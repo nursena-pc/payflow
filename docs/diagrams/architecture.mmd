@@ -1,0 +1,11 @@
+flowchart LR
+    Client --> API[REST API / Spring MVC]
+    API --> Security[Spring Security]
+    Security --> UseCases[Application Use Cases]
+    UseCases --> Domain[Domain Model]
+    UseCases --> Ports[Output Ports]
+    Ports --> PostgreSQL[(PostgreSQL)]
+    Ports --> Redis[(Redis)]
+    Ports --> Kafka[(Kafka)]
+    Kafka --> Consumers[Notification / Audit Consumers]
+    API --> Observability[Actuator / Prometheus]
