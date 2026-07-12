@@ -1,0 +1,43 @@
+erDiagram
+    USERS ||--|| WALLETS : owns
+    WALLETS ||--o{ PAYMENT_TRANSACTIONS : sends
+    WALLETS ||--o{ PAYMENT_TRANSACTIONS : receives
+    PAYMENT_TRANSACTIONS ||--|{ LEDGER_ENTRIES : contains
+    WALLETS ||--o{ LEDGER_ENTRIES : records
+
+    USERS {
+        uuid id PK
+        varchar email UK
+        varchar password_hash
+        varchar role
+        varchar status
+        timestamptz created_at
+    }
+
+    WALLETS {
+        uuid id PK
+        uuid owner_id FK_UK
+        numeric balance
+        varchar currency
+        varchar status
+        bigint version
+    }
+
+    PAYMENT_TRANSACTIONS {
+        uuid id PK
+        uuid source_wallet_id FK
+        uuid target_wallet_id FK
+        varchar transaction_type
+        varchar status
+        numeric amount
+        varchar idempotency_key
+    }
+
+    LEDGER_ENTRIES {
+        uuid id PK
+        uuid transaction_id FK
+        uuid wallet_id FK
+        varchar entry_type
+        numeric amount
+        varchar currency
+    }
