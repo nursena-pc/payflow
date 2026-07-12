@@ -16,11 +16,7 @@ public class OpenWalletService implements OpenWalletUseCase {
     private final WalletRepositoryPort walletRepository;
     private final Clock clock;
 
-    public OpenWalletService(WalletRepositoryPort walletRepository) {
-        this(walletRepository, Clock.systemUTC());
-    }
-
-    OpenWalletService(WalletRepositoryPort walletRepository, Clock clock) {
+    public OpenWalletService(WalletRepositoryPort walletRepository, Clock clock) {
         this.walletRepository = walletRepository;
         this.clock = clock;
     }

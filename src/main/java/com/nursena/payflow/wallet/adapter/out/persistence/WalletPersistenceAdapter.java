@@ -1,5 +1,6 @@
 package com.nursena.payflow.wallet.adapter.out.persistence;
 
+import java.time.Clock;
 import java.time.Instant;
 
 import com.nursena.payflow.wallet.application.port.out.WalletRepositoryPort;
@@ -11,9 +12,11 @@ import org.springframework.stereotype.Component;
 class WalletPersistenceAdapter implements WalletRepositoryPort {
 
     private final SpringDataWalletRepository repository;
+    private final Clock clock;
 
-    WalletPersistenceAdapter(SpringDataWalletRepository repository) {
+    WalletPersistenceAdapter(SpringDataWalletRepository repository, Clock clock) {
         this.repository = repository;
+        this.clock = clock;
     }
 
     @Override
@@ -23,7 +26,7 @@ class WalletPersistenceAdapter implements WalletRepositoryPort {
 
     @Override
     public Wallet save(Wallet wallet) {
-        Instant now = Instant.now();
+        Instant now = clock.instant();
         WalletJpaEntity entity = new WalletJpaEntity(
                 wallet.id(),
                 wallet.ownerId(),
