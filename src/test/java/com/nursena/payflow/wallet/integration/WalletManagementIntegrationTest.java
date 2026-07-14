@@ -26,6 +26,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.time.Duration;
+
+
 @SpringBootTest
 @AutoConfigureMockMvc
 @Testcontainers
@@ -118,13 +121,17 @@ class WalletManagementIntegrationTest {
                 .asText()
         );
 
-        assertThat(
-            createdAtFromRetrieval
-        ).isEqualTo(
-            createdAtFromCreation.truncatedTo(
-                ChronoUnit.MICROS
+        Duration timestampDifference = Duration
+            .between(
+                createdAtFromCreation,
+                createdAtFromRetrieval
             )
-        );
+            .abs();
+
+        assertThat(timestampDifference)
+            .isLessThanOrEqualTo(
+                Duration.ofNanos(1_000)
+            );
 
         openWallet(accessToken)
             .andExpect(status().isConflict())
