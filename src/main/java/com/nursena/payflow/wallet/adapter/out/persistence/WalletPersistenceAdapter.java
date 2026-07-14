@@ -2,6 +2,7 @@ package com.nursena.payflow.wallet.adapter.out.persistence;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 
 import com.nursena.payflow.wallet.application.port.out.WalletRepositoryPort;
@@ -13,7 +14,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
 @Component
-class WalletPersistenceAdapter implements WalletRepositoryPort {
+class WalletPersistenceAdapter
+    implements WalletRepositoryPort {
 
     private static final String OWNER_UNIQUE_CONSTRAINT =
         "uq_wallets_owner_id";
@@ -32,6 +34,13 @@ class WalletPersistenceAdapter implements WalletRepositoryPort {
     @Override
     public boolean existsByOwnerId(UUID ownerId) {
         return repository.existsByOwnerId(ownerId);
+    }
+
+    @Override
+    public Optional<Wallet> findByOwnerId(UUID ownerId) {
+        return repository
+            .findByOwnerId(ownerId)
+            .map(WalletPersistenceAdapter::toDomain);
     }
 
     @Override
@@ -68,7 +77,8 @@ class WalletPersistenceAdapter implements WalletRepositoryPort {
         Throwable current = throwable;
 
         while (current != null) {
-            if (current instanceof ConstraintViolationException violation) {
+            if (current
+                instanceof ConstraintViolationException violation) {
                 return OWNER_UNIQUE_CONSTRAINT.equals(
                     violation.getConstraintName()
                 );
@@ -80,7 +90,9 @@ class WalletPersistenceAdapter implements WalletRepositoryPort {
         return false;
     }
 
-    private static Wallet toDomain(WalletJpaEntity entity) {
+    private static Wallet toDomain(
+        WalletJpaEntity entity
+    ) {
         return Wallet.rehydrate(
             entity.getId(),
             entity.getOwnerId(),

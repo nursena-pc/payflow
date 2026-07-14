@@ -22,7 +22,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
+import java.math.BigDecimal;
+import java.util.Optional;
 
+import com.nursena.payflow.wallet.domain.model.WalletStatus;
 @ExtendWith(MockitoExtension.class)
 class WalletPersistenceAdapterTest {
 
@@ -163,5 +166,69 @@ class WalletPersistenceAdapterTest {
 
         assertThatThrownBy(() -> adapter.save(wallet))
             .isSameAs(databaseException);
+    }
+
+    @Test
+    void shouldFindWalletByOwnerId() {
+        UUID walletId = UUID.fromString(
+            "461ffd4c-29cc-4dbf-82b5-c9af3e1da8db"
+        );
+
+        WalletJpaEntity entity = new WalletJpaEntity(
+            walletId,
+            OWNER_ID,
+            new BigDecimal("125.50"),
+            Currency.TRY,
+            WalletStatus.ACTIVE,
+            NOW,
+            NOW
+        );
+
+        when(repository.findByOwnerId(OWNER_ID))
+            .thenReturn(Optional.of(entity));
+
+        Optional<Wallet> result =
+            adapter.findByOwnerId(OWNER_ID);
+
+        assertThat(result).isPresent();
+
+        Wallet wallet = result.orElseThrow();
+
+        assertThat(wallet.id())
+            .isEqualTo(walletId);
+
+        assertThat(wallet.ownerId())
+            .isEqualTo(OWNER_ID);
+
+        assertThat(wallet.balance().amount())
+            .isEqualByComparingTo(
+                new BigDecimal("125.50")
+            );
+
+        assertThat(wallet.balance().currency())
+            .isEqualTo(Currency.TRY);
+
+        assertThat(wallet.status())
+            .isEqualTo(WalletStatus.ACTIVE);
+
+        assertThat(wallet.createdAt())
+            .isEqualTo(NOW);
+
+        verify(repository)
+            .findByOwnerId(OWNER_ID);
+    }
+
+    @Test
+    void shouldReturnEmptyWhenWalletDoesNotExist() {
+        when(repository.findByOwnerId(OWNER_ID))
+            .thenReturn(Optional.empty());
+
+        Optional<Wallet> result =
+            adapter.findByOwnerId(OWNER_ID);
+
+        assertThat(result).isEmpty();
+
+        verify(repository)
+            .findByOwnerId(OWNER_ID);
     }
 }
