@@ -21,6 +21,7 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtValidators;
 
 @Configuration
 @Profile("!prod")
@@ -73,12 +74,23 @@ class JwtConfiguration {
     }
 
     @Bean
-    JwtDecoder jwtDecoder(KeyPair jwtKeyPair) {
+    JwtDecoder jwtDecoder(
+        KeyPair jwtKeyPair,
+        JwtProperties properties
+    ) {
         RSAPublicKey publicKey =
             (RSAPublicKey) jwtKeyPair.getPublic();
 
-        return NimbusJwtDecoder
+        NimbusJwtDecoder decoder = NimbusJwtDecoder
             .withPublicKey(publicKey)
             .build();
+
+        decoder.setJwtValidator(
+            JwtValidators.createDefaultWithIssuer(
+                properties.issuer()
+            )
+        );
+
+        return decoder;
     }
 }

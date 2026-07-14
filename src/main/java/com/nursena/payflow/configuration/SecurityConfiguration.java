@@ -7,6 +7,10 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import static org.springframework.http.HttpMethod.GET;
+
+import org.springframework.security.config.Customizer;
+
 @Configuration
 public class SecurityConfiguration {
 
@@ -21,17 +25,39 @@ public class SecurityConfiguration {
     };
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain securityFilterChain(
+        HttpSecurity http
+    ) throws Exception {
         return http
-                .csrf(csrf -> csrf.disable())
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
-                        .anyRequest().denyAll())
-                .httpBasic(httpBasic -> httpBasic.disable())
-                .formLogin(formLogin -> formLogin.disable())
-                .build();
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(session ->
+                session.sessionCreationPolicy(
+                    SessionCreationPolicy.STATELESS
+                )
+            )
+            .authorizeHttpRequests(authorize -> authorize
+                .requestMatchers(PUBLIC_ENDPOINTS)
+                .permitAll()
+                .requestMatchers(
+                    GET,
+                    "/api/v1/users/me"
+                )
+                .authenticated()
+                .anyRequest()
+                .denyAll()
+            )
+            .oauth2ResourceServer(resourceServer ->
+                resourceServer.jwt(
+                    Customizer.withDefaults()
+                )
+            )
+            .httpBasic(httpBasic ->
+                httpBasic.disable()
+            )
+            .formLogin(formLogin ->
+                formLogin.disable()
+            )
+            .build();
     }
 
     @Bean
