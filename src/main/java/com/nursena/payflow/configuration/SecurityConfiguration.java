@@ -10,7 +10,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import static org.springframework.http.HttpMethod.GET;
 
 import org.springframework.security.config.Customizer;
-
+import org.springframework.http.HttpMethod;
 @Configuration
 public class SecurityConfiguration {
 
@@ -42,6 +42,12 @@ public class SecurityConfiguration {
                     GET,
                     "/api/v1/users/me"
                 )
+
+                .authenticated()
+                .requestMatchers(
+                    HttpMethod.POST,
+                    "/api/v1/wallets"
+                )
                 .authenticated()
                 .anyRequest()
                 .denyAll()
@@ -57,6 +63,7 @@ public class SecurityConfiguration {
             .formLogin(formLogin ->
                 formLogin.disable()
             )
+
             .build();
     }
 
