@@ -18,6 +18,7 @@ import com.nursena.payflow.wallet.application.port.in.OpenWalletUseCase;
 import com.nursena.payflow.wallet.domain.model.Currency;
 import com.nursena.payflow.wallet.domain.model.WalletStatus;
 import com.nursena.payflow.configuration.SecurityConfiguration;
+import com.nursena.payflow.wallet.domain.exception.WalletAlreadyExistsException;
 import org.springframework.context.annotation.Import;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,8 +29,10 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(OpenWalletController.class)
-@Import(SecurityConfiguration.class)
-class OpenWalletControllerTest {
+@Import({
+    SecurityConfiguration.class,
+    OpenWalletExceptionHandler.class
+})class OpenWalletControllerTest {
 
     private static final UUID USER_ID =
         UUID.fromString(
@@ -140,5 +143,58 @@ class OpenWalletControllerTest {
                                         """)
             )
             .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shouldReturnConflictWhenUserAlreadyHasWallet()
+        throws Exception {
+
+        when(openWalletUseCase.open(
+            any(OpenWalletCommand.class)
+        )).thenThrow(
+            new WalletAlreadyExistsException()
+        );
+
+        mockMvc.perform(
+                post("/api/v1/wallets")
+                    .with(
+                        jwt().jwt(token ->
+                            token.subject(
+                                USER_ID.toString()
+                            )
+                        )
+                    )
+                    .contentType(
+                        MediaType.APPLICATION_JSON
+                    )
+                    .content("""
+                                    {
+                                      "currency": "TRY"
+                                    }
+                                    """)
+            )
+            .andExpect(status().isConflict())
+            .andExpect(
+                jsonPath("$.status")
+                    .value(409)
+            )
+            .andExpect(
+                jsonPath("$.code")
+                    .value("WALLET_ALREADY_EXISTS")
+            )
+            .andExpect(
+                jsonPath("$.message")
+                    .value(
+                        "User already has a wallet."
+                    )
+            )
+            .andExpect(
+                jsonPath("$.path")
+                    .value("/api/v1/wallets")
+            )
+            .andExpect(
+                jsonPath("$.violations")
+                    .isEmpty()
+            );
     }
 }
