@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
+import java.util.Optional;
 import java.sql.SQLException;
 import java.time.Instant;
 
@@ -70,6 +70,50 @@ class UserPersistenceAdapterTest {
         assertThat(savedUser.status()).isEqualTo(user.status());
         assertThat(savedUser.createdAt()).isEqualTo(NOW);
         assertThat(savedUser.updatedAt()).isEqualTo(NOW);
+    }
+
+    @Test
+    void shouldFindUserByNormalizedEmail() {
+        User user = User.register(
+            EmailAddress.of("nursena@example.com"),
+            "$2a$12$hashed-password",
+            NOW
+        );
+
+        UserJpaEntity entity = new UserJpaEntity(
+            user.id(),
+            user.email().value(),
+            user.passwordHash(),
+            user.role(),
+            user.status(),
+            user.createdAt(),
+            user.updatedAt()
+        );
+
+        when(repository.findByEmail("nursena@example.com"))
+            .thenReturn(Optional.of(entity));
+
+        Optional<User> result = adapter.findByEmail(
+            EmailAddress.of("NURSENA@example.com")
+        );
+
+        assertThat(result).isPresent();
+
+        User foundUser = result.orElseThrow();
+
+        assertThat(foundUser.id()).isEqualTo(user.id());
+        assertThat(foundUser.email()).isEqualTo(user.email());
+        assertThat(foundUser.passwordHash())
+            .isEqualTo(user.passwordHash());
+        assertThat(foundUser.role()).isEqualTo(user.role());
+        assertThat(foundUser.status()).isEqualTo(user.status());
+        assertThat(foundUser.createdAt())
+            .isEqualTo(user.createdAt());
+        assertThat(foundUser.updatedAt())
+            .isEqualTo(user.updatedAt());
+
+        verify(repository)
+            .findByEmail("nursena@example.com");
     }
 
     @Test

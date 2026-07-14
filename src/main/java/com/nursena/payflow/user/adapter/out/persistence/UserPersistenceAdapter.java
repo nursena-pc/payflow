@@ -7,6 +7,7 @@ import com.nursena.payflow.user.domain.model.User;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
+import java.util.Optional;
 
 @Component
 class UserPersistenceAdapter implements UserRepositoryPort {
@@ -24,6 +25,12 @@ class UserPersistenceAdapter implements UserRepositoryPort {
     @Override
     public boolean existsByEmail(EmailAddress email) {
         return repository.existsByEmail(email.value());
+    }
+
+    @Override
+    public Optional<User> findByEmail(EmailAddress email) {
+        return repository.findByEmail(email.value())
+            .map(UserPersistenceAdapter::toDomain);
     }
 
     @Override

@@ -54,3 +54,9 @@ springdoc:
 logging:
   pattern:
     level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
+
+payflow:
+  security:
+    jwt:
+      issuer: https://api.payflow.local
+      access-token-ttl: 15m

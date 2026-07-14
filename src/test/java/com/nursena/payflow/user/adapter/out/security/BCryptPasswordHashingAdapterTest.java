@@ -12,13 +12,32 @@ class BCryptPasswordHashingAdapterTest {
     void shouldHashPasswordUsingBCrypt() {
         PasswordEncoder encoder = new BCryptPasswordEncoder(4);
         BCryptPasswordHashingAdapter adapter =
-            new BCryptPasswordHashingAdapter(encoder);
+                new BCryptPasswordHashingAdapter(encoder);
 
         String rawPassword = "StrongPassword123!";
 
         String passwordHash = adapter.hash(rawPassword);
 
         assertThat(passwordHash).isNotEqualTo(rawPassword);
-        assertThat(encoder.matches(rawPassword, passwordHash)).isTrue();
+        assertThat(
+                encoder.matches(rawPassword, passwordHash)
+        ).isTrue();
+    }
+
+    @Test
+    void shouldVerifyMatchingPassword() {
+        PasswordEncoder encoder = new BCryptPasswordEncoder(4);
+        BCryptPasswordHashingAdapter adapter =
+                new BCryptPasswordHashingAdapter(encoder);
+
+        String rawPassword = "StrongPassword123!";
+        String passwordHash = encoder.encode(rawPassword);
+
+        boolean matches = adapter.matches(
+                rawPassword,
+                passwordHash
+        );
+
+        assertThat(matches).isTrue();
     }
 }
