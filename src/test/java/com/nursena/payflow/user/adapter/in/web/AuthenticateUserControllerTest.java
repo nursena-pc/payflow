@@ -23,7 +23,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 @WebMvcTest(AuthenticateUserController.class)
 @Import({
     SecurityConfiguration.class,
@@ -39,6 +39,9 @@ class AuthenticateUserControllerTest {
 
     @MockitoBean
     private AuthenticateUserUseCase authenticateUserUseCase;
+
+    @MockitoBean
+    private JwtDecoder jwtDecoder;
 
     @Test
     void shouldAuthenticateUser() throws Exception {
