@@ -2,9 +2,9 @@
 
 ## Current delivery focus
 
-The repository foundation, core identity flow, authenticated current-user profile, and secure wallet creation are complete.
+The repository foundation, core identity flow, authenticated current-user profile, secure wallet creation, and authenticated wallet retrieval are complete.
 
-The next delivery increment is authenticated wallet retrieval, followed by simulated top-up and PostgreSQL concurrency verification.
+The next delivery increment is simulated top-up and PostgreSQL optimistic-locking verification, followed by transfers, idempotency, and double-entry ledger records.
 
 ## Milestone 0 — Repository foundation
 
@@ -33,8 +33,8 @@ The next delivery increment is authenticated wallet retrieval, followed by simul
 - [x] Enforce one wallet per user
 - [x] Return a stable `409 Conflict` response for duplicate wallet creation
 - [x] PostgreSQL persistence and integration tests with Testcontainers
-- [ ] Retrieve the authenticated user's wallet summary
-- [ ] Return a stable `WALLET_NOT_FOUND` response
+- [x] Retrieve the authenticated user's wallet summary
+- [x] Return a stable `WALLET_NOT_FOUND` response
 - [ ] Simulated top-up
 - [ ] Verify optimistic locking behavior with PostgreSQL concurrency tests
 
