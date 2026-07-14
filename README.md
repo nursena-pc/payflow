@@ -45,15 +45,32 @@ This keeps domain rules independent from Spring and infrastructure while avoidin
 
 ## Current status
 
-Milestone 0 is complete:
+The repository foundation and the initial identity flow are complete:
 
-- repository and CI foundation
-- local PostgreSQL, Redis, and Kafka infrastructure
+- repository standards and CI verification
+- Docker-based PostgreSQL, Redis, and Kafka infrastructure
 - Flyway core schema
-- secure-by-default HTTP configuration
-- wallet aggregate with money validation and domain tests
+- secure-by-default Spring Security configuration
+- user registration with normalized email addresses
+- BCrypt password hashing
+- user login with RSA-signed JWT access tokens
+- authenticated current-user profile
+- authenticated wallet creation
+- one-wallet-per-user enforcement at application and database levels
+- stable `409 Conflict` response for duplicate wallet creation
+- unit, web, persistence, and PostgreSQL Testcontainers integration tests
 
-The next milestone is identity and JWT authentication. See the [roadmap](docs/roadmap.md).
+The current delivery focus is authenticated wallet retrieval, followed by simulated top-up and concurrency verification. See the [roadmap](docs/roadmap.md).
+
+## Implemented API
+
+| Method | Endpoint | Authentication | Description |
+|---|---|---|---|
+| `POST` | `/api/v1/auth/register` | Public | Registers a new user and stores a BCrypt password hash. |
+| `POST` | `/api/v1/auth/login` | Public | Authenticates a user and returns an RSA-signed JWT access token. |
+| `GET` | `/api/v1/users/me` | Bearer JWT | Returns the authenticated user's safe profile fields. |
+| `POST` | `/api/v1/wallets` | Bearer JWT | Opens a zero-balance wallet for the authenticated user. |
+| `GET` | `/api/v1/system/health` | Configuration-dependent | Exposes the application health status. |
 
 ## Local development
 
@@ -144,11 +161,13 @@ Wallet mutation, transaction state, ledger entries, and outbox record creation e
 
 ## Git workflow
 
-- Work begins from a GitHub issue with acceptance criteria.
-- Branches use `feature/<issue>-name` or `fix/<issue>-name`.
+- Work begins from the latest `develop` branch.
+- Branches use `feat/<short-name>`, `fix/<short-name>`, `docs/<short-name>`, or `chore/<short-name>`.
+- Features are divided into small, testable checkpoints.
 - Commits follow Conventional Commits.
-- Pull requests remain focused and require passing CI.
-- Squash merge is preferred for a readable history.
+- Pull requests represent complete and reviewable value increments.
+- CI must pass and conflicts must be resolved before merging.
+- Squash merge is preferred for a readable `develop` history.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
 
