@@ -1,27 +1,28 @@
 package com.nursena.payflow.configuration;
 
+import static org.springframework.http.HttpMethod.GET;
+import static org.springframework.http.HttpMethod.POST;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import static org.springframework.http.HttpMethod.GET;
+import org.springframework.security.web.SecurityFilterChain;
 
-import org.springframework.security.config.Customizer;
-import org.springframework.http.HttpMethod;
 @Configuration
 public class SecurityConfiguration {
 
     private static final String[] PUBLIC_ENDPOINTS = {
-            "/api/v1/system/health",
-            "/actuator/health",
-            "/v3/api-docs/**",
-            "/swagger-ui.html",
-            "/swagger-ui/**",
-            "/api/v1/auth/register",
-            "/api/v1/auth/login"
+        "/api/v1/system/health",
+        "/actuator/health",
+        "/v3/api-docs/**",
+        "/swagger-ui.html",
+        "/swagger-ui/**",
+        "/api/v1/auth/register",
+        "/api/v1/auth/login"
     };
 
     @Bean
@@ -40,12 +41,12 @@ public class SecurityConfiguration {
                 .permitAll()
                 .requestMatchers(
                     GET,
-                    "/api/v1/users/me"
+                    "/api/v1/users/me",
+                    "/api/v1/wallets/me"
                 )
-
                 .authenticated()
                 .requestMatchers(
-                    HttpMethod.POST,
+                    POST,
                     "/api/v1/wallets"
                 )
                 .authenticated()
@@ -63,7 +64,6 @@ public class SecurityConfiguration {
             .formLogin(formLogin ->
                 formLogin.disable()
             )
-
             .build();
     }
 

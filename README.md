@@ -56,11 +56,12 @@ The repository foundation and the initial identity flow are complete:
 - user login with RSA-signed JWT access tokens
 - authenticated current-user profile
 - authenticated wallet creation
+- authenticated current-wallet retrieval with a stable `404 Not Found` response
 - one-wallet-per-user enforcement at application and database levels
 - stable `409 Conflict` response for duplicate wallet creation
 - unit, web, persistence, and PostgreSQL Testcontainers integration tests
 
-The current delivery focus is authenticated wallet retrieval, followed by simulated top-up and concurrency verification. See the [roadmap](docs/roadmap.md).
+The current delivery focus is simulated wallet top-up and PostgreSQL concurrency verification, followed by transfers, idempotency, and double-entry ledger records. See the [roadmap](docs/roadmap.md).
 
 ## Implemented API
 
@@ -70,6 +71,7 @@ The current delivery focus is authenticated wallet retrieval, followed by simula
 | `POST` | `/api/v1/auth/login` | Public | Authenticates a user and returns an RSA-signed JWT access token. |
 | `GET` | `/api/v1/users/me` | Bearer JWT | Returns the authenticated user's safe profile fields. |
 | `POST` | `/api/v1/wallets` | Bearer JWT | Opens a zero-balance wallet for the authenticated user. |
+| `GET` | `/api/v1/wallets/me` | Bearer JWT | Returns the authenticated user's wallet summary. |
 | `GET` | `/api/v1/system/health` | Configuration-dependent | Exposes the application health status. |
 
 ## Local development
