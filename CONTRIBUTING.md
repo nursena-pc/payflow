@@ -2,14 +2,11 @@
 
 ## Branching
 
-- `main`: stable and releasable history
+- `main`: stable, releasable history
 - `develop`: integration branch while the project is under active development
-- `feat/<short-name>`: new product or technical capability
-- `fix/<short-name>`: defect correction
-- `docs/<short-name>`: documentation-only change
-- `chore/<short-name>`: maintenance, tooling, or repository configuration
+- `feature/<issue-number>-short-name`
+- `fix/<issue-number>-short-name`
 
-Branches must be created from the latest `develop` branch. Related issues are linked from the pull request rather than encoded into the branch name.
 ## Commit convention
 
 Use Conventional Commits:
