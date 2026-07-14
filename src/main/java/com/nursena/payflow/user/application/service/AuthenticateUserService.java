@@ -13,8 +13,10 @@ import com.nursena.payflow.user.domain.model.EmailAddress;
 import com.nursena.payflow.user.domain.model.User;
 import com.nursena.payflow.user.domain.model.UserStatus;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.stereotype.Service;
 
-
+@Service
+@Transactional(readOnly = true)
 public class AuthenticateUserService
     implements AuthenticateUserUseCase {
 
