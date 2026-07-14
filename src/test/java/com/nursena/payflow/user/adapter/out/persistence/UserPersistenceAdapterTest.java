@@ -143,4 +143,45 @@ class UserPersistenceAdapterTest {
                 "A user with this email address already exists."
             );
     }
+
+    @Test
+    void shouldFindUserById() {
+        User user = User.register(
+            EmailAddress.of("nursena@example.com"),
+            "$2a$12$hashed-password",
+            NOW
+        );
+
+        UserJpaEntity entity = new UserJpaEntity(
+            user.id(),
+            user.email().value(),
+            user.passwordHash(),
+            user.role(),
+            user.status(),
+            user.createdAt(),
+            user.updatedAt()
+        );
+
+        when(repository.findById(user.id()))
+            .thenReturn(Optional.of(entity));
+
+        Optional<User> result =
+            adapter.findById(user.id());
+
+        assertThat(result).isPresent();
+
+        User foundUser = result.orElseThrow();
+
+        assertThat(foundUser.id()).isEqualTo(user.id());
+        assertThat(foundUser.email())
+            .isEqualTo(user.email());
+        assertThat(foundUser.role())
+            .isEqualTo(user.role());
+        assertThat(foundUser.status())
+            .isEqualTo(user.status());
+        assertThat(foundUser.createdAt())
+            .isEqualTo(user.createdAt());
+
+        verify(repository).findById(user.id());
+    }
 }
