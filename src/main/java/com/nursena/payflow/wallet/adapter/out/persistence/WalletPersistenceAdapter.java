@@ -12,6 +12,10 @@ import com.nursena.payflow.wallet.domain.model.Wallet;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
+import com.nursena.payflow.wallet.domain.exception.WalletNotFoundException;
+import com.nursena.payflow.wallet.domain.exception.WalletConcurrentUpdateException;
+import org.springframework.dao.OptimisticLockingFailureException;
+
 
 @Component
 class WalletPersistenceAdapter
@@ -69,6 +73,27 @@ class WalletPersistenceAdapter
 
             throw exception;
         }
+    }
+
+    @Override
+    public Wallet update(Wallet wallet) {
+        WalletJpaEntity entity = repository
+            .findById(wallet.id())
+            .orElseThrow(WalletNotFoundException::new);
+
+        entity.updateState(
+            wallet.balance().amount(),
+            wallet.status(),
+            clock.instant()
+        );
+
+        try {
+            repository.flush();
+        } catch (OptimisticLockingFailureException exception) {
+            throw new WalletConcurrentUpdateException();
+        }
+
+        return toDomain(entity);
     }
 
     private static boolean isOwnerUniqueConstraintViolation(
