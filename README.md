@@ -45,15 +45,79 @@ This keeps domain rules independent from Spring and infrastructure while avoidin
 
 ## Current status
 
-Milestone 0 is complete:
+The repository foundation, identity flow, and initial wallet-management capabilities are complete:
 
-- repository and CI foundation
-- local PostgreSQL, Redis, and Kafka infrastructure
+- repository standards and CI verification
+- Docker-based PostgreSQL, Redis, and Kafka infrastructure
 - Flyway core schema
-- secure-by-default HTTP configuration
-- wallet aggregate with money validation and domain tests
+- secure-by-default Spring Security configuration
+- user registration with normalized email addresses
+- BCrypt password hashing
+- user login with RSA-signed JWT access tokens
+- authenticated current-user profile
+- authenticated wallet creation
+- authenticated current-wallet retrieval with a stable `404 Not Found` response
+- one-wallet-per-user enforcement at application and database levels
+- stable `409 Conflict` response for duplicate wallet creation
+- unit, web, persistence, and PostgreSQL Testcontainers integration tests
+- authenticated simulated wallet top-up
+- aggregate-based wallet balance mutation
+- PostgreSQL optimistic locking for wallet updates
+- stable `409 Conflict` response for concurrent wallet updates
+- real PostgreSQL concurrency verification with Testcontainers
 
-The next milestone is identity and JWT authentication. See the [roadmap](docs/roadmap.md).
+The current delivery focus is wallet-to-wallet transfer processing, idempotency, and double-entry ledger records, building on the completed wallet top-up and PostgreSQL optimistic-locking foundation. See the [roadmap](docs/roadmap.md).
+
+## Implemented API
+
+| Method | Endpoint | Authentication | Description |
+|---|---|---|---|
+| `POST` | `/api/v1/auth/register` | Public | Registers a new user and stores a BCrypt password hash. |
+| `POST` | `/api/v1/auth/login` | Public | Authenticates a user and returns an RSA-signed JWT access token. |
+| `GET` | `/api/v1/users/me` | Bearer JWT | Returns the authenticated user's safe profile fields. |
+| `POST` | `/api/v1/wallets` | Bearer JWT | Opens a zero-balance wallet for the authenticated user. |
+| `GET` | `/api/v1/wallets/me` | Bearer JWT | Returns the authenticated user's wallet summary. |
+| `POST` | `/api/v1/wallets/me/top-ups` | Bearer JWT | Credits the authenticated user's wallet with a validated simulated amount. |
+| `GET` | `/api/v1/system/health` | Configuration-dependent | Exposes the application health status. |
+
+### Simulated wallet top-up
+
+```http
+POST /api/v1/wallets/me/top-ups
+Authorization: Bearer <access-token>
+Content-Type: application/json
+```
+
+Request body:
+
+```json
+{
+  "amount": 250.00
+}
+```
+
+Successful response:
+
+```json
+{
+  "id": "461ffd4c-29cc-4dbf-82b5-c9af3e1da8db",
+  "balance": 250.00,
+  "currency": "TRY",
+  "status": "ACTIVE",
+  "createdAt": "2026-07-15T12:00:00Z"
+}
+```
+
+The currency is derived from the existing wallet rather than accepted from the client.
+
+Relevant error outcomes include:
+
+- `400 VALIDATION_FAILED`
+- `401 Unauthorized`
+- `404 WALLET_NOT_FOUND`
+- `409 WALLET_CONCURRENT_UPDATE`
+- `422 INVALID_MONEY_AMOUNT`
+- `422 WALLET_NOT_ACTIVE`
 
 ## Local development
 
@@ -126,9 +190,9 @@ Kafka decouples post-transfer work such as notifications, audit enrichment, and 
 
 Clients send an `Idempotency-Key`. The database stores the key with a uniqueness constraint scoped to the source wallet. Repeated requests return the original result instead of creating another transfer.
 
-### How are concurrent transfers protected?
+### How are concurrent wallet updates protected?
 
-Wallets use optimistic locking. Conflicting updates fail rather than silently overwriting each other. Concurrency behavior will be verified with PostgreSQL Testcontainers tests.
+Wallets use optimistic locking through a persisted version column. Conflicting updates fail rather than silently overwriting each other and are exposed as a stable `WALLET_CONCURRENT_UPDATE` conflict. The behavior is verified with two controlled concurrent transactions against PostgreSQL Testcontainers.
 
 ### What happens when a transfer fails?
 
@@ -144,11 +208,13 @@ Wallet mutation, transaction state, ledger entries, and outbox record creation e
 
 ## Git workflow
 
-- Work begins from a GitHub issue with acceptance criteria.
-- Branches use `feature/<issue>-name` or `fix/<issue>-name`.
+- Work begins from the latest `develop` branch.
+- Branches use `feat/<short-name>`, `fix/<short-name>`, `docs/<short-name>`, or `chore/<short-name>`.
+- Features are divided into small, testable checkpoints.
 - Commits follow Conventional Commits.
-- Pull requests remain focused and require passing CI.
-- Squash merge is preferred for a readable history.
+- Pull requests represent complete and reviewable value increments.
+- CI must pass and conflicts must be resolved before merging.
+- Squash merge is preferred for a readable `develop` history.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
 
