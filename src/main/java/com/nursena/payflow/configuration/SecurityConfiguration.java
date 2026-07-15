@@ -47,7 +47,8 @@ public class SecurityConfiguration {
                 .authenticated()
                 .requestMatchers(
                     POST,
-                    "/api/v1/wallets"
+                    "/api/v1/wallets",
+                    "/api/v1/wallets/me/top-ups"
                 )
                 .authenticated()
                 .anyRequest()
