@@ -25,9 +25,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.time.Duration;
-
+import java.math.BigDecimal;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -46,7 +45,7 @@ class WalletManagementIntegrationTest {
     private ObjectMapper objectMapper;
 
     @Test
-    void shouldCreateRetrieveAndRejectSecondWallet()
+    void shouldCreateTopUpRetrieveAndRejectSecondWallet()
         throws Exception {
 
         String email = uniqueEmail("wallet");
@@ -74,6 +73,36 @@ class WalletManagementIntegrationTest {
                 .getContentAsString()
         );
 
+        topUpWallet(
+            accessToken,
+            new BigDecimal("250.00")
+        )
+            .andExpect(status().isOk())
+            .andExpect(
+                jsonPath("$.id")
+                    .value(createdWallet.get("id").asText())
+            )
+            .andExpect(
+                jsonPath("$.balance")
+                    .value(250.00)
+            )
+            .andExpect(
+                jsonPath("$.currency")
+                    .value("TRY")
+            )
+            .andExpect(
+                jsonPath("$.status")
+                    .value("ACTIVE")
+            )
+            .andExpect(
+                jsonPath("$.createdAt")
+                    .isNotEmpty()
+            )
+            .andExpect(
+                jsonPath("$.ownerId")
+                    .doesNotExist()
+            );
+
         MvcResult currentWalletResult =
             getCurrentWallet(accessToken)
                 .andExpect(status().isOk())
@@ -83,7 +112,7 @@ class WalletManagementIntegrationTest {
                 )
                 .andExpect(
                     jsonPath("$.balance")
-                        .value(0.00)
+                        .value(250.00)
                 )
                 .andExpect(
                     jsonPath("$.currency")
@@ -197,6 +226,49 @@ class WalletManagementIntegrationTest {
             );
     }
 
+    @Test
+    void shouldReturnNotFoundWhenTopUpUserHasNoWallet()
+        throws Exception {
+
+        String email = uniqueEmail("top-up-not-found");
+        String password = "StrongPassword123!";
+
+        registerUser(email, password);
+
+        String accessToken =
+            authenticateUser(email, password);
+
+        topUpWallet(
+            accessToken,
+            new BigDecimal("50.00")
+        )
+            .andExpect(status().isNotFound())
+            .andExpect(
+                jsonPath("$.status")
+                    .value(404)
+            )
+            .andExpect(
+                jsonPath("$.code")
+                    .value("WALLET_NOT_FOUND")
+            )
+            .andExpect(
+                jsonPath("$.message")
+                    .value(
+                        "Wallet could not be found."
+                    )
+            )
+            .andExpect(
+                jsonPath("$.path")
+                    .value(
+                        "/api/v1/wallets/me/top-ups"
+                    )
+            )
+            .andExpect(
+                jsonPath("$.violations")
+                    .isEmpty()
+            );
+    }
+
     private void registerUser(
         String email,
         String password
@@ -279,6 +351,28 @@ class WalletManagementIntegrationTest {
         );
     }
 
+    private ResultActions topUpWallet(
+        String accessToken,
+        BigDecimal amount
+    ) throws Exception {
+
+        return mockMvc.perform(
+            post("/api/v1/wallets/me/top-ups")
+                .header(
+                    HttpHeaders.AUTHORIZATION,
+                    bearer(accessToken)
+                )
+                .contentType(
+                    MediaType.APPLICATION_JSON
+                )
+                .content(
+                    objectMapper.writeValueAsString(
+                        new TopUpRequest(amount)
+                    )
+                )
+        );
+    }
+
     private ResultActions getCurrentWallet(
         String accessToken
     ) throws Exception {
@@ -316,6 +410,11 @@ class WalletManagementIntegrationTest {
     private record LoginRequest(
         String email,
         String password
+    ) {
+    }
+
+    private record TopUpRequest(
+        BigDecimal amount
     ) {
     }
 }
