@@ -333,4 +333,44 @@ class WalletPersistenceAdapterTest {
             .flush();
     }
 
+    @Test
+    void shouldFindWalletById() {
+        UUID walletId = UUID.fromString(
+            "461ffd4c-29cc-4dbf-82b5-c9af3e1da8db"
+        );
+
+        WalletJpaEntity entity = new WalletJpaEntity(
+            walletId,
+            OWNER_ID,
+            new BigDecimal("125.50"),
+            Currency.TRY,
+            WalletStatus.ACTIVE,
+            NOW,
+            NOW
+        );
+
+        when(repository.findById(walletId))
+            .thenReturn(Optional.of(entity));
+
+        Optional<Wallet> result =
+            adapter.findById(walletId);
+
+        assertThat(result).isPresent();
+
+        Wallet wallet = result.orElseThrow();
+
+        assertThat(wallet.id())
+            .isEqualTo(walletId);
+
+        assertThat(wallet.ownerId())
+            .isEqualTo(OWNER_ID);
+
+        assertThat(wallet.balance().amount())
+            .isEqualByComparingTo(
+                new BigDecimal("125.50")
+            );
+
+        verify(repository).findById(walletId);
+    }
+
 }

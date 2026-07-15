@@ -51,6 +51,13 @@ public class SecurityConfiguration {
                     "/api/v1/wallets/me/top-ups"
                 )
                 .authenticated()
+                .requestMatchers(
+                    POST,
+                    "/api/v1/wallets",
+                    "/api/v1/wallets/me/top-ups",
+                    "/api/v1/transfers"
+                )
+                .authenticated()
                 .anyRequest()
                 .denyAll()
             )
