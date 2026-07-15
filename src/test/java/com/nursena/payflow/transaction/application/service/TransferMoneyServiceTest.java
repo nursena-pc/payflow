@@ -69,6 +69,9 @@ class TransferMoneyServiceTest {
             "33333333-3333-3333-3333-333333333333"
         );
 
+    private static final Instant NANOSECOND_TIME =
+        Instant.parse("2026-07-15T18:30:00.123456789Z");
+
     private static final Instant NOW =
         Instant.parse("2026-07-15T18:30:00Z");
 
@@ -457,6 +460,77 @@ class TransferMoneyServiceTest {
 
         verifyNoWrites();
     }
+
+    @Test
+    void shouldNormalizeTransactionTimestampsToMicroseconds() {
+        TransferMoneyService timestampService =
+            new TransferMoneyService(
+                walletRepository,
+                transactionRepository,
+                ledgerRepository,
+                Clock.fixed(
+                    NANOSECOND_TIME,
+                    ZoneOffset.UTC
+                )
+            );
+
+        Wallet sourceWallet = sourceWallet("200.00");
+        Wallet targetWallet = targetWallet("50.00");
+
+        when(walletRepository.findByOwnerId(OWNER_ID))
+            .thenReturn(Optional.of(sourceWallet));
+
+        when(
+            transactionRepository
+                .findBySourceWalletIdAndIdempotencyKey(
+                    SOURCE_WALLET_ID,
+                    new IdempotencyKey("request-1")
+                )
+        ).thenReturn(Optional.empty());
+
+        when(walletRepository.findById(TARGET_WALLET_ID))
+            .thenReturn(Optional.of(targetWallet));
+
+        when(transactionRepository.save(
+            any(PaymentTransaction.class)
+        )).thenAnswer(invocation ->
+            invocation.getArgument(0)
+        );
+
+        when(walletRepository.update(any(Wallet.class)))
+            .thenAnswer(invocation ->
+                invocation.getArgument(0)
+            );
+
+        when(ledgerRepository.save(
+            any(DoubleEntryLedger.class)
+        )).thenAnswer(invocation ->
+            invocation.getArgument(0)
+        );
+
+        when(transactionRepository.update(
+            any(PaymentTransaction.class)
+        )).thenAnswer(invocation ->
+            invocation.getArgument(0)
+        );
+
+        TransferMoneyResult result =
+            timestampService.transfer(
+                command("25.00", TARGET_WALLET_ID)
+            );
+
+        Instant expected =
+            Instant.parse(
+                "2026-07-15T18:30:00.123456Z"
+            );
+
+        assertThat(result.createdAt())
+            .isEqualTo(expected);
+
+        assertThat(result.completedAt())
+            .isEqualTo(expected);
+    }
+
     private static PaymentTransaction completedTransaction(
         String amount,
         UUID targetWalletId

@@ -3,6 +3,7 @@ package com.nursena.payflow.transaction.application.service;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.*;
+import java.time.temporal.ChronoUnit;
 
 import com.nursena.payflow.transaction.domain.exception.IdempotencyConflictException;
 import com.nursena.payflow.transaction.domain.exception.IdempotencyRequestInProgressException;
@@ -93,7 +94,7 @@ public class TransferMoneyService
             targetWallet
         );
 
-        Instant createdAt = clock.instant();
+        Instant createdAt = currentTime();
 
         PaymentTransaction transaction =
             PaymentTransaction.startTransfer(
@@ -126,7 +127,7 @@ public class TransferMoneyService
 
         ledgerRepository.save(ledger);
 
-        savedTransaction.complete(clock.instant());
+        savedTransaction.complete(currentTime());
 
         PaymentTransaction completedTransaction =
             transactionRepository.update(
@@ -182,5 +183,9 @@ public class TransferMoneyService
             != targetWallet.balance().currency()) {
             throw new TransferCurrencyMismatchException();
         }
+    }
+    private Instant currentTime() {
+        return clock.instant()
+            .truncatedTo(ChronoUnit.MICROS);
     }
 }
