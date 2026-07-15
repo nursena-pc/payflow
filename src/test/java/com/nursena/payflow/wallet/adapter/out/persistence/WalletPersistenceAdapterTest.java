@@ -27,6 +27,10 @@ import java.math.BigDecimal;
 import java.util.Optional;
 
 import com.nursena.payflow.wallet.domain.model.WalletStatus;
+import static org.mockito.Mockito.doThrow;
+import com.nursena.payflow.wallet.domain.exception.WalletConcurrentUpdateException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
+
 @ExtendWith(MockitoExtension.class)
 class WalletPersistenceAdapterTest {
 
@@ -269,6 +273,58 @@ class WalletPersistenceAdapterTest {
 
         assertThat(updated.balance().currency())
             .isEqualTo(Currency.TRY);
+
+        verify(repository)
+            .findById(walletId);
+
+        verify(repository)
+            .flush();
+    }
+
+    @Test
+    void shouldTranslateOptimisticLockingFailure() {
+        UUID walletId = UUID.fromString(
+            "461ffd4c-29cc-4dbf-82b5-c9af3e1da8db"
+        );
+
+        WalletJpaEntity entity = new WalletJpaEntity(
+            walletId,
+            OWNER_ID,
+            new BigDecimal("100.00"),
+            Currency.TRY,
+            WalletStatus.ACTIVE,
+            NOW,
+            NOW
+        );
+
+        Wallet wallet = Wallet.rehydrate(
+            walletId,
+            OWNER_ID,
+            Money.of("150.00", Currency.TRY),
+            WalletStatus.ACTIVE,
+            NOW
+        );
+
+        when(repository.findById(walletId))
+            .thenReturn(Optional.of(entity));
+
+        doThrow(
+            new ObjectOptimisticLockingFailureException(
+                WalletJpaEntity.class,
+                walletId
+            )
+        )
+            .when(repository)
+            .flush();
+
+        assertThatThrownBy(() -> adapter.update(wallet))
+            .isInstanceOf(
+                WalletConcurrentUpdateException.class
+            )
+            .hasMessage(
+                "Wallet was updated concurrently. "
+                    + "Please retry the operation."
+            );
 
         verify(repository)
             .findById(walletId);

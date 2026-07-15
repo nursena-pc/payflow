@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.nursena.payflow.common.api.ApiError;
 import com.nursena.payflow.wallet.domain.exception.WalletNotFoundException;
+import com.nursena.payflow.wallet.domain.exception.WalletConcurrentUpdateException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -35,6 +36,25 @@ public class TopUpWalletExceptionHandler {
 
         return ResponseEntity
             .status(HttpStatus.NOT_FOUND)
+            .body(body);
+    }
+
+    @ExceptionHandler(WalletConcurrentUpdateException.class)
+    ResponseEntity<ApiError> handleConcurrentUpdate(
+        WalletConcurrentUpdateException exception,
+        HttpServletRequest request
+    ) {
+        ApiError body = new ApiError(
+            Instant.now(),
+            HttpStatus.CONFLICT.value(),
+            exception.getCode(),
+            exception.getMessage(),
+            request.getRequestURI(),
+            List.of()
+        );
+
+        return ResponseEntity
+            .status(HttpStatus.CONFLICT)
             .body(body);
     }
 }

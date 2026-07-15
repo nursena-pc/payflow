@@ -20,6 +20,7 @@ import com.nursena.payflow.wallet.application.port.in.TopUpWalletUseCase;
 import com.nursena.payflow.wallet.domain.exception.WalletNotFoundException;
 import com.nursena.payflow.wallet.domain.model.Currency;
 import com.nursena.payflow.wallet.domain.model.WalletStatus;
+import com.nursena.payflow.wallet.domain.exception.WalletConcurrentUpdateException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -259,4 +260,63 @@ class TopUpWalletControllerTest {
 
         verifyNoInteractions(topUpWalletUseCase);
     }
+
+    @Test
+    void shouldReturnConflictWhenWalletIsUpdatedConcurrently()
+        throws Exception {
+
+        when(topUpWalletUseCase.topUp(
+            any(TopUpWalletCommand.class)
+        )).thenThrow(
+            new WalletConcurrentUpdateException()
+        );
+
+        mockMvc.perform(
+                post("/api/v1/wallets/me/top-ups")
+                    .with(
+                        jwt().jwt(token ->
+                            token.subject(
+                                OWNER_ID.toString()
+                            )
+                        )
+                    )
+                    .contentType(
+                        MediaType.APPLICATION_JSON
+                    )
+                    .content("""
+                    {
+                      "amount": 25.00
+                    }
+                    """)
+            )
+            .andExpect(status().isConflict())
+            .andExpect(
+                jsonPath("$.status")
+                    .value(409)
+            )
+            .andExpect(
+                jsonPath("$.code")
+                    .value(
+                        "WALLET_CONCURRENT_UPDATE"
+                    )
+            )
+            .andExpect(
+                jsonPath("$.message")
+                    .value(
+                        "Wallet was updated concurrently. "
+                            + "Please retry the operation."
+                    )
+            )
+            .andExpect(
+                jsonPath("$.path")
+                    .value(
+                        "/api/v1/wallets/me/top-ups"
+                    )
+            )
+            .andExpect(
+                jsonPath("$.violations")
+                    .isEmpty()
+            );
+    }
+
 }

@@ -13,6 +13,9 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 import com.nursena.payflow.wallet.domain.exception.WalletNotFoundException;
+import com.nursena.payflow.wallet.domain.exception.WalletConcurrentUpdateException;
+import org.springframework.dao.OptimisticLockingFailureException;
+
 
 @Component
 class WalletPersistenceAdapter
@@ -84,7 +87,11 @@ class WalletPersistenceAdapter
             clock.instant()
         );
 
-        repository.flush();
+        try {
+            repository.flush();
+        } catch (OptimisticLockingFailureException exception) {
+            throw new WalletConcurrentUpdateException();
+        }
 
         return toDomain(entity);
     }
