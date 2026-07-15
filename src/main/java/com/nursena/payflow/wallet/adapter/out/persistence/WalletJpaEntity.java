@@ -13,6 +13,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
+import java.util.Objects;
 
 @Entity
 @Table(name = "wallets")
@@ -63,6 +64,25 @@ class WalletJpaEntity {
         this.status = status;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+    }
+
+    void updateState(
+        BigDecimal balance,
+        WalletStatus status,
+        Instant updatedAt
+    ) {
+        this.balance = Objects.requireNonNull(
+            balance,
+            "balance must not be null"
+        );
+        this.status = Objects.requireNonNull(
+            status,
+            "status must not be null"
+        );
+        this.updatedAt = Objects.requireNonNull(
+            updatedAt,
+            "updatedAt must not be null"
+        );
     }
 
     UUID getId() {

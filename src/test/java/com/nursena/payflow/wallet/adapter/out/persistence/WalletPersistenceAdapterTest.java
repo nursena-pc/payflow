@@ -14,6 +14,7 @@ import java.util.UUID;
 
 import com.nursena.payflow.wallet.domain.exception.WalletAlreadyExistsException;
 import com.nursena.payflow.wallet.domain.model.Currency;
+import com.nursena.payflow.wallet.domain.model.Money;
 import com.nursena.payflow.wallet.domain.model.Wallet;
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
@@ -231,4 +232,49 @@ class WalletPersistenceAdapterTest {
         verify(repository)
             .findByOwnerId(OWNER_ID);
     }
+
+    @Test
+    void shouldUpdateManagedWalletEntity() {
+        UUID walletId = UUID.fromString(
+            "461ffd4c-29cc-4dbf-82b5-c9af3e1da8db"
+        );
+
+        WalletJpaEntity entity = new WalletJpaEntity(
+            walletId,
+            OWNER_ID,
+            new BigDecimal("100.00"),
+            Currency.TRY,
+            WalletStatus.ACTIVE,
+            NOW,
+            NOW
+        );
+
+        Wallet wallet = Wallet.rehydrate(
+            walletId,
+            OWNER_ID,
+            Money.of("250.00", Currency.TRY),
+            WalletStatus.ACTIVE,
+            NOW
+        );
+
+        when(repository.findById(walletId))
+            .thenReturn(Optional.of(entity));
+
+        Wallet updated = adapter.update(wallet);
+
+        assertThat(updated.balance().amount())
+            .isEqualByComparingTo(
+                new BigDecimal("250.00")
+            );
+
+        assertThat(updated.balance().currency())
+            .isEqualTo(Currency.TRY);
+
+        verify(repository)
+            .findById(walletId);
+
+        verify(repository)
+            .flush();
+    }
+
 }
