@@ -117,6 +117,30 @@ public final class PaymentTransaction {
         );
     }
 
+    public static PaymentTransaction rehydrate(
+            UUID id,
+            UUID sourceWalletId,
+            UUID targetWalletId,
+            Money amount,
+            IdempotencyKey idempotencyKey,
+            TransactionType type,
+            TransactionStatus status,
+            Instant createdAt,
+            Instant completedAt
+    ) {
+        return new PaymentTransaction(
+                id,
+                sourceWalletId,
+                targetWalletId,
+                amount,
+                idempotencyKey,
+                type,
+                status,
+                createdAt,
+                completedAt
+        );
+    }
+
     public void complete(Instant now) {
         Objects.requireNonNull(
             now,
