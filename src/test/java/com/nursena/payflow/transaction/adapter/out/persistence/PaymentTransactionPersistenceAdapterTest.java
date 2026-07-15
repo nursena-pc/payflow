@@ -6,10 +6,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.sql.SQLException;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.nursena.payflow.transaction.domain.exception.IdempotencyConflictException;
 import com.nursena.payflow.transaction.domain.exception.PaymentTransactionNotFoundException;
 import com.nursena.payflow.transaction.domain.model.IdempotencyKey;
 import com.nursena.payflow.transaction.domain.model.PaymentTransaction;
@@ -22,6 +24,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentTransactionPersistenceAdapterTest {
@@ -220,4 +224,59 @@ class PaymentTransactionPersistenceAdapterTest {
             null
         );
     }
+
+    @Test
+    void shouldTranslateDuplicateIdempotencyConstraint() {
+        ConstraintViolationException violation =
+            new ConstraintViolationException(
+                "duplicate idempotency key",
+                new SQLException(),
+                "uq_transaction_idempotency"
+            );
+
+        when(repository.saveAndFlush(
+            any(PaymentTransactionJpaEntity.class)
+        )).thenThrow(
+            new DataIntegrityViolationException(
+                "duplicate idempotency key",
+                violation
+            )
+        );
+
+        assertThatThrownBy(() ->
+            adapter.save(pendingTransaction())
+        )
+            .isInstanceOf(
+                IdempotencyConflictException.class
+            )
+            .hasMessage(
+                "Idempotency key has already been used "
+                    + "for another transfer request."
+            );
+    }
+
+    @Test
+    void shouldNotTranslateUnrelatedConstraintViolation() {
+        ConstraintViolationException violation =
+            new ConstraintViolationException(
+                "unrelated constraint",
+                new SQLException(),
+                "some_other_constraint"
+            );
+
+        DataIntegrityViolationException databaseException =
+            new DataIntegrityViolationException(
+                "unrelated constraint",
+                violation
+            );
+
+        when(repository.saveAndFlush(
+            any(PaymentTransactionJpaEntity.class)
+        )).thenThrow(databaseException);
+
+        assertThatThrownBy(() ->
+            adapter.save(pendingTransaction())
+        ).isSameAs(databaseException);
+    }
+
 }

@@ -128,6 +128,33 @@ class PaymentTransactionTest {
             );
     }
 
+    @Test
+    void shouldMatchOriginalTransferRequest() {
+        PaymentTransaction transaction =
+            startTransfer();
+
+        assertThat(
+            transaction.matchesTransferRequest(
+                TARGET_WALLET_ID,
+                Money.of("125.50", Currency.TRY)
+            )
+        ).isTrue();
+
+        assertThat(
+            transaction.matchesTransferRequest(
+                TARGET_WALLET_ID,
+                Money.of("125.51", Currency.TRY)
+            )
+        ).isFalse();
+
+        assertThat(
+            transaction.matchesTransferRequest(
+                UUID.randomUUID(),
+                Money.of("125.50", Currency.TRY)
+            )
+        ).isFalse();
+    }
+
     private static PaymentTransaction startTransfer() {
         return PaymentTransaction.startTransfer(
             SOURCE_WALLET_ID,

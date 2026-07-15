@@ -48,6 +48,13 @@ class WalletPersistenceAdapter
     }
 
     @Override
+    public Optional<Wallet> findById(UUID walletId) {
+        return repository
+            .findById(walletId)
+            .map(WalletPersistenceAdapter::toDomain);
+    }
+
+    @Override
     public Wallet save(Wallet wallet) {
         Instant now = clock.instant();
 

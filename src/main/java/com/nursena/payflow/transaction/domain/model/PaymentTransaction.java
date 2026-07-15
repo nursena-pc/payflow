@@ -155,6 +155,24 @@ public final class PaymentTransaction {
         completedAt = now;
     }
 
+    public boolean matchesTransferRequest(
+            UUID targetWalletId,
+            Money amount
+    ) {
+        Objects.requireNonNull(
+                targetWalletId,
+                "targetWalletId must not be null"
+        );
+        Objects.requireNonNull(
+                amount,
+                "amount must not be null"
+        );
+
+        return type == TransactionType.TRANSFER
+                && this.targetWalletId.equals(targetWalletId)
+                && this.amount.equals(amount);
+    }
+
     public UUID id() {
         return id;
     }

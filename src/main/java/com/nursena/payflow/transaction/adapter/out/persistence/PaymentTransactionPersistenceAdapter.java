@@ -9,6 +9,9 @@ import com.nursena.payflow.transaction.domain.model.IdempotencyKey;
 import com.nursena.payflow.transaction.domain.model.PaymentTransaction;
 import com.nursena.payflow.wallet.domain.model.Money;
 import org.springframework.stereotype.Component;
+import com.nursena.payflow.transaction.domain.exception.IdempotencyConflictException;
+import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 
 @Component
 class PaymentTransactionPersistenceAdapter
@@ -16,6 +19,9 @@ class PaymentTransactionPersistenceAdapter
 
     private final SpringDataPaymentTransactionRepository
         repository;
+
+    private static final String IDEMPOTENCY_CONSTRAINT =
+        "uq_transaction_idempotency";
 
     PaymentTransactionPersistenceAdapter(
         SpringDataPaymentTransactionRepository repository
@@ -45,12 +51,22 @@ class PaymentTransactionPersistenceAdapter
     public PaymentTransaction save(
         PaymentTransaction transaction
     ) {
-        PaymentTransactionJpaEntity saved =
-            repository.saveAndFlush(
-                toEntity(transaction)
-            );
+        try {
+            PaymentTransactionJpaEntity saved =
+                repository.saveAndFlush(
+                    toEntity(transaction)
+                );
 
-        return toDomain(saved);
+            return toDomain(saved);
+        } catch (DataIntegrityViolationException exception) {
+            if (isIdempotencyConstraintViolation(
+                exception
+            )) {
+                throw new IdempotencyConflictException();
+            }
+
+            throw exception;
+        }
     }
 
     @Override
@@ -111,5 +127,26 @@ class PaymentTransactionPersistenceAdapter
             entity.getCreatedAt(),
             entity.getCompletedAt()
         );
+    }
+    private static boolean
+    isIdempotencyConstraintViolation(
+        Throwable throwable
+    ) {
+
+        Throwable current = throwable;
+
+        while (current != null) {
+            if (current
+                instanceof ConstraintViolationException violation) {
+
+                return IDEMPOTENCY_CONSTRAINT.equals(
+                    violation.getConstraintName()
+                );
+            }
+
+            current = current.getCause();
+        }
+
+        return false;
     }
 }
