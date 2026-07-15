@@ -40,13 +40,26 @@ The next delivery increment is wallet-to-wallet transfer processing with idempot
 
 ## Milestone 3 — Transfers and ledger
 
-- [ ] Transfer use case
-- [ ] `Idempotency-Key` handling
-- [ ] Transaction state machine
-- [ ] Atomic source-wallet debit and target-wallet credit
-- [ ] Double-entry ledger
-- [ ] Rollback and concurrency tests
-- [ ] Filtering and pagination
+- [x] Transfer domain model and lifecycle
+- [x] Payment-transaction persistence
+- [x] `PENDING` to `COMPLETED` state transition
+- [x] Authenticated transfer use case
+- [x] Source wallet derived from JWT identity
+- [x] `Idempotency-Key` HTTP contract
+- [x] Source-wallet-scoped database uniqueness
+- [x] Completed-request replay
+- [x] Conflicting-payload detection
+- [x] In-progress request conflict behavior
+- [x] Atomic source-wallet debit and target-wallet credit
+- [x] Double-entry ledger domain model
+- [x] Immutable `DEBIT` and `CREDIT` persistence
+- [x] Database constraints for transfer and ledger invariants
+- [x] Rollback verification when ledger persistence fails
+- [x] Concurrent duplicate-transfer verification
+- [x] Authenticated endpoint-to-database integration test
+- [ ] Transaction history
+- [ ] Filtering by direction, status, and date range
+- [ ] Pagination and stable sorting
 
 ## Milestone 4 — Event-driven processing
 
