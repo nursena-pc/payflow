@@ -3,6 +3,8 @@ package com.nursena.payflow.transaction.application.model;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.nursena.payflow.transaction.application.exception.InvalidTransactionHistoryFilterException;
+
 import java.time.Instant;
 
 import org.junit.jupiter.api.Test;
@@ -79,7 +81,7 @@ class TransactionHistoryFilterTest {
             )
         )
             .isInstanceOf(
-                IllegalArgumentException.class
+                InvalidTransactionHistoryFilterException.class
             )
             .hasMessage(
                 "from must not be after to"

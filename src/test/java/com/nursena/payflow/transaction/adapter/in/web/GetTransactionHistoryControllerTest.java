@@ -23,6 +23,7 @@ import com.nursena.payflow.transaction.domain.model.TransactionStatus;
 import com.nursena.payflow.transaction.domain.model.TransactionType;
 import com.nursena.payflow.wallet.domain.exception.WalletNotFoundException;
 import com.nursena.payflow.wallet.domain.model.Currency;
+import com.nursena.payflow.transaction.application.model.TransactionHistoryFilter;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -266,6 +267,155 @@ class GetTransactionHistoryControllerTest {
     }
 
     @Test
+    void shouldApplyRequestedFilters()
+        throws Exception {
+
+        Instant from =
+            Instant.parse(
+                "2026-07-01T00:00:00Z"
+            );
+
+        Instant to =
+            Instant.parse(
+                "2026-08-01T00:00:00Z"
+            );
+
+        TransactionHistoryFilter filter =
+            new TransactionHistoryFilter(
+                TransactionDirection.OUTGOING,
+                TransactionStatus.COMPLETED,
+                from,
+                to
+            );
+
+        GetTransactionHistoryQuery expectedQuery =
+            new GetTransactionHistoryQuery(
+                OWNER_ID,
+                0,
+                20,
+                filter
+            );
+
+        when(
+            getTransactionHistoryUseCase
+                .getTransactionHistory(expectedQuery)
+        ).thenReturn(
+            new TransactionHistoryPage(
+                List.of(),
+                0,
+                20,
+                0,
+                0
+            )
+        );
+
+        mockMvc.perform(
+                get("/api/v1/transactions/me")
+                    .param(
+                        "direction",
+                        "OUTGOING"
+                    )
+                    .param(
+                        "status",
+                        "COMPLETED"
+                    )
+                    .param(
+                        "from",
+                        from.toString()
+                    )
+                    .param(
+                        "to",
+                        to.toString()
+                    )
+                    .with(
+                        jwt().jwt(token ->
+                            token.subject(
+                                OWNER_ID.toString()
+                            )
+                        )
+                    )
+            )
+            .andExpect(status().isOk())
+            .andExpect(
+                jsonPath("$.items.length()")
+                    .value(0)
+            )
+            .andExpect(
+                jsonPath("$.page")
+                    .value(0)
+            )
+            .andExpect(
+                jsonPath("$.size")
+                    .value(20)
+            );
+
+        verify(getTransactionHistoryUseCase)
+            .getTransactionHistory(expectedQuery);
+    }
+
+    @Test
+    void shouldAllowEqualDateBoundaries()
+        throws Exception {
+
+        Instant boundary =
+            Instant.parse(
+                "2026-07-01T00:00:00Z"
+            );
+
+        TransactionHistoryFilter filter =
+            new TransactionHistoryFilter(
+                null,
+                null,
+                boundary,
+                boundary
+            );
+
+        GetTransactionHistoryQuery expectedQuery =
+            new GetTransactionHistoryQuery(
+                OWNER_ID,
+                0,
+                20,
+                filter
+            );
+
+        when(
+            getTransactionHistoryUseCase
+                .getTransactionHistory(expectedQuery)
+        ).thenReturn(
+            new TransactionHistoryPage(
+                List.of(),
+                0,
+                20,
+                0,
+                0
+            )
+        );
+
+        mockMvc.perform(
+                get("/api/v1/transactions/me")
+                    .param(
+                        "from",
+                        boundary.toString()
+                    )
+                    .param(
+                        "to",
+                        boundary.toString()
+                    )
+                    .with(
+                        jwt().jwt(token ->
+                            token.subject(
+                                OWNER_ID.toString()
+                            )
+                        )
+                    )
+            )
+            .andExpect(status().isOk());
+
+        verify(getTransactionHistoryUseCase)
+            .getTransactionHistory(expectedQuery);
+    }
+
+    @Test
     void shouldRejectRequestWithoutAccessToken()
         throws Exception {
 
@@ -273,6 +423,105 @@ class GetTransactionHistoryControllerTest {
                 get("/api/v1/transactions/me")
             )
             .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(
+            getTransactionHistoryUseCase
+        );
+    }
+
+    @Test
+    void shouldRejectReversedDateRange()
+        throws Exception {
+
+        mockMvc.perform(
+                get("/api/v1/transactions/me")
+                    .param(
+                        "from",
+                        "2026-08-01T00:00:00Z"
+                    )
+                    .param(
+                        "to",
+                        "2026-07-01T00:00:00Z"
+                    )
+                    .with(
+                        jwt().jwt(token ->
+                            token.subject(
+                                OWNER_ID.toString()
+                            )
+                        )
+                    )
+            )
+            .andExpect(status().isBadRequest())
+            .andExpect(
+                jsonPath("$.status")
+                    .value(400)
+            )
+            .andExpect(
+                jsonPath("$.code")
+                    .value("VALIDATION_FAILED")
+            )
+            .andExpect(
+                jsonPath("$.message")
+                    .value(
+                        "Request validation failed."
+                    )
+            )
+            .andExpect(
+                jsonPath("$.path")
+                    .value(
+                        "/api/v1/transactions/me"
+                    )
+            );
+
+        verifyNoInteractions(
+            getTransactionHistoryUseCase
+        );
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "direction, SIDEWAYS",
+        "status, UNKNOWN",
+        "from, not-an-instant",
+        "to, not-an-instant"
+    })
+    void shouldRejectInvalidFilterValues(
+        String parameter,
+        String value
+    ) throws Exception {
+
+        mockMvc.perform(
+                get("/api/v1/transactions/me")
+                    .param(parameter, value)
+                    .with(
+                        jwt().jwt(token ->
+                            token.subject(
+                                OWNER_ID.toString()
+                            )
+                        )
+                    )
+            )
+            .andExpect(status().isBadRequest())
+            .andExpect(
+                jsonPath("$.status")
+                    .value(400)
+            )
+            .andExpect(
+                jsonPath("$.code")
+                    .value("VALIDATION_FAILED")
+            )
+            .andExpect(
+                jsonPath("$.message")
+                    .value(
+                        "Request validation failed."
+                    )
+            )
+            .andExpect(
+                jsonPath("$.path")
+                    .value(
+                        "/api/v1/transactions/me"
+                    )
+            );
 
         verifyNoInteractions(
             getTransactionHistoryUseCase

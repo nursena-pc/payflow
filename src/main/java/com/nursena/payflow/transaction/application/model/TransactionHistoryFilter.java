@@ -3,6 +3,7 @@ package com.nursena.payflow.transaction.application.model;
 import java.time.Instant;
 
 import com.nursena.payflow.transaction.domain.model.TransactionStatus;
+import com.nursena.payflow.transaction.application.exception.InvalidTransactionHistoryFilterException;
 
 public record TransactionHistoryFilter(
     TransactionDirection direction,
@@ -17,7 +18,7 @@ public record TransactionHistoryFilter(
                 && to != null
                 && from.isAfter(to)
         ) {
-            throw new IllegalArgumentException(
+            throw new InvalidTransactionHistoryFilterException(
                 "from must not be after to"
             );
         }

@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.List;
 
 import com.nursena.payflow.common.api.ApiError;
+import com.nursena.payflow.transaction.application.exception.InvalidTransactionHistoryFilterException;
 import com.nursena.payflow.wallet.domain.exception.WalletNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.core.Ordered;
@@ -37,9 +38,10 @@ public class TransactionHistoryExceptionHandler {
 
     @ExceptionHandler({
         HandlerMethodValidationException.class,
-        MethodArgumentTypeMismatchException.class
+        MethodArgumentTypeMismatchException.class,
+        InvalidTransactionHistoryFilterException.class
     })
-    ResponseEntity<ApiError> handleInvalidPagination(
+    ResponseEntity<ApiError> handleValidationFailure(
         Exception exception,
         HttpServletRequest request
     ) {
