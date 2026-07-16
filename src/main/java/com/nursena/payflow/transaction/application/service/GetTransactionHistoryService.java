@@ -9,8 +9,11 @@ import com.nursena.payflow.transaction.application.port.out.TransactionHistoryQu
 import com.nursena.payflow.wallet.application.port.out.WalletRepositoryPort;
 import com.nursena.payflow.wallet.domain.exception.WalletNotFoundException;
 import com.nursena.payflow.wallet.domain.model.Wallet;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-public final class GetTransactionHistoryService
+@Service
+public class GetTransactionHistoryService
     implements GetTransactionHistoryUseCase {
 
     private final WalletRepositoryPort walletRepository;
@@ -36,6 +39,7 @@ public final class GetTransactionHistoryService
     }
 
     @Override
+    @Transactional(readOnly = true)
     public TransactionHistoryPage
     getTransactionHistory(
         GetTransactionHistoryQuery query
