@@ -280,6 +280,73 @@ class TransactionHistoryPersistenceIntegrationTest {
         ).isEqualTo(
             COUNTERPARTY_WALLET_B_ID
         );
+        TransactionHistoryPage outgoingPage =
+            transactionHistoryQueryPort
+                .findByWalletId(
+                    WALLET_ID,
+                    0,
+                    20,
+                    new TransactionHistoryFilter(
+                        TransactionDirection.OUTGOING,
+                        null,
+                        null,
+                        null
+                    )
+                );
+
+        assertThat(outgoingPage.items())
+            .extracting(item ->
+                item.transactionId()
+            )
+            .containsExactly(
+                SAME_TIME_HIGH_ID
+            );
+
+        TransactionHistoryPage incomingPage =
+            transactionHistoryQueryPort
+                .findByWalletId(
+                    WALLET_ID,
+                    0,
+                    20,
+                    new TransactionHistoryFilter(
+                        TransactionDirection.INCOMING,
+                        null,
+                        null,
+                        null
+                    )
+                );
+
+        assertThat(incomingPage.items())
+            .extracting(item ->
+                item.transactionId()
+            )
+            .containsExactly(
+                NEWEST_TRANSACTION_ID,
+                SAME_TIME_LOW_ID
+            );
+
+        TransactionHistoryPage dateFilteredPage =
+            transactionHistoryQueryPort
+                .findByWalletId(
+                    WALLET_ID,
+                    0,
+                    20,
+                    new TransactionHistoryFilter(
+                        null,
+                        null,
+                        BASE_TIME,
+                        BASE_TIME.plusSeconds(60)
+                    )
+                );
+
+        assertThat(dateFilteredPage.items())
+            .extracting(item ->
+                item.transactionId()
+            )
+            .containsExactly(
+                SAME_TIME_HIGH_ID,
+                SAME_TIME_LOW_ID
+            );
     }
 
     private void insertUser(
