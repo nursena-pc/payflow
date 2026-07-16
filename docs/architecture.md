@@ -91,6 +91,10 @@ The transaction module owns:
 - transfer request identity
 - `PENDING` and `COMPLETED` states
 - stable transfer results
+- authenticated transaction-history queries
+- incoming and outgoing direction mapping
+- transaction-status and date-range filtering
+- pagination and deterministic ordering
 
 ### Ledger module
 
@@ -102,6 +106,38 @@ The ledger module owns:
 - persistence of accounting records
 
 The transaction module coordinates the use case, but it does not absorb wallet or ledger domain responsibilities.
+
+## Transaction history read path
+
+Transaction history is implemented as an application-level read use case rather than exposing Spring Data or JPA models through the HTTP boundary.
+
+The read flow is:
+
+1. obtain the authenticated user identifier from the verified JWT subject
+2. resolve the wallet owned by that user
+3. construct an application-level transaction-history filter
+4. query payment transactions where the wallet is either the source or target
+5. derive `OUTGOING` or `INCOMING` from the wallet's position in the transaction
+6. map the opposite wallet as the counterparty
+7. return an application-owned paginated result
+8. map the result to HTTP response DTOs
+
+The persistence query supports optional filtering by:
+
+- transaction direction
+- transaction status
+- inclusive `from` instant
+- exclusive `to` instant
+
+Results use the deterministic ordering:
+
+```text
+createdAt DESC, id DESC
+```
+
+The UUID tie-breaker keeps pagination predictable when multiple transactions share the same creation timestamp.
+
+Spring Data `Page`, JPA entities, and transfer idempotency keys do not cross the application or HTTP boundaries.
 
 ## Transaction strategy
 
@@ -233,8 +269,9 @@ Clients cannot supply the source user or source wallet identifier for:
 - current-wallet retrieval
 - wallet top-up
 - wallet-to-wallet transfer
+- transaction-history retrieval
 
-This prevents a client from changing another user's state by submitting a different UUID in the request body.
+This prevents a client from accessing or changing another user's data by supplying a different user or wallet identifier in request input.
 
 Spring Security uses a deny-by-default policy. New routes remain inaccessible until they are explicitly classified as public or authenticated.
 
@@ -248,8 +285,10 @@ Spring Security uses a deny-by-default policy. New routes remain inaccessible un
 - JPA entities are never exposed through API responses
 - business errors use stable application error codes
 - validation errors include field violations
-- collection endpoints will use pagination and deterministic sorting
+- collection endpoints use pagination and deterministic sorting
 - financial mutation endpoints define explicit conflict behavior
+- transaction-history date ranges use inclusive `from` and exclusive `to` boundaries
+- invalid pagination, enum, and timestamp parameters return stable validation responses
 
 ## Testing strategy
 
@@ -260,6 +299,7 @@ The test suite uses several complementary levels:
 - MockMvc slice tests for HTTP, validation, security, and error mapping
 - persistence-adapter tests for JPA mapping and constraint translation
 - Testcontainers tests against real PostgreSQL
+- PostgreSQL transaction-history tests for filtering, isolation, pagination, and deterministic ordering
 - controlled concurrency tests
 - rollback and failure-path tests
 - authenticated endpoint-to-database integration tests

@@ -45,7 +45,7 @@ This keeps domain rules independent from Spring and infrastructure while avoidin
 
 ## Current status
 
-The repository foundation, identity flow, wallet management, and the first complete wallet-to-wallet transfer increment are implemented.
+The repository foundation, identity flow, wallet management, wallet-to-wallet transfer, double-entry ledger, and authenticated transaction history are implemented.
 
 Completed capabilities include:
 
@@ -74,8 +74,16 @@ Completed capabilities include:
 - controlled concurrent duplicate-transfer verification
 - real PostgreSQL integration tests with Testcontainers
 - real JWT endpoint-to-database transfer verification
+- authenticated current-wallet transaction history
+- incoming and outgoing transaction direction derivation
+- filtering by direction, transaction status, and date range
+- inclusive `from` and exclusive `to` date boundaries
+- deterministic pagination using `createdAt DESC, id DESC`
+- stable validation, authentication, and wallet-not-found responses
+- public transaction-history responses that exclude idempotency keys
+- real PostgreSQL verification of filtering, ordering, and pagination
 
-The next delivery focus is transaction history with filtering and pagination, followed by OpenAPI examples, a Postman collection, and the `v0.2.0` release. See the [roadmap](docs/roadmap.md).
+The next delivery focus is OpenAPI examples, a Postman collection, and the `v0.2.0` release, followed by transactional outbox and Kafka-based post-transfer processing. See the [roadmap](docs/roadmap.md).
 
 ## Implemented API
 
@@ -88,6 +96,7 @@ The next delivery focus is transaction history with filtering and pagination, fo
 | `GET` | `/api/v1/wallets/me` | Bearer JWT | Returns the authenticated user's wallet summary. |
 | `POST` | `/api/v1/wallets/me/top-ups` | Bearer JWT | Credits the authenticated user's wallet with a validated simulated amount. |
 | `POST` | `/api/v1/transfers` | Bearer JWT | Creates an atomic and idempotent wallet-to-wallet transfer. |
+| `GET` | `/api/v1/transactions/me` | Bearer JWT | Returns the authenticated user's paginated and filterable transaction history. |
 | `GET` | `/api/v1/system/health` | Configuration-dependent | Exposes the application health status. |
 
 ### Simulated wallet top-up
@@ -188,6 +197,66 @@ Relevant error outcomes include:
 - `422 SELF_TRANSFER_NOT_ALLOWED`
 - `422 TRANSFER_CURRENCY_MISMATCH`
 - `422 WALLET_NOT_ACTIVE`
+
+### Transaction history
+
+The endpoint resolves the wallet from the authenticated JWT subject. Clients cannot request another user's wallet history by supplying a wallet identifier.
+
+```http
+GET /api/v1/transactions/me?page=0&size=20&direction=OUTGOING&status=COMPLETED&from=2026-07-01T00:00:00Z&to=2026-08-01T00:00:00Z
+Authorization: Bearer <access-token>
+```
+
+Supported query parameters:
+
+| Parameter | Required | Description |
+|---|---|---|
+| `page` | No | Zero-based page number. Defaults to `0`. |
+| `size` | No | Page size between `1` and `100`. Defaults to `20`. |
+| `direction` | No | `INCOMING` or `OUTGOING`. |
+| `status` | No | `PENDING`, `COMPLETED`, or `FAILED`. |
+| `from` | No | Inclusive ISO-8601 instant. |
+| `to` | No | Exclusive ISO-8601 instant. |
+
+All filters are optional. When both date parameters are supplied, the endpoint uses the half-open interval `[from, to)`. Equal boundaries are valid and represent an empty date range.
+
+Successful response:
+
+```json
+{
+  "items": [
+    {
+      "transactionId": "b4077781-34f4-466f-8e61-b79ca906bc98",
+      "type": "TRANSFER",
+      "direction": "OUTGOING",
+      "counterpartyWalletId": "461ffd4c-29cc-4dbf-82b5-c9af3e1da8db",
+      "amount": 125.50,
+      "currency": "TRY",
+      "status": "COMPLETED",
+      "createdAt": "2026-07-16T10:00:00Z",
+      "completedAt": "2026-07-16T10:00:01Z"
+    }
+  ],
+  "page": 0,
+  "size": 20,
+  "totalElements": 1,
+  "totalPages": 1,
+  "first": true,
+  "last": true,
+  "hasNext": false,
+  "hasPrevious": false
+}
+```
+
+Transactions are ordered by `createdAt DESC, id DESC` so pagination remains deterministic when multiple transactions share the same timestamp.
+
+The response intentionally excludes the transfer `Idempotency-Key`.
+
+Relevant error outcomes include:
+
+- `400 VALIDATION_FAILED`
+- `401 Unauthorized`
+- `404 WALLET_NOT_FOUND`
 
 ## Local development
 
