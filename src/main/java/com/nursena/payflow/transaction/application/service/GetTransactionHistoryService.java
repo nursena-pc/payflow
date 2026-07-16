@@ -9,6 +9,7 @@ import com.nursena.payflow.transaction.application.port.out.TransactionHistoryQu
 import com.nursena.payflow.wallet.application.port.out.WalletRepositoryPort;
 import com.nursena.payflow.wallet.domain.exception.WalletNotFoundException;
 import com.nursena.payflow.wallet.domain.model.Wallet;
+import com.nursena.payflow.transaction.application.model.TransactionHistoryFilter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -59,7 +60,8 @@ public class GetTransactionHistoryService
             .findByWalletId(
                 wallet.id(),
                 query.page(),
-                query.size()
+                query.size(),
+                query.filter()
             );
     }
 }

@@ -24,6 +24,7 @@ import com.nursena.payflow.wallet.application.port.out.WalletRepositoryPort;
 import com.nursena.payflow.wallet.domain.exception.WalletNotFoundException;
 import com.nursena.payflow.wallet.domain.model.Currency;
 import com.nursena.payflow.wallet.domain.model.Wallet;
+import com.nursena.payflow.transaction.application.model.TransactionHistoryFilter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -88,12 +89,16 @@ class GetTransactionHistoryServiceTest {
         TransactionHistoryPage expectedPage =
             historyPage();
 
+        TransactionHistoryFilter filter =
+            TransactionHistoryFilter.unfiltered();
+
         when(
             transactionHistoryQueryPort
                 .findByWalletId(
                     WALLET_ID,
                     0,
-                    20
+                    20,
+                    filter
                 )
         ).thenReturn(expectedPage);
 
@@ -102,7 +107,8 @@ class GetTransactionHistoryServiceTest {
                 new GetTransactionHistoryQuery(
                     OWNER_ID,
                     0,
-                    20
+                    20,
+                    filter
                 )
             );
 
@@ -116,7 +122,8 @@ class GetTransactionHistoryServiceTest {
             .findByWalletId(
                 WALLET_ID,
                 0,
-                20
+                20,
+                filter
             );
     }
 

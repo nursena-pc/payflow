@@ -10,6 +10,7 @@ import java.util.UUID;
 import com.nursena.payflow.transaction.application.model.TransactionDirection;
 import com.nursena.payflow.transaction.application.model.TransactionHistoryPage;
 import com.nursena.payflow.transaction.application.port.out.TransactionHistoryQueryPort;
+import com.nursena.payflow.transaction.application.model.TransactionHistoryFilter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -181,7 +182,8 @@ class TransactionHistoryPersistenceIntegrationTest {
                 .findByWalletId(
                     WALLET_ID,
                     0,
-                    2
+                    2,
+                    TransactionHistoryFilter.unfiltered()
                 );
 
         assertThat(firstPage.totalElements())
@@ -248,7 +250,8 @@ class TransactionHistoryPersistenceIntegrationTest {
                 .findByWalletId(
                     WALLET_ID,
                     1,
-                    2
+                    2,
+                    TransactionHistoryFilter.unfiltered()
                 );
 
         assertThat(secondPage.items())

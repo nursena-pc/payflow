@@ -17,12 +17,14 @@ import com.nursena.payflow.transaction.application.model.TransactionHistoryPage;
 import com.nursena.payflow.transaction.domain.model.TransactionStatus;
 import com.nursena.payflow.transaction.domain.model.TransactionType;
 import com.nursena.payflow.wallet.domain.model.Currency;
+import com.nursena.payflow.transaction.application.model.TransactionHistoryFilter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import static org.mockito.ArgumentMatchers.isNull;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -88,8 +90,16 @@ class TransactionHistoryPersistenceAdapterTest {
             PageRequest.of(1, 2);
 
         when(
-            repository.findHistoryByWalletId(
+            repository.findHistory(
                 eq(WALLET_ID),
+                eq(true),
+                eq(true),
+                eq(false),
+                eq(TransactionStatus.PENDING),
+                eq(false),
+                eq(Instant.EPOCH),
+                eq(false),
+                eq(Instant.EPOCH),
                 any(Pageable.class)
             )
         ).thenReturn(
@@ -104,7 +114,8 @@ class TransactionHistoryPersistenceAdapterTest {
             adapter.findByWalletId(
                 WALLET_ID,
                 1,
-                2
+                2,
+                TransactionHistoryFilter.unfiltered()
             );
 
         assertThat(result.page())
@@ -150,8 +161,16 @@ class TransactionHistoryPersistenceAdapterTest {
             ArgumentCaptor.forClass(Pageable.class);
 
         verify(repository)
-            .findHistoryByWalletId(
+            .findHistory(
                 eq(WALLET_ID),
+                eq(true),
+                eq(true),
+                eq(false),
+                eq(TransactionStatus.PENDING),
+                eq(false),
+                eq(Instant.EPOCH),
+                eq(false),
+                eq(Instant.EPOCH),
                 pageableCaptor.capture()
             );
 
@@ -195,8 +214,16 @@ class TransactionHistoryPersistenceAdapterTest {
             );
 
         when(
-            repository.findHistoryByWalletId(
+            repository.findHistory(
                 eq(WALLET_ID),
+                eq(true),
+                eq(true),
+                eq(false),
+                eq(TransactionStatus.PENDING),
+                eq(false),
+                eq(Instant.EPOCH),
+                eq(false),
+                eq(Instant.EPOCH),
                 any(Pageable.class)
             )
         ).thenReturn(
@@ -207,7 +234,8 @@ class TransactionHistoryPersistenceAdapterTest {
             adapter.findByWalletId(
                 WALLET_ID,
                 0,
-                20
+                20,
+                TransactionHistoryFilter.unfiltered()
             )
         )
             .isInstanceOf(
