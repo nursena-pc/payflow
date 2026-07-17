@@ -2,9 +2,9 @@
 
 ## Current delivery focus
 
-The repository foundation, core identity flow, authenticated current-user profile, secure wallet creation, authenticated wallet retrieval, simulated top-up, and PostgreSQL optimistic-locking verification are complete.
+The repository foundation, identity flow, wallet management, wallet-to-wallet transfer processing, double-entry ledger persistence, and authenticated transaction history are complete.
 
-The next delivery increment is wallet-to-wallet transfer processing with idempotency and double-entry ledger records.
+The next delivery increment focuses on API delivery and release readiness through OpenAPI examples, a Postman collection, and the `v0.2.0` release. Transactional outbox and Kafka-based post-transfer processing follow in the event-driven milestone.
 
 ## Milestone 0 — Repository foundation
 
@@ -40,13 +40,26 @@ The next delivery increment is wallet-to-wallet transfer processing with idempot
 
 ## Milestone 3 — Transfers and ledger
 
-- [ ] Transfer use case
-- [ ] `Idempotency-Key` handling
-- [ ] Transaction state machine
-- [ ] Atomic source-wallet debit and target-wallet credit
-- [ ] Double-entry ledger
-- [ ] Rollback and concurrency tests
-- [ ] Filtering and pagination
+- [x] Transfer domain model and lifecycle
+- [x] Payment-transaction persistence
+- [x] `PENDING` to `COMPLETED` state transition
+- [x] Authenticated transfer use case
+- [x] Source wallet derived from JWT identity
+- [x] `Idempotency-Key` HTTP contract
+- [x] Source-wallet-scoped database uniqueness
+- [x] Completed-request replay
+- [x] Conflicting-payload detection
+- [x] In-progress request conflict behavior
+- [x] Atomic source-wallet debit and target-wallet credit
+- [x] Double-entry ledger domain model
+- [x] Immutable `DEBIT` and `CREDIT` persistence
+- [x] Database constraints for transfer and ledger invariants
+- [x] Rollback verification when ledger persistence fails
+- [x] Concurrent duplicate-transfer verification
+- [x] Authenticated endpoint-to-database integration test
+- [x] Transaction history
+- [x] Filtering by direction, status, and date range
+- [x] Pagination and deterministic sorting
 
 ## Milestone 4 — Event-driven processing
 

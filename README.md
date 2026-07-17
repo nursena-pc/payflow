@@ -45,28 +45,45 @@ This keeps domain rules independent from Spring and infrastructure while avoidin
 
 ## Current status
 
-The repository foundation, identity flow, and initial wallet-management capabilities are complete:
+The repository foundation, identity flow, wallet management, wallet-to-wallet transfer, double-entry ledger, and authenticated transaction history are implemented.
 
-- repository standards and CI verification
+Completed capabilities include:
+
+- repository standards, contribution guidelines, and CI verification
 - Docker-based PostgreSQL, Redis, and Kafka infrastructure
-- Flyway core schema
+- versioned PostgreSQL schema management with Flyway
 - secure-by-default Spring Security configuration
 - user registration with normalized email addresses
 - BCrypt password hashing
 - user login with RSA-signed JWT access tokens
 - authenticated current-user profile
-- authenticated wallet creation
-- authenticated current-wallet retrieval with a stable `404 Not Found` response
+- authenticated wallet creation and current-wallet retrieval
 - one-wallet-per-user enforcement at application and database levels
-- stable `409 Conflict` response for duplicate wallet creation
-- unit, web, persistence, and PostgreSQL Testcontainers integration tests
 - authenticated simulated wallet top-up
 - aggregate-based wallet balance mutation
-- PostgreSQL optimistic locking for wallet updates
-- stable `409 Conflict` response for concurrent wallet updates
-- real PostgreSQL concurrency verification with Testcontainers
+- PostgreSQL optimistic locking for concurrent wallet updates
+- authenticated wallet-to-wallet transfer
+- source-wallet identity derived from the authenticated JWT subject
+- transfer lifecycle persistence with `PENDING` and `COMPLETED` states
+- atomic source-wallet debit and target-wallet credit
+- immutable double-entry ledger records
+- source-wallet-scoped `Idempotency-Key` uniqueness
+- completed-transfer replay for repeated requests with the same payload
+- stable conflict responses for key reuse with a different payload
+- complete rollback when ledger persistence fails
+- controlled concurrent duplicate-transfer verification
+- real PostgreSQL integration tests with Testcontainers
+- real JWT endpoint-to-database transfer verification
+- authenticated current-wallet transaction history
+- incoming and outgoing transaction direction derivation
+- filtering by direction, transaction status, and date range
+- inclusive `from` and exclusive `to` date boundaries
+- deterministic pagination using `createdAt DESC, id DESC`
+- stable validation, authentication, and wallet-not-found responses
+- public transaction-history responses that exclude idempotency keys
+- real PostgreSQL verification of filtering, ordering, and pagination
 
-The current delivery focus is wallet-to-wallet transfer processing, idempotency, and double-entry ledger records, building on the completed wallet top-up and PostgreSQL optimistic-locking foundation. See the [roadmap](docs/roadmap.md).
+The next delivery focus is OpenAPI examples, a Postman collection, and the `v0.2.0` release, followed by transactional outbox and Kafka-based post-transfer processing. See the [roadmap](docs/roadmap.md).
 
 ## Implemented API
 
@@ -78,6 +95,8 @@ The current delivery focus is wallet-to-wallet transfer processing, idempotency,
 | `POST` | `/api/v1/wallets` | Bearer JWT | Opens a zero-balance wallet for the authenticated user. |
 | `GET` | `/api/v1/wallets/me` | Bearer JWT | Returns the authenticated user's wallet summary. |
 | `POST` | `/api/v1/wallets/me/top-ups` | Bearer JWT | Credits the authenticated user's wallet with a validated simulated amount. |
+| `POST` | `/api/v1/transfers` | Bearer JWT | Creates an atomic and idempotent wallet-to-wallet transfer. |
+| `GET` | `/api/v1/transactions/me` | Bearer JWT | Returns the authenticated user's paginated and filterable transaction history. |
 | `GET` | `/api/v1/system/health` | Configuration-dependent | Exposes the application health status. |
 
 ### Simulated wallet top-up
@@ -118,6 +137,126 @@ Relevant error outcomes include:
 - `409 WALLET_CONCURRENT_UPDATE`
 - `422 INVALID_MONEY_AMOUNT`
 - `422 WALLET_NOT_ACTIVE`
+
+### Wallet-to-wallet transfer
+
+The source wallet is resolved from the authenticated JWT subject. Clients cannot provide or override the source wallet identifier.
+
+```http
+POST /api/v1/transfers
+Authorization: Bearer <access-token>
+Idempotency-Key: transfer-request-123
+Content-Type: application/json
+```
+
+Request body:
+
+```json
+{
+  "targetWalletId": "461ffd4c-29cc-4dbf-82b5-c9af3e1da8db",
+  "amount": 125.50
+}
+```
+
+Successful response:
+
+```json
+{
+  "transactionId": "b4077781-34f4-466f-8e61-b79ca906bc98",
+  "sourceWalletId": "11111111-1111-1111-1111-111111111111",
+  "targetWalletId": "461ffd4c-29cc-4dbf-82b5-c9af3e1da8db",
+  "amount": 125.50,
+  "currency": "TRY",
+  "status": "COMPLETED",
+  "createdAt": "2026-07-15T18:30:00.123456Z",
+  "completedAt": "2026-07-15T18:30:00.123456Z"
+}
+```
+
+Transfer guarantees:
+
+- the source wallet belongs to the authenticated user
+- source debit and target credit execute in one PostgreSQL transaction
+- every successful transfer creates one `DEBIT` and one `CREDIT` ledger entry
+- debit and credit amounts must be equal
+- repeated completed requests with the same key and payload return the existing transfer
+- reusing the same key with a different payload returns a conflict
+- concurrent duplicate requests create at most one financial movement
+- persistence failure rolls back wallet, transaction, and ledger changes
+
+Relevant error outcomes include:
+
+- `400 VALIDATION_FAILED`
+- `400 MISSING_IDEMPOTENCY_KEY`
+- `401 Unauthorized`
+- `404 WALLET_NOT_FOUND`
+- `409 IDEMPOTENCY_KEY_CONFLICT`
+- `409 IDEMPOTENCY_REQUEST_IN_PROGRESS`
+- `409 WALLET_CONCURRENT_UPDATE`
+- `422 INSUFFICIENT_BALANCE`
+- `422 SELF_TRANSFER_NOT_ALLOWED`
+- `422 TRANSFER_CURRENCY_MISMATCH`
+- `422 WALLET_NOT_ACTIVE`
+
+### Transaction history
+
+The endpoint resolves the wallet from the authenticated JWT subject. Clients cannot request another user's wallet history by supplying a wallet identifier.
+
+```http
+GET /api/v1/transactions/me?page=0&size=20&direction=OUTGOING&status=COMPLETED&from=2026-07-01T00:00:00Z&to=2026-08-01T00:00:00Z
+Authorization: Bearer <access-token>
+```
+
+Supported query parameters:
+
+| Parameter | Required | Description |
+|---|---|---|
+| `page` | No | Zero-based page number. Defaults to `0`. |
+| `size` | No | Page size between `1` and `100`. Defaults to `20`. |
+| `direction` | No | `INCOMING` or `OUTGOING`. |
+| `status` | No | `PENDING`, `COMPLETED`, or `FAILED`. |
+| `from` | No | Inclusive ISO-8601 instant. |
+| `to` | No | Exclusive ISO-8601 instant. |
+
+All filters are optional. When both date parameters are supplied, the endpoint uses the half-open interval `[from, to)`. Equal boundaries are valid and represent an empty date range.
+
+Successful response:
+
+```json
+{
+  "items": [
+    {
+      "transactionId": "b4077781-34f4-466f-8e61-b79ca906bc98",
+      "type": "TRANSFER",
+      "direction": "OUTGOING",
+      "counterpartyWalletId": "461ffd4c-29cc-4dbf-82b5-c9af3e1da8db",
+      "amount": 125.50,
+      "currency": "TRY",
+      "status": "COMPLETED",
+      "createdAt": "2026-07-16T10:00:00Z",
+      "completedAt": "2026-07-16T10:00:01Z"
+    }
+  ],
+  "page": 0,
+  "size": 20,
+  "totalElements": 1,
+  "totalPages": 1,
+  "first": true,
+  "last": true,
+  "hasNext": false,
+  "hasPrevious": false
+}
+```
+
+Transactions are ordered by `createdAt DESC, id DESC` so pagination remains deterministic when multiple transactions share the same timestamp.
+
+The response intentionally excludes the transfer `Idempotency-Key`.
+
+Relevant error outcomes include:
+
+- `400 VALIDATION_FAILED`
+- `401 Unauthorized`
+- `404 WALLET_NOT_FOUND`
 
 ## Local development
 
@@ -165,7 +304,21 @@ docker compose --profile app up --build
 
 ## Database model
 
-The initial migration defines users, wallets, payment transactions, and immutable ledger entries. The wallet row includes an optimistic-lock version. Idempotency uniqueness is enforced for the source wallet and request key.
+Flyway migrations define users, wallets, payment transactions, and immutable ledger entries.
+
+Important database guarantees include:
+
+- unique normalized user email addresses
+- one wallet per user
+- non-negative wallet balances
+- optimistic-lock wallet versions
+- positive transaction and ledger amounts
+- source-wallet-scoped idempotency-key uniqueness
+- distinct source and target wallets for transfers
+- ledger entry types restricted to `DEBIT` and `CREDIT`
+- one ledger entry per transaction, wallet, and entry type
+
+JPA models store cross-module references as UUID values rather than direct entity associations. This keeps persistence coupling between the wallet, transaction, and ledger modules explicit.
 
 The source diagrams are stored in:
 
@@ -188,7 +341,11 @@ Kafka decouples post-transfer work such as notifications, audit enrichment, and 
 
 ### How are duplicate payments prevented?
 
-Clients send an `Idempotency-Key`. The database stores the key with a uniqueness constraint scoped to the source wallet. Repeated requests return the original result instead of creating another transfer.
+Clients send an `Idempotency-Key`. PostgreSQL enforces uniqueness for the combination of source wallet and key.
+
+When a completed transfer is requested again with the same key and payload, the application returns the existing transaction result without mutating balances or creating ledger entries again.
+
+Using the same key with a different target wallet or amount returns `IDEMPOTENCY_KEY_CONFLICT`. A duplicate request that encounters an unfinished transaction returns `IDEMPOTENCY_REQUEST_IN_PROGRESS`.
 
 ### How are concurrent wallet updates protected?
 
@@ -196,7 +353,9 @@ Wallets use optimistic locking through a persisted version column. Conflicting u
 
 ### What happens when a transfer fails?
 
-Wallet mutation, transaction state, ledger entries, and outbox record creation execute in one database transaction. An exception rolls back the complete unit of work. Expected business failures are represented with stable error codes.
+Wallet mutation, payment-transaction persistence, and ledger-entry persistence execute in one PostgreSQL transaction. An exception rolls back the complete unit of work, including wallet balances and optimistic-lock versions.
+
+Transactional outbox persistence will be added in a later milestone. Once implemented, the outbox record will join the same database transaction.
 
 ### How is the application tested?
 

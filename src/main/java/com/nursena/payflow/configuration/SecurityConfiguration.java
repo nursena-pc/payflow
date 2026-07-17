@@ -42,13 +42,15 @@ public class SecurityConfiguration {
                 .requestMatchers(
                     GET,
                     "/api/v1/users/me",
-                    "/api/v1/wallets/me"
+                    "/api/v1/wallets/me",
+                    "/api/v1/transactions/me"
                 )
                 .authenticated()
                 .requestMatchers(
                     POST,
                     "/api/v1/wallets",
-                    "/api/v1/wallets/me/top-ups"
+                    "/api/v1/wallets/me/top-ups",
+                    "/api/v1/transfers"
                 )
                 .authenticated()
                 .anyRequest()
