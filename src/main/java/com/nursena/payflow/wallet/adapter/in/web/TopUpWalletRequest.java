@@ -6,8 +6,19 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotNull;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(
+    name = "TopUpWalletRequest",
+    description = "Amount credited to the current wallet."
+)
 public record TopUpWalletRequest(
 
+    @Schema(
+        description = "Positive top-up amount.",
+        example = "100.00",
+        minimum = "0.01"
+    )
     @NotNull(message = "amount must not be null")
     @DecimalMin(
         value = "0.01",
@@ -19,6 +30,5 @@ public record TopUpWalletRequest(
         message = "amount must have at most 2 fractional digits"
     )
     BigDecimal amount
-
 ) {
 }
