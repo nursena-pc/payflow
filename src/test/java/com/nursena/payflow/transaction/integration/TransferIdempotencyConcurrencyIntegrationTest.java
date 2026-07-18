@@ -360,8 +360,90 @@ class TransferIdempotencyConcurrencyIntegrationTest {
                 TRANSFER_AMOUNT
             );
 
+        Long outboxEventCount =
+            jdbcTemplate.queryForObject(
+                """
+                SELECT COUNT(*)
+                FROM outbox_events
+                WHERE aggregate_type = 'PAYMENT_TRANSACTION'
+                  AND aggregate_id = ?
+                  AND event_type = 'wallet.transfer.completed'
+                  AND event_version = 1
+                """,
+                Long.class,
+                transactionId
+            );
+
+        assertThat(outboxEventCount)
+            .isEqualTo(1L);
+
+        String outboxStatus =
+            jdbcTemplate.queryForObject(
+                """
+                SELECT status
+                FROM outbox_events
+                WHERE aggregate_id = ?
+                """,
+                String.class,
+                transactionId
+            );
+
+        assertThat(outboxStatus)
+            .isEqualTo("PENDING");
+
+        String partitionKey =
+            jdbcTemplate.queryForObject(
+                """
+                SELECT partition_key
+                FROM outbox_events
+                WHERE aggregate_id = ?
+                """,
+                String.class,
+                transactionId
+            );
+
+        assertThat(partitionKey)
+            .isEqualTo(
+                transactionId.toString()
+            );
+
+        String deduplicationKey =
+            jdbcTemplate.queryForObject(
+                """
+                SELECT deduplication_key
+                FROM outbox_events
+                WHERE aggregate_id = ?
+                """,
+                String.class,
+                transactionId
+            );
+
+        assertThat(deduplicationKey)
+            .isEqualTo(
+                "wallet.transfer.completed:1:"
+                    + transactionId
+            );
+
+        String payloadTransactionId =
+            jdbcTemplate.queryForObject(
+                """
+                SELECT payload ->> 'transactionId'
+                FROM outbox_events
+                WHERE aggregate_id = ?
+                """,
+                String.class,
+                transactionId
+            );
+
+        assertThat(payloadTransactionId)
+            .isEqualTo(
+                transactionId.toString()
+            );
+
         assertThat(creditCount)
             .isEqualTo(1L);
+
+
     }
 
     private BigDecimal walletBalance(
