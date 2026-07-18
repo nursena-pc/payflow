@@ -195,7 +195,7 @@ class TransferMoneyIntegrationTest {
         UUID transactionId,
         UUID sourceWalletId,
         UUID targetWalletId
-    ) {
+    ) throws Exception {
         assertThat(walletBalance(sourceWalletId))
             .isEqualByComparingTo(
                 EXPECTED_SOURCE_BALANCE
@@ -249,7 +249,11 @@ class TransferMoneyIntegrationTest {
 
         assertThat(hasCompletionTimestamp)
             .isTrue();
-
+        assertOutboxEvent(
+            transactionId,
+            sourceWalletId,
+            targetWalletId
+        );
         Long ledgerEntryCount =
             jdbcTemplate.queryForObject(
                 """
@@ -500,6 +504,172 @@ class TransferMoneyIntegrationTest {
 
     private record TopUpRequest(
         BigDecimal amount
+    ) {
+    }
+    private void assertOutboxEvent(
+        UUID transactionId,
+        UUID sourceWalletId,
+        UUID targetWalletId
+    ) throws Exception {
+
+        Long outboxCount =
+            jdbcTemplate.queryForObject(
+                """
+                SELECT COUNT(*)
+                FROM outbox_events
+                WHERE aggregate_type = 'PAYMENT_TRANSACTION'
+                  AND aggregate_id = ?
+                  AND event_type = 'wallet.transfer.completed'
+                  AND event_version = 1
+                """,
+                Long.class,
+                transactionId
+            );
+
+        assertThat(outboxCount)
+            .isEqualTo(1L);
+
+        OutboxMetadata metadata =
+            jdbcTemplate.queryForObject(
+                """
+                SELECT
+                    outbox.id::text AS outbox_id,
+                    outbox.topic,
+                    outbox.partition_key,
+                    outbox.deduplication_key,
+                    outbox.status,
+                    outbox.payload::text AS payload,
+                    (
+                        (
+                            outbox.payload
+                                ->> 'occurredAt'
+                        )::timestamptz
+                        = payment.completed_at
+                    ) AS occurred_at_matches
+                FROM outbox_events outbox
+                JOIN payment_transactions payment
+                  ON payment.id = outbox.aggregate_id
+                WHERE outbox.aggregate_id = ?
+                """,
+                (resultSet, rowNumber) ->
+                    new OutboxMetadata(
+                        resultSet.getString(
+                            "outbox_id"
+                        ),
+                        resultSet.getString(
+                            "topic"
+                        ),
+                        resultSet.getString(
+                            "partition_key"
+                        ),
+                        resultSet.getString(
+                            "deduplication_key"
+                        ),
+                        resultSet.getString(
+                            "status"
+                        ),
+                        resultSet.getString(
+                            "payload"
+                        ),
+                        resultSet.getBoolean(
+                            "occurred_at_matches"
+                        )
+                    ),
+                transactionId
+            );
+
+        assertThat(metadata)
+            .isNotNull();
+
+        assertThat(metadata.topic())
+            .isEqualTo(
+                "wallet.transfer.completed"
+            );
+
+        assertThat(metadata.partitionKey())
+            .isEqualTo(
+                transactionId.toString()
+            );
+
+        assertThat(metadata.deduplicationKey())
+            .isEqualTo(
+                "wallet.transfer.completed:1:"
+                    + transactionId
+            );
+
+        assertThat(metadata.status())
+            .isEqualTo("PENDING");
+
+        assertThat(metadata.occurredAtMatches())
+            .isTrue();
+
+        JsonNode payload =
+            objectMapper.readTree(
+                metadata.payload()
+            );
+
+        assertThat(payload.size())
+            .isEqualTo(9);
+
+        assertThat(
+            payload.get("eventId").asText()
+        ).isEqualTo(
+            metadata.outboxId()
+        );
+
+        assertThat(
+            payload.get("eventType").asText()
+        ).isEqualTo(
+            "wallet.transfer.completed"
+        );
+
+        assertThat(
+            payload.get("eventVersion").asInt()
+        ).isEqualTo(1);
+
+        assertThat(
+            payload.get("transactionId").asText()
+        ).isEqualTo(
+            transactionId.toString()
+        );
+
+        assertThat(
+            payload.get("sourceWalletId").asText()
+        ).isEqualTo(
+            sourceWalletId.toString()
+        );
+
+        assertThat(
+            payload.get("targetWalletId").asText()
+        ).isEqualTo(
+            targetWalletId.toString()
+        );
+
+        assertThat(
+            payload.get("amount").isTextual()
+        ).isTrue();
+
+        assertThat(
+            payload.get("amount").asText()
+        ).isEqualTo("125.50");
+
+        assertThat(
+            payload.get("currency").asText()
+        ).isEqualTo("TRY");
+
+        assertThat(
+            payload.has("idempotencyKey")
+        ).isFalse();
+    }
+
+    private record OutboxMetadata(
+        String outboxId,
+        String topic,
+        String partitionKey,
+        String deduplicationKey,
+        String status,
+        String payload,
+        boolean occurredAtMatches
     ) {
     }
 }

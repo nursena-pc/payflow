@@ -23,11 +23,15 @@ import com.nursena.payflow.wallet.domain.model.Money;
 import com.nursena.payflow.wallet.domain.model.Wallet;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.nursena.payflow.transaction.application.model.TransferCompletedEvent;
+import com.nursena.payflow.transaction.application.port.out.TransferCompletedEventRecorderPort;
 
 @Service
 public class TransferMoneyService
     implements TransferMoneyUseCase {
 
+    private final TransferCompletedEventRecorderPort
+        completedEventRecorder;
     private final WalletRepositoryPort walletRepository;
     private final PaymentTransactionRepositoryPort
         transactionRepository;
@@ -38,11 +42,14 @@ public class TransferMoneyService
         WalletRepositoryPort walletRepository,
         PaymentTransactionRepositoryPort transactionRepository,
         LedgerRepositoryPort ledgerRepository,
+        TransferCompletedEventRecorderPort completedEventRecorder,
         Clock clock
     ) {
         this.walletRepository = walletRepository;
         this.transactionRepository = transactionRepository;
         this.ledgerRepository = ledgerRepository;
+        this.completedEventRecorder =
+            completedEventRecorder;
         this.clock = clock;
     }
 
@@ -133,6 +140,12 @@ public class TransferMoneyService
             transactionRepository.update(
                 savedTransaction
             );
+
+        completedEventRecorder.record(
+            TransferCompletedEvent.from(
+                completedTransaction
+            )
+        );
 
         return TransferMoneyResult.from(
             completedTransaction

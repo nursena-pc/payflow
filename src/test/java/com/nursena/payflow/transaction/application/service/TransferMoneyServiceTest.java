@@ -40,6 +40,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import com.nursena.payflow.transaction.application.model.TransferCompletedEvent;
+import com.nursena.payflow.transaction.application.port.out.TransferCompletedEventRecorderPort;
 
 @ExtendWith(MockitoExtension.class)
 class TransferMoneyServiceTest {
@@ -85,6 +87,10 @@ class TransferMoneyServiceTest {
     @Mock
     private LedgerRepositoryPort ledgerRepository;
 
+    @Mock
+    private TransferCompletedEventRecorderPort
+        completedEventRecorder;
+
     private TransferMoneyService service;
 
     @BeforeEach
@@ -93,6 +99,7 @@ class TransferMoneyServiceTest {
             walletRepository,
             transactionRepository,
             ledgerRepository,
+            completedEventRecorder,
             Clock.fixed(NOW, ZoneOffset.UTC)
         );
     }
@@ -200,6 +207,49 @@ class TransferMoneyServiceTest {
 
         verify(walletRepository).update(sourceWallet);
         verify(walletRepository).update(targetWallet);
+
+        ArgumentCaptor<TransferCompletedEvent>
+            eventCaptor =
+            ArgumentCaptor.forClass(
+                TransferCompletedEvent.class
+            );
+
+        verify(completedEventRecorder)
+            .record(eventCaptor.capture());
+
+        TransferCompletedEvent event =
+            eventCaptor.getValue();
+
+        assertThat(event.eventId())
+            .isNotNull();
+
+        assertThat(event.eventType())
+            .isEqualTo(
+                TransferCompletedEvent.TYPE
+            );
+
+        assertThat(event.eventVersion())
+            .isEqualTo(
+                TransferCompletedEvent.VERSION
+            );
+
+        assertThat(event.occurredAt())
+            .isEqualTo(NOW);
+
+        assertThat(event.transactionId())
+            .isEqualTo(result.transactionId());
+
+        assertThat(event.sourceWalletId())
+            .isEqualTo(SOURCE_WALLET_ID);
+
+        assertThat(event.targetWalletId())
+            .isEqualTo(TARGET_WALLET_ID);
+
+        assertThat(event.amount())
+            .isEqualTo("125.50");
+
+        assertThat(event.currency())
+            .isEqualTo("TRY");
     }
 
     @Test
@@ -309,6 +359,10 @@ class TransferMoneyServiceTest {
 
         verify(transactionRepository, never())
             .update(any(PaymentTransaction.class));
+        verify(completedEventRecorder, never())
+            .record(
+                any(TransferCompletedEvent.class)
+            );
     }
 
     private static TransferMoneyCommand command(
@@ -468,6 +522,7 @@ class TransferMoneyServiceTest {
                 walletRepository,
                 transactionRepository,
                 ledgerRepository,
+                completedEventRecorder,
                 Clock.fixed(
                     NANOSECOND_TIME,
                     ZoneOffset.UTC
