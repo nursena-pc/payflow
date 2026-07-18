@@ -12,14 +12,14 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableConfigurationProperties(
     OutboxPollingProperties.class
 )
+@ConditionalOnProperty(
+    prefix = "payflow.outbox.polling",
+    name = "enabled",
+    havingValue = "true"
+)
 class OutboxPollingConfiguration {
 
     @Bean
-    @ConditionalOnProperty(
-        prefix = "payflow.outbox.polling",
-        name = "enabled",
-        havingValue = "true"
-    )
     OutboxPublishingScheduler
     outboxPublishingScheduler(
         PublishOutboxEventsUseCase useCase,
