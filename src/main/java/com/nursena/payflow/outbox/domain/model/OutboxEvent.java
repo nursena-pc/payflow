@@ -5,6 +5,10 @@ import java.util.Objects;
 import java.util.UUID;
 
 import com.nursena.payflow.outbox.domain.exception.InvalidOutboxEventException;
+import java.time.DateTimeException;
+import java.time.Duration;
+
+import com.nursena.payflow.outbox.domain.exception.InvalidOutboxEventStateException;
 
 public final class OutboxEvent {
 
@@ -222,6 +226,316 @@ public final class OutboxEvent {
             publishedAt,
             lastError
         );
+    }
+
+    public OutboxEvent claim(
+        String publisherId,
+        Instant now,
+        Duration leaseDuration
+    ) {
+        String validatedPublisherId =
+            requireText(
+                publisherId,
+                "publisherId",
+                MAX_LOCKED_BY_LENGTH
+            );
+
+        Instant validatedNow =
+            Objects.requireNonNull(
+                now,
+                "now must not be null"
+            );
+
+        ensureNotBeforeCreatedAt(
+            validatedNow,
+            "now"
+        );
+
+        ensureClaimable(validatedNow);
+
+        Instant leaseEnd =
+            calculateLeaseEnd(
+                validatedNow,
+                leaseDuration
+            );
+
+        return withDeliveryState(
+            OutboxStatus.PROCESSING,
+            incrementAttemptCount(),
+            availableAt,
+            validatedNow,
+            leaseEnd,
+            validatedPublisherId,
+            null,
+            lastError
+        );
+    }
+
+    public OutboxEvent markPublished(
+        String publisherId,
+        Instant publishedAt
+    ) {
+        Instant validatedPublishedAt =
+            Objects.requireNonNull(
+                publishedAt,
+                "publishedAt must not be null"
+            );
+
+        ensureActiveLeaseOwnedBy(
+            publisherId,
+            validatedPublishedAt
+        );
+
+        return withDeliveryState(
+            OutboxStatus.PUBLISHED,
+            attemptCount,
+            availableAt,
+            null,
+            null,
+            null,
+            validatedPublishedAt,
+            null
+        );
+    }
+
+    public OutboxEvent scheduleRetry(
+        String publisherId,
+        Instant now,
+        Instant nextAvailableAt,
+        String error
+    ) {
+        Instant validatedNow =
+            Objects.requireNonNull(
+                now,
+                "now must not be null"
+            );
+
+        Instant validatedNextAvailableAt =
+            Objects.requireNonNull(
+                nextAvailableAt,
+                "nextAvailableAt must not be null"
+            );
+
+        ensureActiveLeaseOwnedBy(
+            publisherId,
+            validatedNow
+        );
+
+        if (validatedNextAvailableAt.isBefore(
+            validatedNow
+        )) {
+            throw new InvalidOutboxEventException(
+                "nextAvailableAt must not be before now."
+            );
+        }
+
+        String validatedError =
+            requireText(
+                error,
+                "error",
+                MAX_LAST_ERROR_LENGTH
+            );
+
+        return withDeliveryState(
+            OutboxStatus.PENDING,
+            attemptCount,
+            validatedNextAvailableAt,
+            null,
+            null,
+            null,
+            null,
+            validatedError
+        );
+    }
+
+    public OutboxEvent markFailed(
+        String publisherId,
+        Instant now,
+        String error
+    ) {
+        Instant validatedNow =
+            Objects.requireNonNull(
+                now,
+                "now must not be null"
+            );
+
+        ensureActiveLeaseOwnedBy(
+            publisherId,
+            validatedNow
+        );
+
+        String validatedError =
+            requireText(
+                error,
+                "error",
+                MAX_LAST_ERROR_LENGTH
+            );
+
+        return withDeliveryState(
+            OutboxStatus.FAILED,
+            attemptCount,
+            availableAt,
+            null,
+            null,
+            null,
+            null,
+            validatedError
+        );
+    }
+
+    private OutboxEvent withDeliveryState(
+        OutboxStatus newStatus,
+        int newAttemptCount,
+        Instant newAvailableAt,
+        Instant newLockedAt,
+        Instant newLockedUntil,
+        String newLockedBy,
+        Instant newPublishedAt,
+        String newLastError
+    ) {
+        return new OutboxEvent(
+            id,
+            aggregateType,
+            aggregateId,
+            eventType,
+            eventVersion,
+            topic,
+            partitionKey,
+            deduplicationKey,
+            payload,
+            newStatus,
+            newAttemptCount,
+            newAvailableAt,
+            newLockedAt,
+            newLockedUntil,
+            newLockedBy,
+            createdAt,
+            newPublishedAt,
+            newLastError
+        );
+    }
+
+    private void ensureClaimable(
+        Instant now
+    ) {
+        if (status == OutboxStatus.PENDING) {
+            if (now.isBefore(availableAt)) {
+                throw new InvalidOutboxEventStateException(
+                    "PENDING event is not available yet."
+                );
+            }
+
+            return;
+        }
+
+        if (status == OutboxStatus.PROCESSING) {
+            if (lockedUntil.isAfter(now)) {
+                throw new InvalidOutboxEventStateException(
+                    "PROCESSING event lease is still active."
+                );
+            }
+
+            return;
+        }
+
+        throw new InvalidOutboxEventStateException(
+            "Only PENDING or expired PROCESSING "
+                + "events may be claimed."
+        );
+    }
+
+    private void ensureActiveLeaseOwnedBy(
+        String publisherId,
+        Instant now
+    ) {
+        String validatedPublisherId =
+            requireText(
+                publisherId,
+                "publisherId",
+                MAX_LOCKED_BY_LENGTH
+            );
+
+        ensureNotBeforeCreatedAt(
+            now,
+            "now"
+        );
+
+        if (status != OutboxStatus.PROCESSING) {
+            throw new InvalidOutboxEventStateException(
+                "Outbox event must be PROCESSING."
+            );
+        }
+
+        if (!lockedBy.equals(validatedPublisherId)) {
+            throw new InvalidOutboxEventStateException(
+                "Outbox event is owned by another publisher."
+            );
+        }
+
+        if (now.isBefore(lockedAt)) {
+            throw new InvalidOutboxEventException(
+                "now must not be before lockedAt."
+            );
+        }
+
+        if (!now.isBefore(lockedUntil)) {
+            throw new InvalidOutboxEventStateException(
+                "Outbox event lease has expired."
+            );
+        }
+    }
+
+    private void ensureNotBeforeCreatedAt(
+        Instant value,
+        String fieldName
+    ) {
+        if (value.isBefore(createdAt)) {
+            throw new InvalidOutboxEventException(
+                fieldName
+                    + " must not be before createdAt."
+            );
+        }
+    }
+
+    private static Instant calculateLeaseEnd(
+        Instant now,
+        Duration leaseDuration
+    ) {
+        Objects.requireNonNull(
+            leaseDuration,
+            "leaseDuration must not be null"
+        );
+
+        if (leaseDuration.isZero()
+            || leaseDuration.isNegative()) {
+
+            throw new InvalidOutboxEventException(
+                "leaseDuration must be positive."
+            );
+        }
+
+        try {
+            return now.plus(leaseDuration);
+        } catch (
+            DateTimeException
+            | ArithmeticException exception
+        ) {
+            throw new InvalidOutboxEventException(
+                "leaseDuration produces an invalid lease end."
+            );
+        }
+    }
+
+    private int incrementAttemptCount() {
+        try {
+            return Math.incrementExact(
+                attemptCount
+            );
+        } catch (ArithmeticException exception) {
+            throw new InvalidOutboxEventException(
+                "attemptCount exceeds the supported range."
+            );
+        }
     }
 
     private static String requireText(
