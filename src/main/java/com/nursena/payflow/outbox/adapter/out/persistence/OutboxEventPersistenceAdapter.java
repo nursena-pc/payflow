@@ -32,10 +32,14 @@ class OutboxEventPersistenceAdapter
         try {
             OutboxEventJpaEntity saved =
                 repository.saveAndFlush(
-                    toEntity(event)
+                    OutboxEventPersistenceMapper.toEntity(
+                        event
+                    )
                 );
 
-            return toDomain(saved);
+            return OutboxEventPersistenceMapper.toDomain(
+                saved
+            );
         } catch (DataIntegrityViolationException exception) {
             if (isDeduplicationConstraintViolation(
                 exception
@@ -54,7 +58,7 @@ class OutboxEventPersistenceAdapter
         return repository
             .findById(eventId)
             .map(
-                OutboxEventPersistenceAdapter::toDomain
+                OutboxEventPersistenceMapper::toDomain
             );
     }
 

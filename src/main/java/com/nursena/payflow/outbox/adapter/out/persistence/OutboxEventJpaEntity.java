@@ -12,6 +12,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import java.util.Objects;
+
+import com.nursena.payflow.outbox.domain.model.OutboxEvent;
 
 @Entity
 @Table(name = "outbox_events")
@@ -170,6 +173,31 @@ class OutboxEventJpaEntity {
         this.createdAt = createdAt;
         this.publishedAt = publishedAt;
         this.lastError = lastError;
+    }
+
+    void applyDeliveryState(
+        OutboxEvent event
+    ) {
+        Objects.requireNonNull(
+            event,
+            "event must not be null"
+        );
+
+        if (!id.equals(event.id())) {
+            throw new IllegalArgumentException(
+                "Cannot apply delivery state "
+                    + "from another outbox event."
+            );
+        }
+
+        status = event.status();
+        attemptCount = event.attemptCount();
+        availableAt = event.availableAt();
+        lockedAt = event.lockedAt();
+        lockedUntil = event.lockedUntil();
+        lockedBy = event.lockedBy();
+        publishedAt = event.publishedAt();
+        lastError = event.lastError();
     }
 
     UUID getId() {
