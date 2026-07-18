@@ -1,35 +1,31 @@
 package com.nursena.payflow.outbox.configuration;
 
-import java.time.Duration;
-
-import com.nursena.payflow.outbox.application.policy.OutboxRetryPolicy;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import java.time.Clock;
 
+import com.nursena.payflow.outbox.application.policy.OutboxRetryPolicy;
 import com.nursena.payflow.outbox.application.port.in.PublishOutboxEventsUseCase;
 import com.nursena.payflow.outbox.application.port.out.OutboxEventClaimPort;
 import com.nursena.payflow.outbox.application.port.out.OutboxEventLifecyclePort;
 import com.nursena.payflow.outbox.application.port.out.OutboxMessagePublisherPort;
 import com.nursena.payflow.outbox.application.service.PublishOutboxEventsService;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 @Configuration(proxyBeanMethods = false)
+@EnableConfigurationProperties(
+    OutboxRetryProperties.class
+)
 public class OutboxOrchestrationConfiguration {
 
-    private static final int MAX_ATTEMPTS = 5;
-
-    private static final Duration INITIAL_RETRY_DELAY =
-        Duration.ofSeconds(10);
-
-    private static final Duration MAXIMUM_RETRY_DELAY =
-        Duration.ofMinutes(1);
-
     @Bean
-    OutboxRetryPolicy outboxRetryPolicy() {
+    OutboxRetryPolicy outboxRetryPolicy(
+        OutboxRetryProperties properties
+    ) {
         return new OutboxRetryPolicy(
-            MAX_ATTEMPTS,
-            INITIAL_RETRY_DELAY,
-            MAXIMUM_RETRY_DELAY
+            properties.maxAttempts(),
+            properties.initialDelay(),
+            properties.maximumDelay()
         );
     }
 
