@@ -7,12 +7,27 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import java.util.Optional;
 
 interface SpringDataOutboxEventRepository
         extends JpaRepository<
         OutboxEventJpaEntity,
         UUID
         > {
+    @Query(
+            value = """
+        SELECT outbox.*
+        FROM outbox_events outbox
+        WHERE outbox.id = :eventId
+        FOR UPDATE
+        """,
+            nativeQuery = true
+    )
+    Optional<OutboxEventJpaEntity>
+    findByIdForUpdate(
+            @Param("eventId")
+            UUID eventId
+    );
 
     @Query(
             value = """
