@@ -24,8 +24,11 @@ spring:
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     producer:
+      acks: all
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      properties:
+        "[enable.idempotence]": true
     consumer:
       group-id: ${KAFKA_CONSUMER_GROUP:payflow}
       auto-offset-reset: earliest
@@ -65,3 +68,6 @@ payflow:
     jwt:
       issuer: https://api.payflow.local
       access-token-ttl: 15m
+  outbox:
+    kafka:
+      send-timeout: ${OUTBOX_KAFKA_SEND_TIMEOUT:10s}
