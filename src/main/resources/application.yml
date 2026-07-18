@@ -71,3 +71,14 @@ payflow:
   outbox:
     kafka:
       send-timeout: ${OUTBOX_KAFKA_SEND_TIMEOUT:10s}
+    retry:
+      max-attempts: ${OUTBOX_RETRY_MAX_ATTEMPTS:5}
+      initial-delay: ${OUTBOX_RETRY_INITIAL_DELAY:10s}
+      maximum-delay: ${OUTBOX_RETRY_MAXIMUM_DELAY:1m}
+    polling:
+      enabled: ${OUTBOX_POLLING_ENABLED:false}
+      publisher-id: ${OUTBOX_PUBLISHER_ID:${HOSTNAME:payflow-local}}
+      batch-size: ${OUTBOX_POLLING_BATCH_SIZE:100}
+      lease-duration: ${OUTBOX_POLLING_LEASE_DURATION:30s}
+      fixed-delay: ${OUTBOX_POLLING_FIXED_DELAY:1s}
+      initial-delay: ${OUTBOX_POLLING_INITIAL_DELAY:5s}
