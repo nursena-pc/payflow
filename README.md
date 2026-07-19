@@ -83,7 +83,7 @@ Completed capabilities include:
 - public transaction-history responses that exclude idempotency keys
 - real PostgreSQL verification of filtering, ordering, and pagination
 
-The next delivery focus is OpenAPI examples, a Postman collection, and the `v0.2.0` release, followed by transactional outbox and Kafka-based post-transfer processing. See the [roadmap](docs/roadmap.md).
+OpenAPI documentation, the executable Postman collection, and the `v0.2.0` release are complete. The current delivery focus is transactional outbox persistence and Kafka-based post-transfer processing. See the [roadmap](docs/roadmap.md).
 
 ## Implemented API
 
@@ -197,6 +197,28 @@ Relevant error outcomes include:
 - `422 SELF_TRANSFER_NOT_ALLOWED`
 - `422 TRANSFER_CURRENCY_MISMATCH`
 - `422 WALLET_NOT_ACTIVE`
+
+## Postman collection
+
+An executable Postman workflow is available under [`postman/`](postman/).
+
+Import:
+
+- `postman/PayFlow.postman_collection.json`
+- `postman/PayFlow.local.postman_environment.json`
+
+Select the **PayFlow Local** environment and run the collection in this order:
+
+1. System
+2. Authentication
+3. Users
+4. Wallets
+5. Transfers
+6. Transactions
+
+The collection automatically generates unique test users, stores JWT access tokens and wallet identifiers, creates an idempotent transfer, verifies completed-request replay, and queries transaction history.
+
+See [`postman/README.md`](postman/README.md) for detailed instructions.
 
 ### Transaction history
 

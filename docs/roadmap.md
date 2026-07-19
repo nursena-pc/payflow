@@ -2,9 +2,9 @@
 
 ## Current delivery focus
 
-The repository foundation, identity flow, wallet management, wallet-to-wallet transfer processing, double-entry ledger persistence, and authenticated transaction history are complete.
+The repository foundation, identity flow, wallet management, wallet-to-wallet transfer processing, double-entry ledger persistence, authenticated transaction history, OpenAPI documentation, executable Postman collection, and the `v0.2.0` release are complete.
 
-The next delivery increment focuses on API delivery and release readiness through OpenAPI examples, a Postman collection, and the `v0.2.0` release. Transactional outbox and Kafka-based post-transfer processing follow in the event-driven milestone.
+The current delivery increment focuses on transactional outbox persistence and Kafka-based post-transfer processing.
 
 ## Milestone 0 — Repository foundation
 
@@ -79,5 +79,5 @@ The next delivery increment focuses on API delivery and release readiness throug
 - [ ] API security hardening
 - [ ] Performance test scenarios
 - [ ] Architecture and ER diagram exports
-- [ ] OpenAPI examples and Postman collection
-- [ ] Release workflow and tagged release
+- [x] OpenAPI examples and Postman collection
+- [x] Release workflow and tagged release

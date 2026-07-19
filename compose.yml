@@ -61,6 +61,12 @@ services:
       DB_PASSWORD: payflow
       REDIS_HOST: redis
       KAFKA_BOOTSTRAP_SERVERS: kafka:19092
+      OUTBOX_POLLING_ENABLED: "true"
+      OUTBOX_PUBLISHER_ID: payflow-compose
+      OUTBOX_POLLING_BATCH_SIZE: 100
+      OUTBOX_POLLING_LEASE_DURATION: 30s
+      OUTBOX_POLLING_FIXED_DELAY: 1s
+      OUTBOX_POLLING_INITIAL_DELAY: 5s
     ports:
       - "8080:8080"
     depends_on:
