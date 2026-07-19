@@ -4,16 +4,24 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Clock;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneOffset;
 
-import com.nursena.payflow.outbox.application.port.in.PublishOutboxEventsCommand;
-import com.nursena.payflow.outbox.application.port.in.PublishOutboxEventsResult;
-import com.nursena.payflow.outbox.application.port.in.PublishOutboxEventsUseCase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.nursena.payflow.outbox.application.model.OutboxBacklogSnapshot;
+import com.nursena.payflow.outbox.application.port.in.PublishOutboxEventsCommand;
+import com.nursena.payflow.outbox.application.port.in.PublishOutboxEventsResult;
+import com.nursena.payflow.outbox.application.port.in.PublishOutboxEventsUseCase;
+import com.nursena.payflow.outbox.application.port.out.OutboxBacklogQueryPort;
+
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 @ExtendWith(MockitoExtension.class)
 class OutboxPublishingSchedulerTest {
@@ -21,21 +29,53 @@ class OutboxPublishingSchedulerTest {
     @Mock
     private PublishOutboxEventsUseCase useCase;
 
+    @Mock
+    private OutboxBacklogQueryPort backlogQueryPort;
+
     private OutboxPublishingScheduler scheduler;
+
+    private SimpleMeterRegistry meterRegistry;
 
     @BeforeEach
     void setUp() {
+        meterRegistry =
+            new SimpleMeterRegistry();
+
+        when(backlogQueryPort.loadSnapshot())
+            .thenReturn(
+                OutboxBacklogSnapshot.empty()
+            );
+
+        OutboxPollingProperties properties =
+            new OutboxPollingProperties(
+                true,
+                "publisher-1",
+                100,
+                Duration.ofSeconds(30),
+                Duration.ofSeconds(1),
+                Duration.ofSeconds(5)
+            );
+
+        OutboxBacklogMetrics backlogMetrics =
+            new OutboxBacklogMetrics(
+                backlogQueryPort,
+                meterRegistry,
+                Clock.fixed(
+                    Instant.parse(
+                        "2026-07-19T12:00:00Z"
+                    ),
+                    ZoneOffset.UTC
+                )
+            );
+
         scheduler =
             new OutboxPublishingScheduler(
                 useCase,
-                new OutboxPollingProperties(
-                    true,
-                    "publisher-1",
-                    100,
-                    Duration.ofSeconds(30),
-                    Duration.ofSeconds(1),
-                    Duration.ofSeconds(5)
-                )
+                new OutboxPollingMetrics(
+                    meterRegistry
+                ),
+                backlogMetrics,
+                properties
             );
     }
 
@@ -63,6 +103,9 @@ class OutboxPublishingSchedulerTest {
 
         verify(useCase)
             .publishAvailable(command);
+
+        verify(backlogQueryPort)
+            .loadSnapshot();
     }
 
     @Test
@@ -87,5 +130,8 @@ class OutboxPublishingSchedulerTest {
 
         verify(useCase)
             .publishAvailable(command);
+
+        verify(backlogQueryPort)
+            .loadSnapshot();
     }
 }

@@ -3,9 +3,16 @@ package com.nursena.payflow.outbox.adapter.in.scheduling;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
-import com.nursena.payflow.outbox.application.port.in.PublishOutboxEventsUseCase;
+import java.time.Clock;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+
+import com.nursena.payflow.outbox.application.port.in.PublishOutboxEventsUseCase;
+import com.nursena.payflow.outbox.application.port.out.OutboxBacklogQueryPort;
+
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 class OutboxPollingConfigurationTest {
 
@@ -21,6 +28,16 @@ class OutboxPollingConfigurationTest {
                 assertThat(context)
                     .doesNotHaveBean(
                         OutboxPollingProperties.class
+                    );
+
+                assertThat(context)
+                    .doesNotHaveBean(
+                        OutboxPollingMetrics.class
+                    );
+
+                assertThat(context)
+                    .doesNotHaveBean(
+                        OutboxBacklogMetrics.class
                     );
             });
     }
@@ -39,6 +56,16 @@ class OutboxPollingConfigurationTest {
                         OutboxPollingProperties.class
                     );
 
+                assertThat(context)
+                    .hasSingleBean(
+                        OutboxPollingMetrics.class
+                    );
+
+                assertThat(context)
+                    .hasSingleBean(
+                        OutboxBacklogMetrics.class
+                    );
+
                 OutboxPollingProperties properties =
                     context.getBean(
                         OutboxPollingProperties.class
@@ -54,8 +81,7 @@ class OutboxPollingConfigurationTest {
             });
     }
 
-    private static ApplicationContextRunner
-    contextRunner(
+    private static ApplicationContextRunner contextRunner(
         boolean enabled
     ) {
         return new ApplicationContextRunner()
@@ -67,6 +93,20 @@ class OutboxPollingConfigurationTest {
                 () -> mock(
                     PublishOutboxEventsUseCase.class
                 )
+            )
+            .withBean(
+                OutboxBacklogQueryPort.class,
+                () -> mock(
+                    OutboxBacklogQueryPort.class
+                )
+            )
+            .withBean(
+                MeterRegistry.class,
+                SimpleMeterRegistry::new
+            )
+            .withBean(
+                Clock.class,
+                Clock::systemUTC
             )
             .withPropertyValues(
                 "payflow.outbox.polling.enabled="

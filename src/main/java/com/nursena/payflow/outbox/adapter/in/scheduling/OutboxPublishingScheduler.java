@@ -7,6 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 
+import java.util.Objects;
+
 public final class OutboxPublishingScheduler {
 
     private static final Logger LOGGER =
@@ -18,14 +20,39 @@ public final class OutboxPublishingScheduler {
         publishOutboxEventsUseCase;
 
     private final PublishOutboxEventsCommand command;
+    private final OutboxPollingMetrics metrics;
+    private final OutboxBacklogMetrics backlogMetrics;
 
     public OutboxPublishingScheduler(
         PublishOutboxEventsUseCase
             publishOutboxEventsUseCase,
+        OutboxPollingMetrics metrics,
+        OutboxBacklogMetrics backlogMetrics,
         OutboxPollingProperties properties
     ) {
         this.publishOutboxEventsUseCase =
-            publishOutboxEventsUseCase;
+            Objects.requireNonNull(
+                publishOutboxEventsUseCase,
+                "publishOutboxEventsUseCase "
+                    + "must not be null"
+            );
+
+        this.metrics =
+            Objects.requireNonNull(
+                metrics,
+                "metrics must not be null"
+            );
+
+        this.backlogMetrics =
+            Objects.requireNonNull(
+                backlogMetrics,
+                "backlogMetrics must not be null"
+            );
+
+        Objects.requireNonNull(
+            properties,
+            "properties must not be null"
+        );
 
         this.command =
             new PublishOutboxEventsCommand(
@@ -44,14 +71,31 @@ public final class OutboxPublishingScheduler {
     public void publishAvailableEvents() {
         try {
             PublishOutboxEventsResult result =
-                publishOutboxEventsUseCase
-                    .publishAvailable(command);
+                metrics.record(() ->
+                    publishOutboxEventsUseCase
+                        .publishAvailable(command)
+                );
 
             logResult(result);
         } catch (RuntimeException exception) {
             LOGGER.error(
                 "Outbox polling cycle failed. "
                     + "publisherId={}",
+                command.publisherId(),
+                exception
+            );
+        } finally {
+            refreshBacklogMetrics();
+        }
+    }
+
+    private void refreshBacklogMetrics() {
+        try {
+            backlogMetrics.refresh();
+        } catch (RuntimeException exception) {
+            LOGGER.warn(
+                "Outbox backlog metrics could not "
+                    + "be refreshed. publisherId={}",
                 command.publisherId(),
                 exception
             );
