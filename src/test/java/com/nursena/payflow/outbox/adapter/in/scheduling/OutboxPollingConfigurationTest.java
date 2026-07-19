@@ -3,10 +3,13 @@ package com.nursena.payflow.outbox.adapter.in.scheduling;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
+import java.time.Clock;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
 import com.nursena.payflow.outbox.application.port.in.PublishOutboxEventsUseCase;
+import com.nursena.payflow.outbox.application.port.out.OutboxBacklogQueryPort;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -31,6 +34,11 @@ class OutboxPollingConfigurationTest {
                     .doesNotHaveBean(
                         OutboxPollingMetrics.class
                     );
+
+                assertThat(context)
+                    .doesNotHaveBean(
+                        OutboxBacklogMetrics.class
+                    );
             });
     }
 
@@ -51,6 +59,11 @@ class OutboxPollingConfigurationTest {
                 assertThat(context)
                     .hasSingleBean(
                         OutboxPollingMetrics.class
+                    );
+
+                assertThat(context)
+                    .hasSingleBean(
+                        OutboxBacklogMetrics.class
                     );
 
                 OutboxPollingProperties properties =
@@ -82,8 +95,18 @@ class OutboxPollingConfigurationTest {
                 )
             )
             .withBean(
+                OutboxBacklogQueryPort.class,
+                () -> mock(
+                    OutboxBacklogQueryPort.class
+                )
+            )
+            .withBean(
                 MeterRegistry.class,
                 SimpleMeterRegistry::new
+            )
+            .withBean(
+                Clock.class,
+                Clock::systemUTC
             )
             .withPropertyValues(
                 "payflow.outbox.polling.enabled="

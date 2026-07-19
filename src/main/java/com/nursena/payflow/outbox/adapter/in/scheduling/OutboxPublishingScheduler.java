@@ -21,11 +21,13 @@ public final class OutboxPublishingScheduler {
 
     private final PublishOutboxEventsCommand command;
     private final OutboxPollingMetrics metrics;
+    private final OutboxBacklogMetrics backlogMetrics;
 
     public OutboxPublishingScheduler(
         PublishOutboxEventsUseCase
             publishOutboxEventsUseCase,
         OutboxPollingMetrics metrics,
+        OutboxBacklogMetrics backlogMetrics,
         OutboxPollingProperties properties
     ) {
         this.publishOutboxEventsUseCase =
@@ -39,6 +41,12 @@ public final class OutboxPublishingScheduler {
             Objects.requireNonNull(
                 metrics,
                 "metrics must not be null"
+            );
+
+        this.backlogMetrics =
+            Objects.requireNonNull(
+                backlogMetrics,
+                "backlogMetrics must not be null"
             );
 
         Objects.requireNonNull(
@@ -67,11 +75,27 @@ public final class OutboxPublishingScheduler {
                     publishOutboxEventsUseCase
                         .publishAvailable(command)
                 );
+
             logResult(result);
         } catch (RuntimeException exception) {
             LOGGER.error(
                 "Outbox polling cycle failed. "
                     + "publisherId={}",
+                command.publisherId(),
+                exception
+            );
+        } finally {
+            refreshBacklogMetrics();
+        }
+    }
+
+    private void refreshBacklogMetrics() {
+        try {
+            backlogMetrics.refresh();
+        } catch (RuntimeException exception) {
+            LOGGER.warn(
+                "Outbox backlog metrics could not "
+                    + "be refreshed. publisherId={}",
                 command.publisherId(),
                 exception
             );
