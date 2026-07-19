@@ -14,6 +14,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.junit.jupiter.api.AfterEach;
 
 @ExtendWith(MockitoExtension.class)
 class OutboxPublishingSchedulerTest {
@@ -23,11 +25,19 @@ class OutboxPublishingSchedulerTest {
 
     private OutboxPublishingScheduler scheduler;
 
+    private SimpleMeterRegistry meterRegistry;
+
     @BeforeEach
     void setUp() {
+        meterRegistry =
+            new SimpleMeterRegistry();
+
         scheduler =
             new OutboxPublishingScheduler(
                 useCase,
+                new OutboxPollingMetrics(
+                    meterRegistry
+                ),
                 new OutboxPollingProperties(
                     true,
                     "publisher-1",

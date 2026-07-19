@@ -7,6 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 
+import java.util.Objects;
+
 public final class OutboxPublishingScheduler {
 
     private static final Logger LOGGER =
@@ -18,14 +20,31 @@ public final class OutboxPublishingScheduler {
         publishOutboxEventsUseCase;
 
     private final PublishOutboxEventsCommand command;
+    private final OutboxPollingMetrics metrics;
 
     public OutboxPublishingScheduler(
         PublishOutboxEventsUseCase
             publishOutboxEventsUseCase,
+        OutboxPollingMetrics metrics,
         OutboxPollingProperties properties
     ) {
         this.publishOutboxEventsUseCase =
-            publishOutboxEventsUseCase;
+            Objects.requireNonNull(
+                publishOutboxEventsUseCase,
+                "publishOutboxEventsUseCase "
+                    + "must not be null"
+            );
+
+        this.metrics =
+            Objects.requireNonNull(
+                metrics,
+                "metrics must not be null"
+            );
+
+        Objects.requireNonNull(
+            properties,
+            "properties must not be null"
+        );
 
         this.command =
             new PublishOutboxEventsCommand(
@@ -44,9 +63,10 @@ public final class OutboxPublishingScheduler {
     public void publishAvailableEvents() {
         try {
             PublishOutboxEventsResult result =
-                publishOutboxEventsUseCase
-                    .publishAvailable(command);
-
+                metrics.record(() ->
+                    publishOutboxEventsUseCase
+                        .publishAvailable(command)
+                );
             logResult(result);
         } catch (RuntimeException exception) {
             LOGGER.error(

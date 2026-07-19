@@ -3,9 +3,13 @@ package com.nursena.payflow.outbox.adapter.in.scheduling;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
-import com.nursena.payflow.outbox.application.port.in.PublishOutboxEventsUseCase;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+
+import com.nursena.payflow.outbox.application.port.in.PublishOutboxEventsUseCase;
+
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 class OutboxPollingConfigurationTest {
 
@@ -21,6 +25,11 @@ class OutboxPollingConfigurationTest {
                 assertThat(context)
                     .doesNotHaveBean(
                         OutboxPollingProperties.class
+                    );
+
+                assertThat(context)
+                    .doesNotHaveBean(
+                        OutboxPollingMetrics.class
                     );
             });
     }
@@ -39,6 +48,11 @@ class OutboxPollingConfigurationTest {
                         OutboxPollingProperties.class
                     );
 
+                assertThat(context)
+                    .hasSingleBean(
+                        OutboxPollingMetrics.class
+                    );
+
                 OutboxPollingProperties properties =
                     context.getBean(
                         OutboxPollingProperties.class
@@ -54,8 +68,7 @@ class OutboxPollingConfigurationTest {
             });
     }
 
-    private static ApplicationContextRunner
-    contextRunner(
+    private static ApplicationContextRunner contextRunner(
         boolean enabled
     ) {
         return new ApplicationContextRunner()
@@ -67,6 +80,10 @@ class OutboxPollingConfigurationTest {
                 () -> mock(
                     PublishOutboxEventsUseCase.class
                 )
+            )
+            .withBean(
+                MeterRegistry.class,
+                SimpleMeterRegistry::new
             )
             .withPropertyValues(
                 "payflow.outbox.polling.enabled="

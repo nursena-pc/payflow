@@ -7,6 +7,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+import io.micrometer.core.instrument.MeterRegistry;
+
 @Configuration(proxyBeanMethods = false)
 @EnableScheduling
 @EnableConfigurationProperties(
@@ -23,11 +25,21 @@ class OutboxPollingConfiguration {
     OutboxPublishingScheduler
     outboxPublishingScheduler(
         PublishOutboxEventsUseCase useCase,
+        OutboxPollingMetrics metrics,
         OutboxPollingProperties properties
     ) {
         return new OutboxPublishingScheduler(
             useCase,
+            metrics,
             properties
+        );
+    }
+    @Bean
+    OutboxPollingMetrics outboxPollingMetrics(
+        MeterRegistry meterRegistry
+    ) {
+        return new OutboxPollingMetrics(
+            meterRegistry
         );
     }
 }
