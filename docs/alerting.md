@@ -19,3 +19,13 @@ Mailpit SMTP
     |
     v
 Mailpit web interface
+
+## Notification flow
+## Local endpoints
+## Alert routing
+## Grouping and inhibition
+## Configuration validation
+## Notification smoke test
+## Health checks
+## Troubleshooting
+## Local development scope

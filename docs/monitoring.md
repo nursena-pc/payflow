@@ -192,3 +192,8 @@ docker compose `
 ~~~
 
 Do not add `--volumes` unless the local PostgreSQL, Redis, Prometheus, and Grafana data should also be deleted.
+
+## Alert notifications
+
+Alert routing, inhibition, Mailpit delivery, and the notification smoke test
+are documented in [Local Alert Notifications](alerting.md).
