@@ -1,0 +1,51 @@
+global:
+  resolve_timeout: 5m
+  smtp_smarthost: "mailpit:1025"
+  smtp_from: "alertmanager@payflow.local"
+  smtp_require_tls: false
+
+route:
+  receiver: "null"
+  group_by:
+    - alertname
+    - service
+    - component
+    - severity
+  group_wait: 10s
+  group_interval: 30s
+  repeat_interval: 4h
+  routes:
+    - receiver: critical-email
+      matchers:
+        - severity="critical"
+
+    - receiver: warning-email
+      matchers:
+        - severity="warning"
+
+inhibit_rules:
+  - source_matchers:
+      - alertname="PayFlowMetricsTargetDown"
+      - severity="critical"
+    target_matchers:
+      - severity="warning"
+    equal:
+      - service
+      - component
+
+receivers:
+  - name: "null"
+
+  - name: critical-email
+    email_configs:
+      - to: "oncall@payflow.local"
+        send_resolved: true
+        headers:
+          Subject: '[PayFlow][CRITICAL][{{ .Status }}] {{ .CommonLabels.alertname }}'
+
+  - name: warning-email
+    email_configs:
+      - to: "engineering@payflow.local"
+        send_resolved: true
+        headers:
+          Subject: '[PayFlow][WARNING][{{ .Status }}] {{ .CommonLabels.alertname }}'
