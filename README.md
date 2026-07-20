@@ -402,3 +402,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 ## Disclaimer
 
 PayFlow is an educational portfolio project. It is not certified for banking, payment processing, custody, or production financial use.
+## Monitoring
+
+PayFlow provides a local Prometheus and Grafana stack for transactional outbox observability, including a provisioned dashboard and operational alert rules.
+
+See [Local Monitoring](docs/monitoring.md) for setup, validation, dashboards, alerts, and security considerations.
