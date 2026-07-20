@@ -1,0 +1,60 @@
+groups:
+  - name: payflow-transactional-outbox
+    interval: 15s
+    rules:
+      - alert: PayFlowMetricsTargetDown
+        expr: up{job="payflow"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: payflow
+          component: transactional-outbox
+        annotations:
+          summary: PayFlow metrics target is unavailable
+          description: Prometheus has been unable to scrape the PayFlow application for more than one minute.
+
+      - alert: PayFlowOutboxPollingFailures
+        expr: sum(increase(payflow_outbox_polling_duration_seconds_count{outcome="failure"}[5m])) > 0
+        for: 1m
+        labels:
+          severity: warning
+          service: payflow
+          component: transactional-outbox
+        annotations:
+          summary: Transactional outbox polling failures detected
+          description: At least one transactional outbox polling cycle failed during the last five minutes.
+
+      - alert: PayFlowOutboxBacklogHigh
+        expr: max(payflow_outbox_backlog_size) >= 100
+        for: 5m
+        labels:
+          severity: warning
+          service: payflow
+          component: transactional-outbox
+        annotations:
+          summary: Transactional outbox backlog is high
+          description: The active transactional outbox backlog has remained at or above 100 events for five minutes.
+          current_value: '{{ $value }}'
+
+      - alert: PayFlowOutboxOldestEventStale
+        expr: max(payflow_outbox_backlog_oldest_age_seconds) >= 120
+        for: 2m
+        labels:
+          severity: critical
+          service: payflow
+          component: transactional-outbox
+        annotations:
+          summary: Transactional outbox contains a stale event
+          description: The oldest active transactional outbox event has remained unpublished for at least two minutes.
+          current_value_seconds: '{{ $value }}'
+
+      - alert: PayFlowOutboxTerminalFailures
+        expr: sum(increase(payflow_outbox_events_total{outcome=~"failed|unresolved"}[10m])) > 0
+        for: 1m
+        labels:
+          severity: critical
+          service: payflow
+          component: transactional-outbox
+        annotations:
+          summary: Terminal transactional outbox outcomes detected
+          description: At least one outbox event became terminally failed or unresolved during the last ten minutes.
