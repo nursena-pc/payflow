@@ -11,15 +11,18 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.nursena.payflow.eventprocessing.application.port.out.KafkaDeadLetterReplayLifecyclePort;
 import com.nursena.payflow.eventprocessing.application.port.out.KafkaDeadLetterReplayRepositoryPort;
 import com.nursena.payflow.eventprocessing.domain.model.KafkaDeadLetterRecord;
 import com.nursena.payflow.eventprocessing.domain.model.KafkaDeadLetterRecordStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Component;
 
-@Repository
+@Component
 class JdbcKafkaDeadLetterReplayRepositoryAdapter
-    implements KafkaDeadLetterReplayRepositoryPort {
+    implements
+    KafkaDeadLetterReplayRepositoryPort,
+    KafkaDeadLetterReplayLifecyclePort {
 
     private static final int
         MAX_WORKER_ID_LENGTH = 200;
@@ -73,6 +76,35 @@ class JdbcKafkaDeadLetterReplayRepositoryAdapter
             last_replay_error,
             replay_origin_id,
             replay_attempt_base
+        """;
+    private static final String
+        MARK_REPLAYED_SQL = """
+        UPDATE kafka_dead_letter_records
+        SET
+            status = 'REPLAYED',
+            replay_lease_owner = NULL,
+            replay_lease_until = NULL,
+            last_replay_error = NULL
+        WHERE id = ?
+          AND status = 'REPLAYING'
+          AND replay_lease_owner = ?
+          AND last_replayed_at <= ?
+          AND replay_lease_until > ?
+        """;
+
+    private static final String
+        MARK_REPLAY_FAILED_SQL = """
+        UPDATE kafka_dead_letter_records
+        SET
+            status = 'REPLAY_FAILED',
+            replay_lease_owner = NULL,
+            replay_lease_until = NULL,
+            last_replay_error = ?
+        WHERE id = ?
+          AND status = 'REPLAYING'
+          AND replay_lease_owner = ?
+          AND last_replayed_at <= ?
+          AND replay_lease_until > ?
         """;
 
     private final JdbcTemplate jdbcTemplate;
@@ -157,7 +189,90 @@ class JdbcKafkaDeadLetterReplayRepositoryAdapter
         return claimed.stream()
             .findFirst();
     }
+    @Override
+    public boolean tryMarkReplayed(
+        UUID recordId,
+        String workerId,
+        Instant completedAt
+    ) {
+        UUID validatedRecordId =
+            Objects.requireNonNull(
+                recordId,
+                "recordId must not be null"
+            );
 
+        String validatedWorkerId =
+            validateWorkerId(workerId);
+
+        Instant validatedCompletedAt =
+            Objects.requireNonNull(
+                completedAt,
+                "completedAt must not be null"
+            );
+
+        int affectedRows =
+            jdbcTemplate.update(
+                MARK_REPLAYED_SQL,
+                validatedRecordId,
+                validatedWorkerId,
+                Timestamp.from(
+                    validatedCompletedAt
+                ),
+                Timestamp.from(
+                    validatedCompletedAt
+                )
+            );
+
+        return transitionResult(
+            affectedRows,
+            "mark replayed"
+        );
+    }
+
+    @Override
+    public boolean tryMarkReplayFailed(
+        UUID recordId,
+        String workerId,
+        Instant failedAt,
+        String error
+    ) {
+        UUID validatedRecordId =
+            Objects.requireNonNull(
+                recordId,
+                "recordId must not be null"
+            );
+
+        String validatedWorkerId =
+            validateWorkerId(workerId);
+
+        Instant validatedFailedAt =
+            Objects.requireNonNull(
+                failedAt,
+                "failedAt must not be null"
+            );
+
+        String validatedError =
+            validateReplayError(error);
+
+        int affectedRows =
+            jdbcTemplate.update(
+                MARK_REPLAY_FAILED_SQL,
+                validatedError,
+                validatedRecordId,
+                validatedWorkerId,
+                Timestamp.from(
+                    validatedFailedAt
+                ),
+                Timestamp.from(
+                    validatedFailedAt
+                )
+            );
+
+        return transitionResult(
+            affectedRows,
+            "mark replay failed"
+        );
+    }
     private static KafkaDeadLetterRecord
     mapRecord(
         ResultSet resultSet,
@@ -298,6 +413,42 @@ class JdbcKafkaDeadLetterReplayRepositoryAdapter
         }
 
         return value;
+    }
+
+    private static String validateReplayError(
+        String value
+    ) {
+        if (
+            value == null
+                || value.isBlank()
+        ) {
+            throw new IllegalArgumentException(
+                "error must not be blank."
+            );
+        }
+
+        return value;
+    }
+
+    private static boolean transitionResult(
+        int affectedRows,
+        String operation
+    ) {
+        if (affectedRows == 1) {
+            return true;
+        }
+
+        if (affectedRows == 0) {
+            return false;
+        }
+
+        throw new IllegalStateException(
+            "Kafka dead-letter replay "
+                + operation
+                + " operation affected "
+                + affectedRows
+                + " rows."
+        );
     }
 
     private static Instant calculateLeaseUntil(
