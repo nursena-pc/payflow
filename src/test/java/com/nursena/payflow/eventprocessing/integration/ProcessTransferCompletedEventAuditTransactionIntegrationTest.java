@@ -15,6 +15,7 @@ import com.nursena.payflow.eventprocessing.application.port.out.ProcessedKafkaEv
 import com.nursena.payflow.eventprocessing.application.port.out.TransferCompletedEventHandlerPort;
 import com.nursena.payflow.eventprocessing.application.service.ProcessTransferCompletedEventService;
 import com.nursena.payflow.transaction.application.model.TransferCompletedEvent;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 @SpringBootTest
 @Testcontainers
@@ -63,6 +65,7 @@ class ProcessTransferCompletedEventAuditTransactionIntegrationTest {
         );
 
     @Autowired
+    @Qualifier("processTransferCompletedEventUseCase")
     private ProcessTransferCompletedEventUseCase
         useCase;
 

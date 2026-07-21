@@ -12,7 +12,7 @@ import com.nursena.payflow.transaction.application.model.TransferCompletedEvent;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-@Repository
+@Repository("transferCompletedAuditHandler")
 class JdbcTransferCompletedEventAuditHandlerAdapter
     implements TransferCompletedEventHandlerPort {
 

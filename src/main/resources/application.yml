@@ -31,7 +31,12 @@ spring:
         "[enable.idempotence]": true
     consumer:
       group-id: ${KAFKA_CONSUMER_GROUP:payflow}
+      enable-auto-commit: false
       auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    listener:
+      ack-mode: record
 
 server:
   port: ${SERVER_PORT:8080}
@@ -82,3 +87,9 @@ payflow:
       lease-duration: ${OUTBOX_POLLING_LEASE_DURATION:30s}
       fixed-delay: ${OUTBOX_POLLING_FIXED_DELAY:1s}
       initial-delay: ${OUTBOX_POLLING_INITIAL_DELAY:5s}
+  event-processing:
+    transfer-completed:
+      enabled: ${TRANSFER_COMPLETED_CONSUMER_ENABLED:false}
+      topic: ${TRANSFER_COMPLETED_CONSUMER_TOPIC:wallet.transfer.completed}
+      group-id: ${TRANSFER_COMPLETED_CONSUMER_GROUP:payflow-transfer-completed-audit-v1}
+      consumer-name: ${TRANSFER_COMPLETED_CONSUMER_NAME:transfer-completed-audit}
