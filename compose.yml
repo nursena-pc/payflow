@@ -76,6 +76,8 @@ services:
       TRANSFER_COMPLETED_RETRY_MULTIPLIER: "2.0"
       TRANSFER_COMPLETED_RETRY_MAXIMUM_DELAY: 5s
       TRANSFER_COMPLETED_DLT_SEND_TIMEOUT: 10s
+      TRANSFER_COMPLETED_DLT_INTAKE_ENABLED: "true"
+      TRANSFER_COMPLETED_DLT_INTAKE_GROUP: payflow-transfer-completed-dlt-intake-v1
     ports:
       - "8080:8080"
     depends_on:
