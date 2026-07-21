@@ -1,0 +1,39 @@
+groups:
+  - name: payflow-kafka-consumer
+    interval: 15s
+    rules:
+      - alert: PayFlowKafkaConsumerDeadLetters
+        expr: sum(increase(payflow_kafka_consumer_recoveries_total{outcome="success"}[10m])) > 0
+        for: 1m
+        labels:
+          severity: warning
+          service: payflow
+          component: kafka-consumer
+        annotations:
+          summary: Kafka consumer records were routed to dead letter
+          description: At least one PayFlow Kafka consumer record was recovered to a dead-letter topic during the last ten minutes.
+          current_value: '{{ $value }}'
+
+      - alert: PayFlowKafkaConsumerRecoveryFailures
+        expr: sum(increase(payflow_kafka_consumer_recoveries_total{outcome="failure"}[5m])) > 0
+        for: 1m
+        labels:
+          severity: critical
+          service: payflow
+          component: kafka-consumer
+        annotations:
+          summary: Kafka consumer dead-letter recovery failed
+          description: At least one PayFlow Kafka consumer record could not be published to its dead-letter topic during the last five minutes.
+          current_value: '{{ $value }}'
+
+      - alert: PayFlowKafkaConsumerRetryStorm
+        expr: sum(increase(payflow_kafka_consumer_retry_attempts_total[5m])) >= 10
+        for: 2m
+        labels:
+          severity: warning
+          service: payflow
+          component: kafka-consumer
+        annotations:
+          summary: Kafka consumer retry activity is elevated
+          description: PayFlow Kafka consumers performed at least ten retry attempts during the last five minutes.
+          current_value: '{{ $value }}'

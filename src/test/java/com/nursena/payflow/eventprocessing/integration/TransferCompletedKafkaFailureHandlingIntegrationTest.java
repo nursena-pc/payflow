@@ -18,6 +18,8 @@ import java.util.concurrent.TimeUnit;
 
 import com.nursena.payflow.eventprocessing.application.port.out.TransferCompletedEventHandlerPort;
 import com.nursena.payflow.transaction.application.model.TransferCompletedEvent;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.NewTopic;
@@ -108,6 +110,18 @@ class TransferCompletedKafkaFailureHandlingIntegrationTest {
         "transfer-completed-failure"
             + "-integration-test";
 
+    private static final String
+        DELIVERY_FAILURES_METRIC =
+        "payflow.kafka.consumer.delivery.failures";
+
+    private static final String
+        RETRY_ATTEMPTS_METRIC =
+        "payflow.kafka.consumer.retry.attempts";
+
+    private static final String
+        RECOVERIES_METRIC =
+        "payflow.kafka.consumer.recoveries";
+
     private static final String CONSUMER_NAME =
         "transfer-completed-audit-failure"
             + "-integration-test";
@@ -175,11 +189,15 @@ class TransferCompletedKafkaFailureHandlingIntegrationTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private MeterRegistry meterRegistry;
+
     @Test
     void shouldRecoverPermanentAndExhaustedRetryableFailures()
         throws Exception {
 
         cleanDatabase();
+        clearFailureMetrics();
 
         try (
             Consumer<String, String> dltConsumer =
@@ -234,6 +252,7 @@ class TransferCompletedKafkaFailureHandlingIntegrationTest {
         );
 
         assertDatabaseRemainsEmpty();
+        assertMalformedJsonMetrics();
     }
 
     private void verifyRetryExhaustionRecovery(
@@ -286,6 +305,7 @@ class TransferCompletedKafkaFailureHandlingIntegrationTest {
         );
 
         assertDatabaseRemainsEmpty();
+        assertRetryExhaustionMetrics();
     }
 
     private long publish(
@@ -513,6 +533,143 @@ class TransferCompletedKafkaFailureHandlingIntegrationTest {
 
         assertThat(auditCount)
             .isZero();
+    }
+
+    private void assertMalformedJsonMetrics() {
+        assertCounterTotal(
+            DELIVERY_FAILURES_METRIC,
+            1.0,
+            "consumer",
+            CONSUMER_NAME,
+            "topic",
+            TOPIC,
+            "failure_type",
+            "permanent"
+        );
+
+        assertCounterTotal(
+            RETRY_ATTEMPTS_METRIC,
+            0.0,
+            "consumer",
+            CONSUMER_NAME,
+            "topic",
+            TOPIC,
+            "failure_type",
+            "permanent"
+        );
+
+        assertCounterTotal(
+            RECOVERIES_METRIC,
+            1.0,
+            "consumer",
+            CONSUMER_NAME,
+            "topic",
+            TOPIC,
+            "failure_type",
+            "permanent",
+            "outcome",
+            "success"
+        );
+
+        assertCounterTotal(
+            RECOVERIES_METRIC,
+            0.0,
+            "consumer",
+            CONSUMER_NAME,
+            "topic",
+            TOPIC,
+            "failure_type",
+            "permanent",
+            "outcome",
+            "failure"
+        );
+    }
+
+    private void assertRetryExhaustionMetrics() {
+        assertCounterTotal(
+            DELIVERY_FAILURES_METRIC,
+            3.0,
+            "consumer",
+            CONSUMER_NAME,
+            "topic",
+            TOPIC,
+            "failure_type",
+            "retryable"
+        );
+
+        assertCounterTotal(
+            RETRY_ATTEMPTS_METRIC,
+            2.0,
+            "consumer",
+            CONSUMER_NAME,
+            "topic",
+            TOPIC,
+            "failure_type",
+            "retryable"
+        );
+
+        assertCounterTotal(
+            RECOVERIES_METRIC,
+            1.0,
+            "consumer",
+            CONSUMER_NAME,
+            "topic",
+            TOPIC,
+            "failure_type",
+            "retryable",
+            "outcome",
+            "success"
+        );
+
+        assertCounterTotal(
+            RECOVERIES_METRIC,
+            0.0,
+            "consumer",
+            CONSUMER_NAME,
+            "topic",
+            TOPIC,
+            "failure_type",
+            "retryable",
+            "outcome",
+            "failure"
+        );
+    }
+
+    private void assertCounterTotal(
+        String metricName,
+        double expected,
+        String... tags
+    ) {
+        double actual =
+            meterRegistry.find(metricName)
+                .tags(tags)
+                .counters()
+                .stream()
+                .mapToDouble(Counter::count)
+                .sum();
+
+        assertThat(actual)
+            .as(
+                "counter total for %s with tags %s",
+                metricName,
+                java.util.Arrays.toString(tags)
+            )
+            .isEqualTo(expected);
+    }
+
+    private void clearFailureMetrics() {
+        meterRegistry.getMeters()
+            .stream()
+            .filter(
+                meter ->
+                    meter.getId()
+                        .getName()
+                        .startsWith(
+                            "payflow.kafka.consumer."
+                        )
+            )
+            .toList()
+            .forEach(meterRegistry::remove);
     }
 
     private static void awaitCommittedOffset(

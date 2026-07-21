@@ -16,6 +16,8 @@ import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
 import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.kafka.support.ExponentialBackOffWithMaxRetries;
 
+import io.micrometer.core.instrument.MeterRegistry;
+
 @Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties(
     TransferCompletedKafkaFailureProperties.class
@@ -31,6 +33,20 @@ class TransferCompletedKafkaFailureConfiguration {
             .class,
         DataIntegrityViolationException.class
     );
+
+    @Bean
+    TransferCompletedKafkaFailureMetrics
+    transferCompletedKafkaFailureMetrics(
+        MeterRegistry meterRegistry,
+        TransferCompletedKafkaConsumerProperties
+            consumerProperties
+    ) {
+        return new TransferCompletedKafkaFailureMetrics(
+            meterRegistry,
+            consumerProperties.consumerName(),
+            nonRetryableExceptions()
+        );
+    }
 
     @Bean(
         "transferCompletedKafkaListenerContainerFactory"
@@ -48,7 +64,8 @@ class TransferCompletedKafkaFailureConfiguration {
         TransferCompletedKafkaConsumerProperties
             consumerProperties,
         TransferCompletedKafkaFailureProperties
-            failureProperties
+            failureProperties,
+        TransferCompletedKafkaFailureMetrics metrics
     ) {
         validateDistinctTopics(
             consumerProperties.topic(),
@@ -69,7 +86,8 @@ class TransferCompletedKafkaFailureConfiguration {
         factory.setCommonErrorHandler(
             errorHandler(
                 kafkaTemplate,
-                failureProperties
+                failureProperties,
+                metrics
             )
         );
 
@@ -80,7 +98,8 @@ class TransferCompletedKafkaFailureConfiguration {
         KafkaTemplate<String, String>
             kafkaTemplate,
         TransferCompletedKafkaFailureProperties
-            properties
+            properties,
+        TransferCompletedKafkaFailureMetrics metrics
     ) {
         Objects.requireNonNull(
             kafkaTemplate,
@@ -90,6 +109,11 @@ class TransferCompletedKafkaFailureConfiguration {
         Objects.requireNonNull(
             properties,
             "properties must not be null"
+        );
+
+        Objects.requireNonNull(
+            metrics,
+            "metrics must not be null"
         );
 
         DeadLetterPublishingRecoverer recoverer =
@@ -127,6 +151,10 @@ class TransferCompletedKafkaFailureConfiguration {
                 errorHandler
                     ::addNotRetryableExceptions
             );
+
+        errorHandler.setRetryListeners(
+            metrics
+        );
 
         return errorHandler;
     }

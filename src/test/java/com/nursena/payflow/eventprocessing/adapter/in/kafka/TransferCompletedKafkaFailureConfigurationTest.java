@@ -64,6 +64,35 @@ class TransferCompletedKafkaFailureConfigurationTest {
             );
     }
 
+    @Test
+    void shouldRejectNullMetricsWhenCreatingErrorHandler() {
+        @SuppressWarnings("unchecked")
+        org.springframework.kafka.core.KafkaTemplate<
+            String,
+            String
+            > kafkaTemplate =
+            org.mockito.Mockito.mock(
+                org.springframework.kafka.core
+                    .KafkaTemplate.class
+            );
+
+        assertThatThrownBy(
+            () ->
+                TransferCompletedKafkaFailureConfiguration
+                    .errorHandler(
+                        kafkaTemplate,
+                        properties(),
+                        null
+                    )
+        )
+            .isInstanceOf(
+                NullPointerException.class
+            )
+            .hasMessage(
+                "metrics must not be null"
+            );
+    }
+
     private static
     TransferCompletedKafkaFailureProperties
     properties() {
