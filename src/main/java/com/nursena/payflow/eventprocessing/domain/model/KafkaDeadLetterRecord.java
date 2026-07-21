@@ -23,7 +23,9 @@ public record KafkaDeadLetterRecord(
     Instant lastReplayedAt,
     String replayLeaseOwner,
     Instant replayLeaseUntil,
-    String lastReplayError
+    String lastReplayError,
+    UUID replayOriginId,
+    int replayAttemptBase
 ) {
 
     private static final int MAX_TOPIC_LENGTH = 200;
@@ -104,12 +106,75 @@ public record KafkaDeadLetterRecord(
                 "receivedAt must not be null"
             );
 
+        if (
+            lastReplayedAt != null
+                && lastReplayedAt.isBefore(receivedAt)
+        ) {
+            throw new IllegalArgumentException(
+                "lastReplayedAt must not be "
+                    + "before receivedAt."
+            );
+        }
+
         validateReplayState(
             status,
             replayCount,
             lastReplayedAt,
             replayLeaseOwner,
             replayLeaseUntil
+        );
+
+        validateReplayLineage(
+            id,
+            replayOriginId,
+            replayAttemptBase,
+            replayCount
+        );
+    }
+
+    public KafkaDeadLetterRecord(
+        UUID id,
+        String deadLetterTopic,
+        int deadLetterPartition,
+        long deadLetterOffset,
+        String originalTopic,
+        int originalPartition,
+        long originalOffset,
+        String originalConsumerGroup,
+        String recordKey,
+        String payload,
+        String exceptionType,
+        String exceptionMessage,
+        KafkaDeadLetterRecordStatus status,
+        int replayCount,
+        Instant receivedAt,
+        Instant lastReplayedAt,
+        String replayLeaseOwner,
+        Instant replayLeaseUntil,
+        String lastReplayError
+    ) {
+        this(
+            id,
+            deadLetterTopic,
+            deadLetterPartition,
+            deadLetterOffset,
+            originalTopic,
+            originalPartition,
+            originalOffset,
+            originalConsumerGroup,
+            recordKey,
+            payload,
+            exceptionType,
+            exceptionMessage,
+            status,
+            replayCount,
+            receivedAt,
+            lastReplayedAt,
+            replayLeaseOwner,
+            replayLeaseUntil,
+            lastReplayError,
+            id,
+            0
         );
     }
 
@@ -181,6 +246,7 @@ public record KafkaDeadLetterRecord(
 
         validateReplayLease(
             status,
+            lastReplayedAt,
             replayLeaseOwner,
             replayLeaseUntil
         );
@@ -188,6 +254,7 @@ public record KafkaDeadLetterRecord(
 
     private static void validateReplayLease(
         KafkaDeadLetterRecordStatus status,
+        Instant lastReplayedAt,
         String replayLeaseOwner,
         Instant replayLeaseUntil
     ) {
@@ -208,6 +275,18 @@ public record KafkaDeadLetterRecord(
                     + "for REPLAYING records"
             );
 
+            if (
+                lastReplayedAt != null
+                    && !replayLeaseUntil.isAfter(
+                    lastReplayedAt
+                )
+            ) {
+                throw new IllegalArgumentException(
+                    "replayLeaseUntil must be after "
+                        + "lastReplayedAt."
+                );
+            }
+
             return;
         }
 
@@ -218,6 +297,59 @@ public record KafkaDeadLetterRecord(
             throw new IllegalArgumentException(
                 "Replay lease fields must be null "
                     + "unless status is REPLAYING."
+            );
+        }
+    }
+
+    private static void validateReplayLineage(
+        UUID id,
+        UUID replayOriginId,
+        int replayAttemptBase,
+        int replayCount
+    ) {
+        UUID validatedOriginId =
+            Objects.requireNonNull(
+                replayOriginId,
+                "replayOriginId must not be null"
+            );
+
+        validateNonNegative(
+            replayAttemptBase,
+            "replayAttemptBase"
+        );
+
+        if (
+            replayAttemptBase == 0
+                && !validatedOriginId.equals(id)
+        ) {
+            throw new IllegalArgumentException(
+                "Initial dead-letter records must "
+                    + "use their own id as "
+                    + "replayOriginId."
+            );
+        }
+
+        if (
+            replayAttemptBase > 0
+                && validatedOriginId.equals(id)
+        ) {
+            throw new IllegalArgumentException(
+                "Replay-derived dead-letter records "
+                    + "must use a different "
+                    + "replayOriginId."
+            );
+        }
+
+        try {
+            Math.addExact(
+                replayAttemptBase,
+                replayCount
+            );
+        } catch (ArithmeticException exception) {
+            throw new IllegalArgumentException(
+                "Total replay attempt count "
+                    + "must not overflow.",
+                exception
             );
         }
     }

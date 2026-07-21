@@ -3,7 +3,9 @@ package com.nursena.payflow.eventprocessing.adapter.in.kafka;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import java.util.UUID;
 
+import com.nursena.payflow.eventprocessing.adapter.kafka.KafkaDeadLetterReplayHeaders;
 import com.nursena.payflow.eventprocessing.application.model.RecordKafkaDeadLetterCommand;
 import com.nursena.payflow.eventprocessing.application.port.in.RecordKafkaDeadLetterUseCase;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -62,6 +64,9 @@ class TransferCompletedKafkaDeadLetterListener {
 
         validateRecordMetadata(record);
 
+        ReplayMetadata replayMetadata =
+            replayMetadata(record);
+
         useCase.record(
             new RecordKafkaDeadLetterCommand(
                 record.topic(),
@@ -95,8 +100,99 @@ class TransferCompletedKafkaDeadLetterListener {
                     record,
                     KafkaHeaders
                         .DLT_EXCEPTION_MESSAGE
-                )
+                ),
+                replayMetadata.originId(),
+                replayMetadata.attemptBase()
             )
+        );
+    }
+
+    private static ReplayMetadata replayMetadata(
+        ConsumerRecord<?, ?> record
+    ) {
+        Header originHeader =
+            record.headers()
+                .lastHeader(
+                    KafkaDeadLetterReplayHeaders
+                        .REPLAY_ORIGIN_ID
+                );
+
+        Header attemptHeader =
+            record.headers()
+                .lastHeader(
+                    KafkaDeadLetterReplayHeaders
+                        .REPLAY_ATTEMPT
+                );
+
+        if (
+            originHeader == null
+                && attemptHeader == null
+        ) {
+            return new ReplayMetadata(
+                null,
+                null
+            );
+        }
+
+        if (
+            originHeader == null
+                || attemptHeader == null
+        ) {
+            throw invalid(
+                "Replay origin id and attempt "
+                    + "headers must either both "
+                    + "be present or both be absent."
+            );
+        }
+
+        String originValue =
+            requiredStringHeader(
+                record,
+                KafkaDeadLetterReplayHeaders
+                    .REPLAY_ORIGIN_ID
+            );
+
+        String attemptValue =
+            requiredStringHeader(
+                record,
+                KafkaDeadLetterReplayHeaders
+                    .REPLAY_ATTEMPT
+            );
+
+        UUID originId;
+
+        try {
+            originId =
+                UUID.fromString(originValue);
+        } catch (IllegalArgumentException exception) {
+            throw invalid(
+                "Kafka replay origin id header "
+                    + "must contain a valid UUID."
+            );
+        }
+
+        int attempt;
+
+        try {
+            attempt =
+                Integer.parseInt(attemptValue);
+        } catch (NumberFormatException exception) {
+            throw invalid(
+                "Kafka replay attempt header "
+                    + "must contain an integer."
+            );
+        }
+
+        if (attempt <= 0) {
+            throw invalid(
+                "Kafka replay attempt header "
+                    + "must be positive."
+            );
+        }
+
+        return new ReplayMetadata(
+            originId,
+            attempt
         );
     }
 
@@ -159,9 +255,10 @@ class TransferCompletedKafkaDeadLetterListener {
             record.headers()
                 .lastHeader(headerName);
 
-        if (header == null
-            || header.value() == null) {
-
+        if (
+            header == null
+                || header.value() == null
+        ) {
             return null;
         }
 
@@ -181,9 +278,10 @@ class TransferCompletedKafkaDeadLetterListener {
                 headerName
             );
 
-        if (value.length
-            != Integer.BYTES) {
-
+        if (
+            value.length
+                != Integer.BYTES
+        ) {
             throw invalid(
                 "Kafka header "
                     + headerName
@@ -208,9 +306,10 @@ class TransferCompletedKafkaDeadLetterListener {
                 headerName
             );
 
-        if (value.length
-            != Long.BYTES) {
-
+        if (
+            value.length
+                != Long.BYTES
+        ) {
             throw invalid(
                 "Kafka header "
                     + headerName
@@ -257,5 +356,11 @@ class TransferCompletedKafkaDeadLetterListener {
             InvalidKafkaDeadLetterRecordException(
             message
         );
+    }
+
+    private record ReplayMetadata(
+        UUID originId,
+        Integer attemptBase
+    ) {
     }
 }

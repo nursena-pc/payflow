@@ -244,6 +244,171 @@ class KafkaDeadLetterRecordSchemaIntegrationTest {
             .isEqualTo("REPLAYING");
     }
 
+    @Test
+    void shouldPersistValidReplayDerivedRecord() {
+        UUID derivedRecordId =
+            UUID.fromString(
+                "80000000-0000-0000-0000-000000001003"
+            );
+
+        insertRecord(
+            derivedRecordId,
+            "wallet.transfer.completed.dlt",
+            0,
+            30L,
+            "wallet.transfer.completed",
+            0,
+            10L,
+            "RECEIVED",
+            0,
+            null,
+            null,
+            null,
+            RECORD_ID,
+            2
+        );
+
+        var stored =
+            jdbcTemplate.queryForMap(
+                """
+                SELECT
+                    replay_origin_id,
+                    replay_attempt_base
+                FROM kafka_dead_letter_records
+                WHERE id = ?
+                """,
+                derivedRecordId
+            );
+
+        assertThat(
+            stored.get("replay_origin_id")
+        )
+            .isEqualTo(RECORD_ID);
+
+        assertThat(
+            stored.get("replay_attempt_base")
+        )
+            .isEqualTo(2);
+    }
+
+    @Test
+    void shouldRejectInvalidReplayLineage() {
+        UUID derivedRecordId =
+            UUID.fromString(
+                "80000000-0000-0000-0000-000000001004"
+            );
+
+        assertConstraintViolation(
+            () -> insertRecord(
+                derivedRecordId,
+                "wallet.transfer.completed.dlt",
+                0,
+                30L,
+                "wallet.transfer.completed",
+                0,
+                10L,
+                "RECEIVED",
+                0,
+                null,
+                null,
+                null,
+                RECORD_ID,
+                0
+            ),
+            "chk_kafka_dead_letter_records_replay_lineage"
+        );
+
+        assertConstraintViolation(
+            () -> insertRecord(
+                derivedRecordId,
+                "wallet.transfer.completed.dlt",
+                0,
+                30L,
+                "wallet.transfer.completed",
+                0,
+                10L,
+                "RECEIVED",
+                0,
+                null,
+                null,
+                null,
+                derivedRecordId,
+                1
+            ),
+            "chk_kafka_dead_letter_records_replay_lineage"
+        );
+    }
+
+    @Test
+    void shouldRejectReplayAttemptOverflow() {
+        UUID derivedRecordId =
+            UUID.fromString(
+                "80000000-0000-0000-0000-000000001005"
+            );
+
+        assertConstraintViolation(
+            () -> insertRecord(
+                derivedRecordId,
+                "wallet.transfer.completed.dlt",
+                0,
+                30L,
+                "wallet.transfer.completed",
+                0,
+                10L,
+                "REPLAY_FAILED",
+                1,
+                REPLAYED_AT,
+                null,
+                null,
+                RECORD_ID,
+                Integer.MAX_VALUE
+            ),
+            "chk_kafka_dead_letter_records_total_replay_count"
+        );
+    }
+
+    @Test
+    void shouldRejectReplayTimestampBeforeReceivedAt() {
+        assertConstraintViolation(
+            () -> insertRecord(
+                RECORD_ID,
+                "wallet.transfer.completed.dlt",
+                0,
+                25L,
+                "wallet.transfer.completed",
+                0,
+                10L,
+                "REPLAY_FAILED",
+                1,
+                RECEIVED_AT.minusSeconds(1),
+                null,
+                null
+            ),
+            "chk_kafka_dead_letter_records_replay_timestamp"
+        );
+    }
+
+    @Test
+    void shouldRejectInvalidReplayLeasePeriod() {
+        assertConstraintViolation(
+            () -> insertRecord(
+                RECORD_ID,
+                "wallet.transfer.completed.dlt",
+                0,
+                25L,
+                "wallet.transfer.completed",
+                0,
+                10L,
+                "REPLAYING",
+                1,
+                REPLAYED_AT,
+                "replay-worker-1",
+                REPLAYED_AT
+            ),
+            "chk_kafka_dead_letter_records_replay_lease_period"
+        );
+    }
+
     private void insertReceivedRecord(
         UUID id
     ) {
@@ -277,6 +442,40 @@ class KafkaDeadLetterRecordSchemaIntegrationTest {
         String replayLeaseOwner,
         Instant replayLeaseUntil
     ) {
+        insertRecord(
+            id,
+            deadLetterTopic,
+            deadLetterPartition,
+            deadLetterOffset,
+            originalTopic,
+            originalPartition,
+            originalOffset,
+            status,
+            replayCount,
+            lastReplayedAt,
+            replayLeaseOwner,
+            replayLeaseUntil,
+            id,
+            0
+        );
+    }
+
+    private void insertRecord(
+        UUID id,
+        String deadLetterTopic,
+        int deadLetterPartition,
+        long deadLetterOffset,
+        String originalTopic,
+        int originalPartition,
+        long originalOffset,
+        String status,
+        int replayCount,
+        Instant lastReplayedAt,
+        String replayLeaseOwner,
+        Instant replayLeaseUntil,
+        UUID replayOriginId,
+        int replayAttemptBase
+    ) {
         jdbcTemplate.update(
             """
             INSERT INTO kafka_dead_letter_records (
@@ -298,11 +497,14 @@ class KafkaDeadLetterRecordSchemaIntegrationTest {
                 last_replayed_at,
                 replay_lease_owner,
                 replay_lease_until,
-                last_replay_error
+                last_replay_error,
+                replay_origin_id,
+                replay_attempt_base
             )
             VALUES (
                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?, ?, ?, ?, ?
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                ?
             )
             """,
             id,
@@ -323,7 +525,9 @@ class KafkaDeadLetterRecordSchemaIntegrationTest {
             timestamp(lastReplayedAt),
             replayLeaseOwner,
             timestamp(replayLeaseUntil),
-            null
+            null,
+            replayOriginId,
+            replayAttemptBase
         );
     }
 

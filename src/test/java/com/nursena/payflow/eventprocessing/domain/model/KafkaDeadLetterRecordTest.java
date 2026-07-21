@@ -68,6 +68,171 @@ class KafkaDeadLetterRecordTest {
 
         assertThat(record.receivedAt())
             .isEqualTo(RECEIVED_AT);
+
+        assertThat(record.replayOriginId())
+            .isEqualTo(RECORD_ID);
+
+        assertThat(record.replayAttemptBase())
+            .isZero();
+    }
+
+    @Test
+    void shouldCreateReplayDerivedReceivedRecord() {
+        UUID derivedRecordId =
+            UUID.fromString(
+                "80000000-0000-0000-0000-000000000902"
+            );
+
+        KafkaDeadLetterRecord record =
+            new KafkaDeadLetterRecord(
+                derivedRecordId,
+                "wallet.transfer.completed.dlt",
+                0,
+                30L,
+                "wallet.transfer.completed",
+                0,
+                10L,
+                "payflow-transfer-completed-audit-v1",
+                "transaction-id",
+                "{}",
+                "IllegalStateException",
+                "Temporary failure.",
+                KafkaDeadLetterRecordStatus.RECEIVED,
+                0,
+                RECEIVED_AT,
+                null,
+                null,
+                null,
+                null,
+                RECORD_ID,
+                2
+            );
+
+        assertThat(record.replayOriginId())
+            .isEqualTo(RECORD_ID);
+
+        assertThat(record.replayAttemptBase())
+            .isEqualTo(2);
+    }
+
+    @Test
+    void shouldRejectIncompleteReplayLineage() {
+        UUID derivedRecordId =
+            UUID.fromString(
+                "80000000-0000-0000-0000-000000000903"
+            );
+
+        assertThatThrownBy(
+            () ->
+                new KafkaDeadLetterRecord(
+                    derivedRecordId,
+                    "wallet.transfer.completed.dlt",
+                    0,
+                    30L,
+                    "wallet.transfer.completed",
+                    0,
+                    10L,
+                    "payflow-transfer-completed-audit-v1",
+                    "transaction-id",
+                    "{}",
+                    "IllegalStateException",
+                    null,
+                    KafkaDeadLetterRecordStatus.RECEIVED,
+                    0,
+                    RECEIVED_AT,
+                    null,
+                    null,
+                    null,
+                    null,
+                    RECORD_ID,
+                    0
+                )
+        )
+            .isInstanceOf(
+                IllegalArgumentException.class
+            )
+            .hasMessage(
+                "Initial dead-letter records must "
+                    + "use their own id as "
+                    + "replayOriginId."
+            );
+
+        assertThatThrownBy(
+            () ->
+                new KafkaDeadLetterRecord(
+                    RECORD_ID,
+                    "wallet.transfer.completed.dlt",
+                    0,
+                    30L,
+                    "wallet.transfer.completed",
+                    0,
+                    10L,
+                    "payflow-transfer-completed-audit-v1",
+                    "transaction-id",
+                    "{}",
+                    "IllegalStateException",
+                    null,
+                    KafkaDeadLetterRecordStatus.RECEIVED,
+                    0,
+                    RECEIVED_AT,
+                    null,
+                    null,
+                    null,
+                    null,
+                    RECORD_ID,
+                    1
+                )
+        )
+            .isInstanceOf(
+                IllegalArgumentException.class
+            )
+            .hasMessage(
+                "Replay-derived dead-letter records "
+                    + "must use a different "
+                    + "replayOriginId."
+            );
+    }
+
+    @Test
+    void shouldRejectReplayAttemptOverflow() {
+        UUID derivedRecordId =
+            UUID.fromString(
+                "80000000-0000-0000-0000-000000000904"
+            );
+
+        assertThatThrownBy(
+            () ->
+                new KafkaDeadLetterRecord(
+                    derivedRecordId,
+                    "wallet.transfer.completed.dlt",
+                    0,
+                    30L,
+                    "wallet.transfer.completed",
+                    0,
+                    10L,
+                    "payflow-transfer-completed-audit-v1",
+                    "transaction-id",
+                    "{}",
+                    "IllegalStateException",
+                    null,
+                    KafkaDeadLetterRecordStatus.REPLAYING,
+                    1,
+                    RECEIVED_AT,
+                    REPLAYED_AT,
+                    "replay-worker-1",
+                    LEASE_UNTIL,
+                    null,
+                    RECORD_ID,
+                    Integer.MAX_VALUE
+                )
+        )
+            .isInstanceOf(
+                IllegalArgumentException.class
+            )
+            .hasMessage(
+                "Total replay attempt count "
+                    + "must not overflow."
+            );
     }
 
     @Test

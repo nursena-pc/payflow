@@ -82,7 +82,9 @@ class KafkaDeadLetterRecordPersistenceIntegrationTest {
                     status,
                     replay_count,
                     record_key,
-                    payload
+                    payload,
+                    replay_origin_id,
+                    replay_attempt_base
                 FROM kafka_dead_letter_records
                 WHERE id = ?
                 """,
@@ -134,6 +136,16 @@ class KafkaDeadLetterRecordPersistenceIntegrationTest {
             stored.get("payload")
         )
             .isNull();
+
+        assertThat(
+            stored.get("replay_origin_id")
+        )
+            .isEqualTo(RECORD_ID);
+
+        assertThat(
+            stored.get("replay_attempt_base")
+        )
+            .isEqualTo(0);
     }
 
     @Test
@@ -262,6 +274,66 @@ class KafkaDeadLetterRecordPersistenceIntegrationTest {
             )
                 .isTrue();
         }
+    }
+
+    @Test
+    void shouldPreserveReplayLineage() {
+        UUID derivedRecordId =
+            UUID.fromString(
+                "80000000-0000-0000-0000-000000001103"
+            );
+
+        KafkaDeadLetterRecord record =
+            new KafkaDeadLetterRecord(
+                derivedRecordId,
+                "wallet.transfer.completed.dlt",
+                0,
+                30L,
+                "wallet.transfer.completed",
+                0,
+                10L,
+                "payflow-transfer-completed-audit-v1",
+                "transaction-id",
+                "{}",
+                "IllegalStateException",
+                "Temporary failure.",
+                KafkaDeadLetterRecordStatus.RECEIVED,
+                0,
+                RECEIVED_AT,
+                null,
+                null,
+                null,
+                null,
+                RECORD_ID,
+                2
+            );
+
+        assertThat(
+            repositoryPort.tryRecord(record)
+        )
+            .isTrue();
+
+        Map<String, Object> stored =
+            jdbcTemplate.queryForMap(
+                """
+                SELECT
+                    replay_origin_id,
+                    replay_attempt_base
+                FROM kafka_dead_letter_records
+                WHERE id = ?
+                """,
+                derivedRecordId
+            );
+
+        assertThat(
+            stored.get("replay_origin_id")
+        )
+            .isEqualTo(RECORD_ID);
+
+        assertThat(
+            stored.get("replay_attempt_base")
+        )
+            .isEqualTo(2);
     }
 
     private Integer countRecords() {

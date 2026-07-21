@@ -33,11 +33,14 @@ class JdbcKafkaDeadLetterRecordRepositoryAdapter
             last_replayed_at,
             replay_lease_owner,
             replay_lease_until,
-            last_replay_error
+            last_replay_error,
+            replay_origin_id,
+            replay_attempt_base
         )
         VALUES (
             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-            ?, ?, ?, ?, ?, ?, ?, ?, ?
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+            ?
         )
         ON CONFLICT (
             dlt_topic,
@@ -95,7 +98,9 @@ class JdbcKafkaDeadLetterRecordRepositoryAdapter
                 timestamp(
                     record.replayLeaseUntil()
                 ),
-                record.lastReplayError()
+                record.lastReplayError(),
+                record.replayOriginId(),
+                record.replayAttemptBase()
             );
 
         if (affectedRows == 1) {

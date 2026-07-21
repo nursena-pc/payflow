@@ -6,8 +6,10 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import com.nursena.payflow.eventprocessing.adapter.kafka.KafkaDeadLetterReplayHeaders;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.NewTopic;
@@ -185,6 +187,34 @@ class TransferCompletedKafkaDeadLetterIntakeIntegrationTest {
         assertThat(countRecords())
             .isEqualTo(1);
 
+        UUID replayOriginId =
+            UUID.fromString(
+                "80000000-0000-0000-0000-000000001501"
+            );
+
+        long replayDerivedOffset =
+            publish(
+                replayDerivedRecord(
+                    replayOriginId,
+                    2
+                )
+            );
+
+        await(
+            () -> countRecords() == 2,
+            "replay-derived DLT record persistence"
+        );
+
+        awaitCommittedOffset(
+            replayDerivedOffset + 1
+        );
+
+        assertStoredReplayLineage(
+            replayDerivedOffset,
+            replayOriginId,
+            2
+        );
+
         /*
          * The next record lacks a required header.
          * The dedicated stopping error handler must
@@ -215,7 +245,7 @@ class TransferCompletedKafkaDeadLetterIntakeIntegrationTest {
             );
 
         assertThat(countRecords())
-            .isEqualTo(1);
+            .isEqualTo(2);
     }
 
     private ProducerRecord<String, String>
@@ -236,6 +266,53 @@ class TransferCompletedKafkaDeadLetterIntakeIntegrationTest {
                     KafkaHeaders.DLT_EXCEPTION_MESSAGE,
                     bytes(
                         "Temporary processing failure."
+                    )
+                )
+            );
+
+        return record;
+    }
+
+    private ProducerRecord<String, String>
+    replayDerivedRecord(
+        UUID replayOriginId,
+        int replayAttemptBase
+    ) {
+        ProducerRecord<String, String> record =
+            new ProducerRecord<>(
+                DEAD_LETTER_TOPIC,
+                0,
+                "replayed-transaction-id",
+                """
+                {
+                  "eventId":
+                    "80000000-0000-0000-0000-000000001502"
+                }
+                """
+            );
+
+        addRequiredHeaders(record);
+
+        record.headers()
+            .add(
+                new RecordHeader(
+                    KafkaDeadLetterReplayHeaders
+                        .REPLAY_ORIGIN_ID,
+                    bytes(
+                        replayOriginId.toString()
+                    )
+                )
+            );
+
+        record.headers()
+            .add(
+                new RecordHeader(
+                    KafkaDeadLetterReplayHeaders
+                        .REPLAY_ATTEMPT,
+                    bytes(
+                        Integer.toString(
+                            replayAttemptBase
+                        )
                     )
                 )
             );
@@ -332,6 +409,7 @@ class TransferCompletedKafkaDeadLetterIntakeIntegrationTest {
             jdbcTemplate.queryForMap(
                 """
                 SELECT
+                    id,
                     dlt_topic,
                     dlt_partition,
                     dlt_offset,
@@ -344,7 +422,9 @@ class TransferCompletedKafkaDeadLetterIntakeIntegrationTest {
                     exception_type,
                     exception_message,
                     status,
-                    replay_count
+                    replay_count,
+                    replay_origin_id,
+                    replay_attempt_base
                 FROM kafka_dead_letter_records
                 WHERE dlt_topic = ?
                   AND dlt_partition = ?
@@ -419,6 +499,62 @@ class TransferCompletedKafkaDeadLetterIntakeIntegrationTest {
             .isEqualTo(
                 "Temporary processing failure."
             );
+
+        assertThat(
+            stored.get("status")
+        )
+            .isEqualTo("RECEIVED");
+
+        assertThat(
+            stored.get("replay_count")
+        )
+            .isEqualTo(0);
+
+        assertThat(
+            stored.get("replay_origin_id")
+        )
+            .isEqualTo(
+                stored.get("id")
+            );
+
+        assertThat(
+            stored.get("replay_attempt_base")
+        )
+            .isEqualTo(0);
+    }
+
+    private void assertStoredReplayLineage(
+        long deadLetterOffset,
+        UUID expectedOriginId,
+        int expectedAttemptBase
+    ) {
+        Map<String, Object> stored =
+            jdbcTemplate.queryForMap(
+                """
+                SELECT
+                    replay_origin_id,
+                    replay_attempt_base,
+                    status,
+                    replay_count
+                FROM kafka_dead_letter_records
+                WHERE dlt_topic = ?
+                  AND dlt_partition = ?
+                  AND dlt_offset = ?
+                """,
+                DEAD_LETTER_TOPIC,
+                0,
+                deadLetterOffset
+            );
+
+        assertThat(
+            stored.get("replay_origin_id")
+        )
+            .isEqualTo(expectedOriginId);
+
+        assertThat(
+            stored.get("replay_attempt_base")
+        )
+            .isEqualTo(expectedAttemptBase);
 
         assertThat(
             stored.get("status")

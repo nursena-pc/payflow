@@ -1,5 +1,7 @@
 package com.nursena.payflow.eventprocessing.application.model;
 
+import java.util.UUID;
+
 public record RecordKafkaDeadLetterCommand(
     String deadLetterTopic,
     int deadLetterPartition,
@@ -11,7 +13,9 @@ public record RecordKafkaDeadLetterCommand(
     String recordKey,
     String payload,
     String exceptionType,
-    String exceptionMessage
+    String exceptionMessage,
+    UUID replayOriginId,
+    Integer replayAttemptBase
 ) {
 
     private static final int MAX_TOPIC_LENGTH = 200;
@@ -70,6 +74,58 @@ public record RecordKafkaDeadLetterCommand(
                 "exceptionType",
                 MAX_EXCEPTION_TYPE_LENGTH
             );
+        boolean hasOrigin =
+            replayOriginId != null;
+
+        boolean hasAttempt =
+            replayAttemptBase != null;
+
+        if (hasOrigin != hasAttempt) {
+            throw new IllegalArgumentException(
+                "Replay origin id and attempt must "
+                    + "either both be present "
+                    + "or both be absent."
+            );
+        }
+
+        if (
+            replayAttemptBase != null
+                && replayAttemptBase <= 0
+        ) {
+            throw new IllegalArgumentException(
+                "replayAttemptBase must be positive "
+                    + "when replay metadata is present."
+            );
+        }
+    }
+    public RecordKafkaDeadLetterCommand(
+        String deadLetterTopic,
+        int deadLetterPartition,
+        long deadLetterOffset,
+        String originalTopic,
+        int originalPartition,
+        long originalOffset,
+        String originalConsumerGroup,
+        String recordKey,
+        String payload,
+        String exceptionType,
+        String exceptionMessage
+    ) {
+        this(
+            deadLetterTopic,
+            deadLetterPartition,
+            deadLetterOffset,
+            originalTopic,
+            originalPartition,
+            originalOffset,
+            originalConsumerGroup,
+            recordKey,
+            payload,
+            exceptionType,
+            exceptionMessage,
+            null,
+            null
+        );
     }
 
     private static String validateText(

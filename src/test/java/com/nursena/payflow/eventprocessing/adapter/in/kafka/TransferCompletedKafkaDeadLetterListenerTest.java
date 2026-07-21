@@ -8,7 +8,9 @@ import static org.mockito.Mockito.verify;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 
+import com.nursena.payflow.eventprocessing.adapter.kafka.KafkaDeadLetterReplayHeaders;
 import com.nursena.payflow.eventprocessing.application.model.RecordKafkaDeadLetterCommand;
 import com.nursena.payflow.eventprocessing.application.port.in.RecordKafkaDeadLetterUseCase;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -117,6 +119,107 @@ class TransferCompletedKafkaDeadLetterListenerTest {
             .isEqualTo(
                 "Temporary processing failure."
             );
+
+        assertThat(command.replayOriginId())
+            .isNull();
+
+        assertThat(command.replayAttemptBase())
+            .isNull();
+    }
+
+    @Test
+    void shouldExtractReplayLineageHeaders() {
+        UUID replayOriginId =
+            UUID.fromString(
+                "80000000-0000-0000-0000-000000001307"
+            );
+
+        ConsumerRecord<String, String> record =
+            validRecord(
+                "transaction-id",
+                "{}"
+            );
+
+        record.headers()
+            .add(
+                new RecordHeader(
+                    KafkaDeadLetterReplayHeaders
+                        .REPLAY_ORIGIN_ID,
+                    bytes(
+                        replayOriginId.toString()
+                    )
+                )
+            );
+
+        record.headers()
+            .add(
+                new RecordHeader(
+                    KafkaDeadLetterReplayHeaders
+                        .REPLAY_ATTEMPT,
+                    bytes("2")
+                )
+            );
+
+        listener.consume(record);
+
+        ArgumentCaptor<RecordKafkaDeadLetterCommand>
+            captor =
+            ArgumentCaptor.forClass(
+                RecordKafkaDeadLetterCommand.class
+            );
+
+        verify(useCase)
+            .record(captor.capture());
+
+        assertThat(
+            captor.getValue().replayOriginId()
+        )
+            .isEqualTo(replayOriginId);
+
+        assertThat(
+            captor.getValue().replayAttemptBase()
+        )
+            .isEqualTo(2);
+    }
+
+    @Test
+    void shouldRejectPartialReplayLineageHeaders() {
+        ConsumerRecord<String, String> record =
+            validRecord(
+                "transaction-id",
+                "{}"
+            );
+
+        record.headers()
+            .add(
+                new RecordHeader(
+                    KafkaDeadLetterReplayHeaders
+                        .REPLAY_ORIGIN_ID,
+                    bytes(
+                        UUID.randomUUID()
+                            .toString()
+                    )
+                )
+            );
+
+        assertThatThrownBy(
+            () -> listener.consume(record)
+        )
+            .isInstanceOf(
+                InvalidKafkaDeadLetterRecordException
+                    .class
+            )
+            .hasMessage(
+                "Replay origin id and attempt "
+                    + "headers must either both "
+                    + "be present or both be absent."
+            );
+
+        verify(
+            useCase,
+            never()
+        )
+            .record(any());
     }
 
     @Test
@@ -347,6 +450,99 @@ class TransferCompletedKafkaDeadLetterListenerTest {
             );
 
         return record;
+    }
+
+    @Test
+    void shouldRejectMalformedReplayOriginHeader() {
+        ConsumerRecord<String, String> record =
+            validRecord(
+                "transaction-id",
+                "{}"
+            );
+
+        record.headers()
+            .add(
+                new RecordHeader(
+                    KafkaDeadLetterReplayHeaders
+                        .REPLAY_ORIGIN_ID,
+                    bytes("not-a-uuid")
+                )
+            );
+
+        record.headers()
+            .add(
+                new RecordHeader(
+                    KafkaDeadLetterReplayHeaders
+                        .REPLAY_ATTEMPT,
+                    bytes("2")
+                )
+            );
+
+        assertThatThrownBy(
+            () -> listener.consume(record)
+        )
+            .isInstanceOf(
+                InvalidKafkaDeadLetterRecordException
+                    .class
+            )
+            .hasMessage(
+                "Kafka replay origin id header "
+                    + "must contain a valid UUID."
+            );
+
+        verify(
+            useCase,
+            never()
+        )
+            .record(any());
+    }
+
+    @Test
+    void shouldRejectMalformedReplayAttemptHeader() {
+        ConsumerRecord<String, String> record =
+            validRecord(
+                "transaction-id",
+                "{}"
+            );
+
+        record.headers()
+            .add(
+                new RecordHeader(
+                    KafkaDeadLetterReplayHeaders
+                        .REPLAY_ORIGIN_ID,
+                    bytes(
+                        UUID.randomUUID()
+                            .toString()
+                    )
+                )
+            );
+
+        record.headers()
+            .add(
+                new RecordHeader(
+                    KafkaDeadLetterReplayHeaders
+                        .REPLAY_ATTEMPT,
+                    bytes("not-an-integer")
+                )
+            );
+
+        assertThatThrownBy(
+            () -> listener.consume(record)
+        )
+            .isInstanceOf(
+                InvalidKafkaDeadLetterRecordException
+                    .class
+            )
+            .hasMessage(
+                "Kafka replay attempt header "
+                    + "must contain an integer."
+            );
+
+        verify(
+            useCase,
+            never()
+        )
+            .record(any());
     }
 
     private static byte[] bytes(

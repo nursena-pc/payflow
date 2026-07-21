@@ -117,6 +117,8 @@ The initial dead-letter model stores:
 - replay lease owner
 - replay lease expiration
 - last replay error
+- replay origin identifier
+- replay-attempt base
 
 The original record key and payload may be null.
 
@@ -138,7 +140,9 @@ Supported statuses are:
 
 ### RECEIVED
 
-The record was durably ingested from the DLT and has not been replayed.
+The record was durably ingested from the DLT and has not been replayed directly from its current physical DLT location.
+
+A `RECEIVED` record may still be replay-derived when its lineage metadata indicates that replay attempts occurred before the current physical DLT record was created.
 
 ### REPLAYING
 
@@ -167,7 +171,7 @@ This is a terminal operational decision.
 A record is replayable only when:
 
 - its status is `RECEIVED` or `REPLAY_FAILED`
-- its replay count is below the configured maximum
+- `replay_attempt_base + replay_count` is lower than the configured maximum replay-attempt limit
 - it is not protected by an active replay lease
 - its original topic is present
 - its payload satisfies the replay command requirements
@@ -201,6 +205,8 @@ A replay count is incremented when a replay attempt is claimed, not after public
 
 This preserves an accurate upper bound even when a worker crashes during publication.
 
+`last_replayed_at` records the start time of the latest replay attempt, meaning the moment the record was claimed. It does not prove that Kafka publication completed successfully.
+
 ## Kafka publication
 
 A claimed record is published to its original topic.
@@ -210,14 +216,13 @@ The replay publication uses:
 - original topic
 - original key
 - original payload
+- PayFlow replay-lineage headers
 
 Spring Kafka DLT exception headers are not copied to the replayed source record.
 
 Delivery-attempt and prior DLT metadata headers are also not copied.
 
 This prevents dead-letter and exception headers from accumulating across replay cycles.
-
-The initial replay implementation republishes only the key and payload.
 
 Business-header replay may be introduced later through an explicit allowlist.
 
@@ -252,11 +257,53 @@ This existing idempotency boundary is required for safe at-least-once replay.
 
 Replay attempts are bounded by configuration.
 
-The default maximum replay count will be conservative.
+The limit applies to the complete logical replay chain rather than independently to each physical Kafka DLT record.
 
-A record that reaches the configured replay limit is no longer eligible for replay without an explicit future administrative intervention.
+A record that reaches the configured chain-wide replay-attempt limit is no longer eligible for replay without an explicit future administrative intervention.
 
 Replay limits prevent permanent failures from consuming resources indefinitely.
+
+### Replay lineage and chain-wide attempt limits
+
+A replay attempt limit must apply to the complete logical replay chain, not only to one physical Kafka DLT record.
+
+Each persisted dead-letter record therefore stores:
+
+- `replay_origin_id`: the identifier of the first persisted dead-letter record in the replay chain.
+- `replay_attempt_base`: the number of replay attempts that occurred before the current physical DLT record was created.
+- `replay_count`: the number of attempts claimed directly from the current physical DLT record.
+
+The total number of attempts for a record is:
+
+`replay_attempt_base + replay_count`
+
+A record may be claimed only while this total is lower than the configured maximum replay-attempt limit.
+
+An initial DLT record uses its own identifier as `replay_origin_id` and stores a zero `replay_attempt_base`.
+
+A replay-derived DLT record preserves the original `replay_origin_id` and receives the total attempt number from the replayed Kafka message.
+
+### Replay lineage headers
+
+A replay publication adds exactly these PayFlow-owned headers:
+
+- `payflow-replay-origin-id`
+- `payflow-replay-attempt`
+
+`payflow-replay-attempt` contains the total attempt count after the current record has been claimed:
+
+`replay_attempt_base + replay_count`
+
+The replay publisher must not copy Spring Kafka DLT exception, stack-trace, delivery-attempt, original-topic, original-offset, or original-consumer-group headers onto the replayed source message.
+
+The DLT intake listener applies the following rules:
+
+- Neither replay header present: initial DLT delivery.
+- Both replay headers present and valid: replay-derived delivery.
+- Only one header present: reject the record.
+- Invalid UUID, non-integer attempt, or non-positive attempt: reject the record.
+
+Rejected lineage metadata is handled fail-closed: the intake transaction is not committed and the DLT consumer offset must not advance.
 
 ## Offset behavior
 
@@ -265,6 +312,10 @@ The DLT intake listener acknowledges a Kafka record only after its PostgreSQL re
 When database persistence fails, the listener must not silently advance the DLT consumer offset.
 
 Duplicate intake caused by Kafka redelivery is expected and is handled through the unique DLT-location constraint.
+
+Invalid or incomplete replay-lineage metadata must also prevent successful acknowledgement.
+
+The DLT intake listener must not advance its consumer offset after rejecting lineage metadata.
 
 ## Security
 
@@ -292,6 +343,8 @@ The replay lifecycle will expose low-cardinality metrics for:
 
 Identifiers, payloads, offsets, exception messages, and record keys will not be metric tags.
 
+Replay-chain identifiers and total replay-attempt values must also not be exposed as metric tags because they would introduce high-cardinality dimensions.
+
 ## Database constraints
 
 PostgreSQL will enforce:
@@ -301,9 +354,12 @@ PostgreSQL will enforce:
 - non-negative partitions
 - non-negative offsets
 - non-negative replay count
+- non-negative replay-attempt base
 - valid lifecycle statuses
 - replay lease consistency
 - replay timestamp consistency
+- valid initial and replay-derived lineage relationships
+- non-overflowing total replay-attempt count
 
 Database constraints complement domain validation and protect the operational state from invalid writes outside the application service.
 
@@ -314,9 +370,11 @@ Database constraints complement domain validation and protect the operational st
 - DLT records remain inspectable beyond Kafka retention.
 - DLT intake is idempotent.
 - Replay is explicit rather than automatic.
-- Replay attempts are bounded.
+- Replay attempts are bounded across the complete logical replay chain.
+- Replay-derived DLT records preserve their original lineage.
 - Concurrent replay claims can be controlled.
 - Kafka exception headers do not accumulate.
+- Invalid lineage metadata is rejected without advancing the DLT consumer offset.
 - Existing consumer idempotency makes replay duplicates safe.
 - Persistence and Kafka concerns remain behind hexagonal ports.
 
@@ -325,6 +383,7 @@ Database constraints complement domain validation and protect the operational st
 - PostgreSQL becomes part of the DLT operational workflow.
 - Replay cannot provide exactly-once publication across PostgreSQL and Kafka.
 - Additional lifecycle recovery logic is required for expired replay leases.
+- Replay lineage must be propagated correctly across Kafka publication and DLT intake.
 - Operational authorization must be designed before exposing replay over HTTP.
 - Stored payloads may contain business data and require normal database access controls.
 
@@ -334,9 +393,15 @@ Database constraints complement domain validation and protect the operational st
 
 Rejected because permanent failures would create unbounded source-to-DLT loops.
 
+### Apply the replay limit independently to each physical DLT record
+
+Rejected because every source-to-DLT cycle would create a new physical record whose local replay count started from zero.
+
+A per-record limit would therefore fail to bound the complete logical replay chain.
+
 ### Use Kafka offsets as the only replay state
 
-Rejected because Kafka retention removes historical records and offsets do not provide operational lifecycle, replay limits, or discard decisions.
+Rejected because Kafka retention removes historical records and offsets do not provide operational lifecycle, replay limits, lineage, or discard decisions.
 
 ### Publish and update PostgreSQL atomically
 
@@ -357,10 +422,19 @@ The implementation must demonstrate:
 - duplicate delivery of one DLT offset creates one database record
 - malformed payloads can still be persisted
 - missing required original-record headers are rejected
+- initial DLT records use their own identifier as `replay_origin_id`
+- initial DLT records use a zero `replay_attempt_base`
+- replay-derived records preserve the original replay-chain identifier
+- replay-derived records persist the attempt base received from Kafka
+- partial replay-lineage headers are rejected
+- invalid replay-origin UUID values are rejected
+- non-integer or non-positive replay-attempt values are rejected
+- rejected lineage metadata prevents DLT offset advancement
 - persistence failure prevents successful DLT consumption
 - concurrent replay claims cannot own the same record
 - expired replay leases can be reclaimed
-- replay count limits are enforced
+- chain-wide replay limits are enforced using `replay_attempt_base + replay_count`
+- total replay-attempt arithmetic cannot overflow
 - successful publication transitions the record to `REPLAYED`
 - failed publication transitions the record to `REPLAY_FAILED`
 - replayed valid events remain safe under duplicate publication

@@ -122,6 +122,64 @@ class RecordKafkaDeadLetterServiceTest {
 
         assertThat(record.receivedAt())
             .isEqualTo(RECEIVED_AT);
+
+        assertThat(record.replayOriginId())
+            .isEqualTo(RECORD_ID);
+
+        assertThat(record.replayAttemptBase())
+            .isZero();
+    }
+
+    @Test
+    void shouldPreserveReplayLineage() {
+        UUID replayOriginId =
+            UUID.fromString(
+                "80000000-0000-0000-0000-000000001306"
+            );
+
+        when(
+            repository.tryRecord(
+                any(KafkaDeadLetterRecord.class)
+            )
+        )
+            .thenReturn(true);
+
+        service.record(
+            new RecordKafkaDeadLetterCommand(
+                "wallet.transfer.completed.dlt",
+                2,
+                25L,
+                "wallet.transfer.completed",
+                1,
+                42L,
+                "payflow-transfer-completed-audit-v1",
+                "transaction-id",
+                "{}",
+                "java.lang.IllegalStateException",
+                "Temporary processing failure.",
+                replayOriginId,
+                2
+            )
+        );
+
+        ArgumentCaptor<KafkaDeadLetterRecord>
+            captor =
+            ArgumentCaptor.forClass(
+                KafkaDeadLetterRecord.class
+            );
+
+        verify(repository)
+            .tryRecord(captor.capture());
+
+        assertThat(
+            captor.getValue().replayOriginId()
+        )
+            .isEqualTo(replayOriginId);
+
+        assertThat(
+            captor.getValue().replayAttemptBase()
+        )
+            .isEqualTo(2);
     }
 
     @Test

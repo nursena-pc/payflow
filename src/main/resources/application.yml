@@ -103,3 +103,7 @@ payflow:
       dead-letter-intake:
         enabled: ${TRANSFER_COMPLETED_DLT_INTAKE_ENABLED:false}
         group-id: ${TRANSFER_COMPLETED_DLT_INTAKE_GROUP:payflow-transfer-completed-dlt-intake-v1}
+      dead-letter-replay:
+        worker-id: ${TRANSFER_COMPLETED_DLT_REPLAY_WORKER_ID:payflow-dlt-replay}
+        lease-duration: ${TRANSFER_COMPLETED_DLT_REPLAY_LEASE_DURATION:30s}
+        max-attempts: ${TRANSFER_COMPLETED_DLT_REPLAY_MAX_ATTEMPTS:3}

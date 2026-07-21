@@ -66,6 +66,16 @@ public class RecordKafkaDeadLetterService
                 "idSupplier must not return null"
             );
 
+        UUID replayOriginId =
+            command.replayOriginId() == null
+                ? recordId
+                : command.replayOriginId();
+
+        int replayAttemptBase =
+            command.replayAttemptBase() == null
+                ? 0
+                : command.replayAttemptBase();
+
         KafkaDeadLetterRecord record =
             new KafkaDeadLetterRecord(
                 recordId,
@@ -86,7 +96,9 @@ public class RecordKafkaDeadLetterService
                 null,
                 null,
                 null,
-                null
+                null,
+                replayOriginId,
+                replayAttemptBase
             );
 
         boolean recorded =
