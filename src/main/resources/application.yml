@@ -100,3 +100,6 @@ payflow:
         multiplier: ${TRANSFER_COMPLETED_RETRY_MULTIPLIER:2.0}
         maximum-delay: ${TRANSFER_COMPLETED_RETRY_MAXIMUM_DELAY:5s}
         send-timeout: ${TRANSFER_COMPLETED_DLT_SEND_TIMEOUT:10s}
+      dead-letter-intake:
+        enabled: ${TRANSFER_COMPLETED_DLT_INTAKE_ENABLED:false}
+        group-id: ${TRANSFER_COMPLETED_DLT_INTAKE_GROUP:payflow-transfer-completed-dlt-intake-v1}
