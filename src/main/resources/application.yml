@@ -93,3 +93,10 @@ payflow:
       topic: ${TRANSFER_COMPLETED_CONSUMER_TOPIC:wallet.transfer.completed}
       group-id: ${TRANSFER_COMPLETED_CONSUMER_GROUP:payflow-transfer-completed-audit-v1}
       consumer-name: ${TRANSFER_COMPLETED_CONSUMER_NAME:transfer-completed-audit}
+      failure:
+        dead-letter-topic: ${TRANSFER_COMPLETED_DLT_TOPIC:wallet.transfer.completed.dlt}
+        max-retries: ${TRANSFER_COMPLETED_RETRY_MAX_RETRIES:3}
+        initial-delay: ${TRANSFER_COMPLETED_RETRY_INITIAL_DELAY:500ms}
+        multiplier: ${TRANSFER_COMPLETED_RETRY_MULTIPLIER:2.0}
+        maximum-delay: ${TRANSFER_COMPLETED_RETRY_MAXIMUM_DELAY:5s}
+        send-timeout: ${TRANSFER_COMPLETED_DLT_SEND_TIMEOUT:10s}

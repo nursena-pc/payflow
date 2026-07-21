@@ -47,8 +47,11 @@ class TransferCompletedKafkaListener {
             "${payflow.event-processing.transfer-completed.topic}",
         groupId =
             "${payflow.event-processing.transfer-completed.group-id}",
+        containerFactory =
+            "transferCompletedKafkaListenerContainerFactory",
         autoStartup =
             "${payflow.event-processing.transfer-completed.enabled}"
+
     )
     void consume(
         ConsumerRecord<String, String> record
