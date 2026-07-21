@@ -9,36 +9,49 @@ import org.junit.jupiter.api.Test;
 
 class KafkaDeadLetterReplayPropertiesTest {
 
+    private static final String WORKER_ID =
+        "replay-worker-1";
+
+    private static final Duration LEASE_DURATION =
+        Duration.ofSeconds(30);
+
+    private static final int MAX_ATTEMPTS = 3;
+
+    private static final Duration SEND_TIMEOUT =
+        Duration.ofSeconds(10);
+
     @Test
     void shouldCreateValidProperties() {
         KafkaDeadLetterReplayProperties properties =
             new KafkaDeadLetterReplayProperties(
-                "replay-worker-1",
-                Duration.ofSeconds(30),
-                3
+                WORKER_ID,
+                LEASE_DURATION,
+                MAX_ATTEMPTS,
+                SEND_TIMEOUT
             );
 
         assertThat(properties.workerId())
-            .isEqualTo("replay-worker-1");
+            .isEqualTo(WORKER_ID);
 
         assertThat(properties.leaseDuration())
-            .isEqualTo(
-                Duration.ofSeconds(30)
-            );
+            .isEqualTo(LEASE_DURATION);
 
         assertThat(properties.maxAttempts())
-            .isEqualTo(3);
+            .isEqualTo(MAX_ATTEMPTS);
+
+        assertThat(properties.sendTimeout())
+            .isEqualTo(SEND_TIMEOUT);
     }
 
     @Test
-    void shouldRejectInvalidProperties() {
-        assertThatThrownBy(
-            () ->
-                new KafkaDeadLetterReplayProperties(
-                    " ",
-                    Duration.ofSeconds(30),
-                    3
-                )
+    void shouldRejectInvalidWorkerId() {
+        assertThatThrownBy(() ->
+            new KafkaDeadLetterReplayProperties(
+                " ",
+                LEASE_DURATION,
+                MAX_ATTEMPTS,
+                SEND_TIMEOUT
+            )
         )
             .isInstanceOf(
                 IllegalArgumentException.class
@@ -46,14 +59,17 @@ class KafkaDeadLetterReplayPropertiesTest {
             .hasMessage(
                 "workerId must not be blank."
             );
+    }
 
-        assertThatThrownBy(
-            () ->
-                new KafkaDeadLetterReplayProperties(
-                    "replay-worker-1",
-                    Duration.ZERO,
-                    3
-                )
+    @Test
+    void shouldRejectInvalidLeaseDuration() {
+        assertThatThrownBy(() ->
+            new KafkaDeadLetterReplayProperties(
+                WORKER_ID,
+                Duration.ZERO,
+                MAX_ATTEMPTS,
+                SEND_TIMEOUT
+            )
         )
             .isInstanceOf(
                 IllegalArgumentException.class
@@ -61,20 +77,72 @@ class KafkaDeadLetterReplayPropertiesTest {
             .hasMessage(
                 "leaseDuration must be positive."
             );
+    }
 
-        assertThatThrownBy(
-            () ->
-                new KafkaDeadLetterReplayProperties(
-                    "replay-worker-1",
-                    Duration.ofSeconds(30),
-                    0
-                )
+    @Test
+    void shouldRejectInvalidMaximumAttempts() {
+        assertThatThrownBy(() ->
+            new KafkaDeadLetterReplayProperties(
+                WORKER_ID,
+                LEASE_DURATION,
+                0,
+                SEND_TIMEOUT
+            )
         )
             .isInstanceOf(
                 IllegalArgumentException.class
             )
             .hasMessage(
                 "maxAttempts must be positive."
+            );
+    }
+
+    @Test
+    void shouldValidateSendTimeout() {
+        assertThatThrownBy(() ->
+            new KafkaDeadLetterReplayProperties(
+                WORKER_ID,
+                LEASE_DURATION,
+                MAX_ATTEMPTS,
+                null
+            )
+        )
+            .isInstanceOf(
+                NullPointerException.class
+            )
+            .hasMessage(
+                "sendTimeout must not be null"
+            );
+
+        assertThatThrownBy(() ->
+            new KafkaDeadLetterReplayProperties(
+                WORKER_ID,
+                LEASE_DURATION,
+                MAX_ATTEMPTS,
+                Duration.ZERO
+            )
+        )
+            .isInstanceOf(
+                IllegalArgumentException.class
+            )
+            .hasMessage(
+                "sendTimeout must be positive."
+            );
+
+        assertThatThrownBy(() ->
+            new KafkaDeadLetterReplayProperties(
+                WORKER_ID,
+                LEASE_DURATION,
+                MAX_ATTEMPTS,
+                Duration.ofNanos(999_999)
+            )
+        )
+            .isInstanceOf(
+                IllegalArgumentException.class
+            )
+            .hasMessage(
+                "sendTimeout must be at least "
+                    + "one millisecond."
             );
     }
 }

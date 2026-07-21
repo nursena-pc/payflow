@@ -14,7 +14,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public record KafkaDeadLetterReplayProperties(
     String workerId,
     Duration leaseDuration,
-    int maxAttempts
+    int maxAttempts,
+    Duration sendTimeout
 ) {
 
     private static final int
@@ -58,6 +59,26 @@ public record KafkaDeadLetterReplayProperties(
         if (maxAttempts <= 0) {
             throw new IllegalArgumentException(
                 "maxAttempts must be positive."
+            );
+        }
+        Objects.requireNonNull(
+            sendTimeout,
+            "sendTimeout must not be null"
+        );
+
+        if (
+            sendTimeout.isZero()
+                || sendTimeout.isNegative()
+        ) {
+            throw new IllegalArgumentException(
+                "sendTimeout must be positive."
+            );
+        }
+
+        if (sendTimeout.toMillis() == 0) {
+            throw new IllegalArgumentException(
+                "sendTimeout must be at least "
+                    + "one millisecond."
             );
         }
     }

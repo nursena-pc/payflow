@@ -107,3 +107,4 @@ payflow:
         worker-id: ${TRANSFER_COMPLETED_DLT_REPLAY_WORKER_ID:payflow-dlt-replay}
         lease-duration: ${TRANSFER_COMPLETED_DLT_REPLAY_LEASE_DURATION:30s}
         max-attempts: ${TRANSFER_COMPLETED_DLT_REPLAY_MAX_ATTEMPTS:3}
+        send-timeout: ${TRANSFER_COMPLETED_DLT_REPLAY_SEND_TIMEOUT:10s}
