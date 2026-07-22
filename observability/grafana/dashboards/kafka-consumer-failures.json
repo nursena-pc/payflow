@@ -1,0 +1,498 @@
+{
+"annotations": {
+"list": []
+},
+"description": "Operational overview of PayFlow Kafka consumer delivery failures, retry activity, and dead-letter recovery outcomes.",
+"editable": false,
+"fiscalYearStartMonth": 0,
+"graphTooltip": 1,
+"id": null,
+"links": [],
+"liveNow": false,
+"panels": [
+{
+"datasource": {
+"type": "prometheus",
+"uid": "payflow-prometheus"
+},
+"description": "Records successfully routed to a dead-letter topic during the last fifteen minutes.",
+"fieldConfig": {
+"defaults": {
+"color": {
+"mode": "thresholds"
+},
+"mappings": [],
+"thresholds": {
+"mode": "absolute",
+"steps": [
+{
+"color": "green",
+"value": null
+},
+{
+"color": "orange",
+"value": 1
+}
+]
+},
+"unit": "short"
+},
+"overrides": []
+},
+"gridPos": {
+"h": 5,
+"w": 6,
+"x": 0,
+"y": 0
+},
+"id": 1,
+"options": {
+"colorMode": "value",
+"graphMode": "area",
+"justifyMode": "auto",
+"orientation": "auto",
+"reduceOptions": {
+"calcs": [
+"lastNotNull"
+],
+"fields": "",
+"values": false
+},
+"showPercentChange": false,
+"textMode": "auto",
+"wideLayout": true
+},
+"targets": [
+{
+"editorMode": "code",
+"expr": "sum(increase(payflow_kafka_consumer_recoveries_total{consumer=~\"$consumer\",topic=~\"$topic\",outcome=\"success\"}[15m]))",
+"instant": true,
+"legendFormat": "DLT recoveries",
+"range": false,
+"refId": "A"
+}
+],
+"title": "DLT Recoveries — 15m",
+"type": "stat"
+},
+{
+"datasource": {
+"type": "prometheus",
+"uid": "payflow-prometheus"
+},
+"description": "Dead-letter publication or recovery failures during the last fifteen minutes.",
+"fieldConfig": {
+"defaults": {
+"color": {
+"mode": "thresholds"
+},
+"mappings": [],
+"thresholds": {
+"mode": "absolute",
+"steps": [
+{
+"color": "green",
+"value": null
+},
+{
+"color": "red",
+"value": 1
+}
+]
+},
+"unit": "short"
+},
+"overrides": []
+},
+"gridPos": {
+"h": 5,
+"w": 6,
+"x": 6,
+"y": 0
+},
+"id": 2,
+"options": {
+"colorMode": "value",
+"graphMode": "area",
+"justifyMode": "auto",
+"orientation": "auto",
+"reduceOptions": {
+"calcs": [
+"lastNotNull"
+],
+"fields": "",
+"values": false
+},
+"showPercentChange": false,
+"textMode": "auto",
+"wideLayout": true
+},
+"targets": [
+{
+"editorMode": "code",
+"expr": "sum(increase(payflow_kafka_consumer_recoveries_total{consumer=~\"$consumer\",topic=~\"$topic\",outcome=\"failure\"}[15m]))",
+"instant": true,
+"legendFormat": "Recovery failures",
+"range": false,
+"refId": "A"
+}
+],
+"title": "Recovery Failures — 15m",
+"type": "stat"
+},
+{
+"datasource": {
+"type": "prometheus",
+"uid": "payflow-prometheus"
+},
+"description": "Kafka consumer retry attempts during the last five minutes.",
+"fieldConfig": {
+"defaults": {
+"color": {
+"mode": "thresholds"
+},
+"mappings": [],
+"thresholds": {
+"mode": "absolute",
+"steps": [
+{
+"color": "green",
+"value": null
+},
+{
+"color": "orange",
+"value": 5
+},
+{
+"color": "red",
+"value": 20
+}
+]
+},
+"unit": "short"
+},
+"overrides": []
+},
+"gridPos": {
+"h": 5,
+"w": 6,
+"x": 12,
+"y": 0
+},
+"id": 3,
+"options": {
+"colorMode": "value",
+"graphMode": "area",
+"justifyMode": "auto",
+"orientation": "auto",
+"reduceOptions": {
+"calcs": [
+"lastNotNull"
+],
+"fields": "",
+"values": false
+},
+"showPercentChange": false,
+"textMode": "auto",
+"wideLayout": true
+},
+"targets": [
+{
+"editorMode": "code",
+"expr": "sum(increase(payflow_kafka_consumer_retry_attempts_total{consumer=~\"$consumer\",topic=~\"$topic\"}[5m]))",
+"instant": true,
+"legendFormat": "Retry attempts",
+"range": false,
+"refId": "A"
+}
+],
+"title": "Retry Attempts — 5m",
+"type": "stat"
+},
+{
+"datasource": {
+"type": "prometheus",
+"uid": "payflow-prometheus"
+},
+"description": "Permanent consumer delivery failures during the last five minutes.",
+"fieldConfig": {
+"defaults": {
+"color": {
+"mode": "thresholds"
+},
+"mappings": [],
+"thresholds": {
+"mode": "absolute",
+"steps": [
+{
+"color": "green",
+"value": null
+},
+{
+"color": "orange",
+"value": 1
+},
+{
+"color": "red",
+"value": 10
+}
+]
+},
+"unit": "short"
+},
+"overrides": []
+},
+"gridPos": {
+"h": 5,
+"w": 6,
+"x": 18,
+"y": 0
+},
+"id": 4,
+"options": {
+"colorMode": "value",
+"graphMode": "area",
+"justifyMode": "auto",
+"orientation": "auto",
+"reduceOptions": {
+"calcs": [
+"lastNotNull"
+],
+"fields": "",
+"values": false
+},
+"showPercentChange": false,
+"textMode": "auto",
+"wideLayout": true
+},
+"targets": [
+{
+"editorMode": "code",
+"expr": "sum(increase(payflow_kafka_consumer_delivery_failures_total{consumer=~\"$consumer\",topic=~\"$topic\",failure_type=\"permanent\"}[5m]))",
+"instant": true,
+"legendFormat": "Permanent failures",
+"range": false,
+"refId": "A"
+}
+],
+"title": "Permanent Failures — 5m",
+"type": "stat"
+},
+{
+"datasource": {
+"type": "prometheus",
+"uid": "payflow-prometheus"
+},
+"description": "Per-second failed-delivery rate grouped by retryability.",
+"fieldConfig": {
+"defaults": {
+"min": 0,
+"unit": "ops"
+},
+"overrides": []
+},
+"gridPos": {
+"h": 8,
+"w": 12,
+"x": 0,
+"y": 5
+},
+"id": 5,
+"options": {
+"legend": {
+"calcs": [
+"lastNotNull",
+"max"
+],
+"displayMode": "list",
+"placement": "bottom",
+"showLegend": true
+},
+"tooltip": {
+"hideZeros": false,
+"mode": "multi",
+"sort": "desc"
+}
+},
+"targets": [
+{
+"editorMode": "code",
+"expr": "sum by (failure_type) (rate(payflow_kafka_consumer_delivery_failures_total{consumer=~\"$consumer\",topic=~\"$topic\"}[5m]))",
+"legendFormat": "{{failure_type}}",
+"range": true,
+"refId": "A"
+}
+],
+"title": "Delivery Failure Rate",
+"type": "timeseries"
+},
+{
+"datasource": {
+"type": "prometheus",
+"uid": "payflow-prometheus"
+},
+"description": "Per-second retry rate grouped by the root exception class.",
+"fieldConfig": {
+"defaults": {
+"min": 0,
+"unit": "ops"
+},
+"overrides": []
+},
+"gridPos": {
+"h": 8,
+"w": 12,
+"x": 12,
+"y": 5
+},
+"id": 6,
+"options": {
+"legend": {
+"calcs": [
+"lastNotNull",
+"max"
+],
+"displayMode": "list",
+"placement": "bottom",
+"showLegend": true
+},
+"tooltip": {
+"hideZeros": false,
+"mode": "multi",
+"sort": "desc"
+}
+},
+"targets": [
+{
+"editorMode": "code",
+"expr": "sum by (exception) (rate(payflow_kafka_consumer_retry_attempts_total{consumer=~\"$consumer\",topic=~\"$topic\"}[5m]))",
+"legendFormat": "{{exception}}",
+"range": true,
+"refId": "A"
+}
+],
+"title": "Retry Rate by Exception",
+"type": "timeseries"
+},
+{
+"datasource": {
+"type": "prometheus",
+"uid": "payflow-prometheus"
+},
+"description": "Dead-letter recovery outcomes grouped by outcome and failure classification.",
+"fieldConfig": {
+"defaults": {
+"min": 0,
+"unit": "ops"
+},
+"overrides": []
+},
+"gridPos": {
+"h": 8,
+"w": 24,
+"x": 0,
+"y": 13
+},
+"id": 7,
+"options": {
+"legend": {
+"calcs": [
+"lastNotNull",
+"max"
+],
+"displayMode": "list",
+"placement": "bottom",
+"showLegend": true
+},
+"tooltip": {
+"hideZeros": false,
+"mode": "multi",
+"sort": "desc"
+}
+},
+"targets": [
+{
+"editorMode": "code",
+"expr": "sum by (outcome, failure_type) (rate(payflow_kafka_consumer_recoveries_total{consumer=~\"$consumer\",topic=~\"$topic\"}[5m]))",
+"legendFormat": "{{outcome}} — {{failure_type}}",
+"range": true,
+"refId": "A"
+}
+],
+"title": "Dead-Letter Recovery Outcomes",
+"type": "timeseries"
+}
+],
+"refresh": "15s",
+"schemaVersion": 41,
+"tags": [
+"payflow",
+"kafka-consumer",
+"dead-letter",
+"observability"
+],
+"templating": {
+"list": [
+{
+"allValue": ".*",
+"current": {
+"selected": true,
+"text": "All",
+"value": "$__all"
+},
+"datasource": {
+"type": "prometheus",
+"uid": "payflow-prometheus"
+},
+"definition": "label_values(payflow_kafka_consumer_delivery_failures_total, consumer)",
+"hide": 0,
+"includeAll": true,
+"label": "Consumer",
+"multi": true,
+"name": "consumer",
+"options": [],
+"query": "label_values(payflow_kafka_consumer_delivery_failures_total, consumer)",
+"refresh": 1,
+"regex": "",
+"skipUrlSync": false,
+"sort": 1,
+"type": "query"
+},
+{
+"allValue": ".*",
+"current": {
+"selected": true,
+"text": "All",
+"value": "$__all"
+},
+"datasource": {
+"type": "prometheus",
+"uid": "payflow-prometheus"
+},
+"definition": "label_values(payflow_kafka_consumer_delivery_failures_total{consumer=~\"$consumer\"}, topic)",
+"hide": 0,
+"includeAll": true,
+"label": "Topic",
+"multi": true,
+"name": "topic",
+"options": [],
+"query": "label_values(payflow_kafka_consumer_delivery_failures_total{consumer=~\"$consumer\"}, topic)",
+"refresh": 1,
+"regex": "",
+"skipUrlSync": false,
+"sort": 1,
+"type": "query"
+}
+]
+},
+"time": {
+"from": "now-1h",
+"to": "now"
+},
+"timepicker": {},
+"timezone": "browser",
+"title": "PayFlow Kafka Consumer Failures",
+"uid": "payflow-kafka-consumer-failures",
+"version": 1,
+"weekStart": ""
+}
