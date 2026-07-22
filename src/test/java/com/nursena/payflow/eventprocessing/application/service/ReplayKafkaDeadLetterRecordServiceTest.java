@@ -105,6 +105,34 @@ class ReplayKafkaDeadLetterRecordServiceTest {
     }
 
     @Test
+    void shouldReturnNotFoundWithoutPublishing() {
+        when(
+            claimUseCase.claim(
+                new ClaimKafkaDeadLetterRecordCommand(
+                    RECORD_ID
+                )
+            )
+        ).thenReturn(
+            ClaimKafkaDeadLetterRecordResult
+                .notFound()
+        );
+
+        ReplayKafkaDeadLetterRecordResult result =
+            service.replay(COMMAND);
+
+        assertThat(result.isNotFound())
+            .isTrue();
+
+        assertThat(result.isNotClaimable())
+            .isFalse();
+
+        verifyNoInteractions(
+            publisherPort,
+            lifecyclePort
+        );
+    }
+
+    @Test
     void shouldReturnNotClaimableWithoutPublishing() {
         when(claimUseCase.claim(
             new ClaimKafkaDeadLetterRecordCommand(
@@ -125,6 +153,8 @@ class ReplayKafkaDeadLetterRecordServiceTest {
             publisherPort,
             lifecyclePort
         );
+        assertThat(result.isNotFound())
+            .isFalse();
     }
 
     @Test

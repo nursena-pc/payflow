@@ -8,6 +8,24 @@ import org.junit.jupiter.api.Test;
 class ReplayKafkaDeadLetterRecordResultTest {
 
     @Test
+    void shouldCreateNotFoundResult() {
+        ReplayKafkaDeadLetterRecordResult result =
+            ReplayKafkaDeadLetterRecordResult
+                .notFound();
+
+        assertThat(result.outcome())
+            .isEqualTo(
+                ReplayKafkaDeadLetterRecordResult
+                    .Outcome.NOT_FOUND
+            );
+
+        assertThat(result.isNotFound())
+            .isTrue();
+
+        assertOtherOutcomesAreFalse(result);
+    }
+
+    @Test
     void shouldCreateNotClaimableResult() {
         ReplayKafkaDeadLetterRecordResult result =
             ReplayKafkaDeadLetterRecordResult
@@ -21,6 +39,9 @@ class ReplayKafkaDeadLetterRecordResultTest {
 
         assertThat(result.isNotClaimable())
             .isTrue();
+
+        assertThat(result.isNotFound())
+            .isFalse();
 
         assertThat(result.isReplayed())
             .isFalse();
@@ -47,6 +68,9 @@ class ReplayKafkaDeadLetterRecordResultTest {
         assertThat(result.isReplayed())
             .isTrue();
 
+        assertThat(result.isNotFound())
+            .isFalse();
+
         assertThat(result.isNotClaimable())
             .isFalse();
 
@@ -71,6 +95,9 @@ class ReplayKafkaDeadLetterRecordResultTest {
 
         assertThat(result.isReplayFailed())
             .isTrue();
+
+        assertThat(result.isNotFound())
+            .isFalse();
 
         assertThat(result.isNotClaimable())
             .isFalse();
@@ -97,6 +124,9 @@ class ReplayKafkaDeadLetterRecordResultTest {
         assertThat(result.isUnresolved())
             .isTrue();
 
+        assertThat(result.isNotFound())
+            .isFalse();
+
         assertThat(result.isNotClaimable())
             .isFalse();
 
@@ -120,5 +150,22 @@ class ReplayKafkaDeadLetterRecordResultTest {
             .hasMessage(
                 "outcome must not be null"
             );
+    }
+
+    private static void
+    assertOtherOutcomesAreFalse(
+        ReplayKafkaDeadLetterRecordResult result
+    ) {
+        assertThat(result.isNotClaimable())
+            .isFalse();
+
+        assertThat(result.isReplayed())
+            .isFalse();
+
+        assertThat(result.isReplayFailed())
+            .isFalse();
+
+        assertThat(result.isUnresolved())
+            .isFalse();
     }
 }

@@ -2,14 +2,13 @@ package com.nursena.payflow.eventprocessing.application.port.out;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Optional;
 import java.util.UUID;
 
-import com.nursena.payflow.eventprocessing.domain.model.KafkaDeadLetterRecord;
+import com.nursena.payflow.eventprocessing.application.model.ClaimKafkaDeadLetterRecordResult;
 
 public interface KafkaDeadLetterReplayRepositoryPort {
 
-    Optional<KafkaDeadLetterRecord> tryClaim(
+    ClaimKafkaDeadLetterRecordResult tryClaim(
         UUID recordId,
         String workerId,
         Instant claimedAt,

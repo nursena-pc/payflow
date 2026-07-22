@@ -29,6 +29,12 @@ class ClaimKafkaDeadLetterRecordResultTest {
         assertThat(result.isClaimed())
             .isTrue();
 
+        assertThat(result.isNotFound())
+            .isFalse();
+
+        assertThat(result.isNotClaimable())
+            .isFalse();
+
         assertThat(result.outcome())
             .isEqualTo(
                 ClaimKafkaDeadLetterRecordResult
@@ -40,12 +46,43 @@ class ClaimKafkaDeadLetterRecordResultTest {
     }
 
     @Test
+    void shouldCreateNotFoundResult() {
+        ClaimKafkaDeadLetterRecordResult result =
+            ClaimKafkaDeadLetterRecordResult
+                .notFound();
+
+        assertThat(result.isNotFound())
+            .isTrue();
+
+        assertThat(result.isClaimed())
+            .isFalse();
+
+        assertThat(result.isNotClaimable())
+            .isFalse();
+
+        assertThat(result.outcome())
+            .isEqualTo(
+                ClaimKafkaDeadLetterRecordResult
+                    .Outcome.NOT_FOUND
+            );
+
+        assertThat(result.record())
+            .isNull();
+    }
+
+    @Test
     void shouldCreateNotClaimableResult() {
         ClaimKafkaDeadLetterRecordResult result =
             ClaimKafkaDeadLetterRecordResult
                 .notClaimable();
 
+        assertThat(result.isNotClaimable())
+            .isTrue();
+
         assertThat(result.isClaimed())
+            .isFalse();
+
+        assertThat(result.isNotFound())
             .isFalse();
 
         assertThat(result.outcome())
@@ -78,6 +115,25 @@ class ClaimKafkaDeadLetterRecordResultTest {
     }
 
     @Test
+    void shouldRejectNotFoundResultWithRecord() {
+        assertThatThrownBy(
+            () ->
+                new ClaimKafkaDeadLetterRecordResult(
+                    ClaimKafkaDeadLetterRecordResult
+                        .Outcome.NOT_FOUND,
+                    claimedRecord()
+                )
+        )
+            .isInstanceOf(
+                IllegalArgumentException.class
+            )
+            .hasMessage(
+                "NOT_FOUND result must not contain "
+                    + "a record."
+            );
+    }
+
+    @Test
     void shouldRejectNotClaimableResultWithRecord() {
         assertThatThrownBy(
             () ->
@@ -93,6 +149,23 @@ class ClaimKafkaDeadLetterRecordResultTest {
             .hasMessage(
                 "NOT_CLAIMABLE result must not "
                     + "contain a record."
+            );
+    }
+
+    @Test
+    void shouldRequireOutcome() {
+        assertThatThrownBy(
+            () ->
+                new ClaimKafkaDeadLetterRecordResult(
+                    null,
+                    null
+                )
+        )
+            .isInstanceOf(
+                NullPointerException.class
+            )
+            .hasMessage(
+                "outcome must not be null"
             );
     }
 

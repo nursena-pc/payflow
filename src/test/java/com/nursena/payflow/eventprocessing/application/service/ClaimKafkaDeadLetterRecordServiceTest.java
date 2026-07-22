@@ -3,13 +3,13 @@ package com.nursena.payflow.eventprocessing.application.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.util.Optional;
 import java.util.UUID;
 
 import com.nursena.payflow.eventprocessing.application.model.ClaimKafkaDeadLetterRecordCommand;
@@ -71,6 +71,11 @@ class ClaimKafkaDeadLetterRecordServiceTest {
         KafkaDeadLetterRecord record =
             claimedRecord();
 
+        ClaimKafkaDeadLetterRecordResult
+            repositoryResult =
+            ClaimKafkaDeadLetterRecordResult
+                .claimed(record);
+
         when(
             repository.tryClaim(
                 RECORD_ID,
@@ -79,10 +84,7 @@ class ClaimKafkaDeadLetterRecordServiceTest {
                 LEASE_DURATION,
                 MAX_ATTEMPTS
             )
-        )
-            .thenReturn(
-                Optional.of(record)
-            );
+        ).thenReturn(repositoryResult);
 
         ClaimKafkaDeadLetterRecordResult result =
             service.claim(
@@ -90,6 +92,9 @@ class ClaimKafkaDeadLetterRecordServiceTest {
                     RECORD_ID
                 )
             );
+
+        assertThat(result)
+            .isSameAs(repositoryResult);
 
         assertThat(result.isClaimed())
             .isTrue();
@@ -108,7 +113,12 @@ class ClaimKafkaDeadLetterRecordServiceTest {
     }
 
     @Test
-    void shouldReturnNotClaimableWhenRepositoryCannotClaim() {
+    void shouldReturnNotFoundResult() {
+        ClaimKafkaDeadLetterRecordResult
+            repositoryResult =
+            ClaimKafkaDeadLetterRecordResult
+                .notFound();
+
         when(
             repository.tryClaim(
                 RECORD_ID,
@@ -117,10 +127,7 @@ class ClaimKafkaDeadLetterRecordServiceTest {
                 LEASE_DURATION,
                 MAX_ATTEMPTS
             )
-        )
-            .thenReturn(
-                Optional.empty()
-            );
+        ).thenReturn(repositoryResult);
 
         ClaimKafkaDeadLetterRecordResult result =
             service.claim(
@@ -129,11 +136,70 @@ class ClaimKafkaDeadLetterRecordServiceTest {
                 )
             );
 
-        assertThat(result.isClaimed())
-            .isFalse();
+        assertThat(result)
+            .isSameAs(repositoryResult);
 
-        assertThat(result.record())
-            .isNull();
+        assertThat(result.isNotFound())
+            .isTrue();
+    }
+
+    @Test
+    void shouldReturnNotClaimableResult() {
+        ClaimKafkaDeadLetterRecordResult
+            repositoryResult =
+            ClaimKafkaDeadLetterRecordResult
+                .notClaimable();
+
+        when(
+            repository.tryClaim(
+                RECORD_ID,
+                WORKER_ID,
+                CLAIMED_AT,
+                LEASE_DURATION,
+                MAX_ATTEMPTS
+            )
+        ).thenReturn(repositoryResult);
+
+        ClaimKafkaDeadLetterRecordResult result =
+            service.claim(
+                new ClaimKafkaDeadLetterRecordCommand(
+                    RECORD_ID
+                )
+            );
+
+        assertThat(result)
+            .isSameAs(repositoryResult);
+
+        assertThat(result.isNotClaimable())
+            .isTrue();
+    }
+
+    @Test
+    void shouldRejectNullRepositoryResult() {
+        when(
+            repository.tryClaim(
+                RECORD_ID,
+                WORKER_ID,
+                CLAIMED_AT,
+                LEASE_DURATION,
+                MAX_ATTEMPTS
+            )
+        ).thenReturn(null);
+
+        assertThatThrownBy(
+            () ->
+                service.claim(
+                    new ClaimKafkaDeadLetterRecordCommand(
+                        RECORD_ID
+                    )
+                )
+        )
+            .isInstanceOf(
+                NullPointerException.class
+            )
+            .hasMessage(
+                "claim result must not be null"
+            );
     }
 
     @Test
@@ -147,6 +213,8 @@ class ClaimKafkaDeadLetterRecordServiceTest {
             .hasMessage(
                 "command must not be null"
             );
+
+        verifyNoInteractions(repository);
     }
 
     @Test

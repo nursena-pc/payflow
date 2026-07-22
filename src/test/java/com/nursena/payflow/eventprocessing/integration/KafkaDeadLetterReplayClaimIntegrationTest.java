@@ -7,7 +7,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -15,6 +14,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import com.nursena.payflow.eventprocessing.application.model.ClaimKafkaDeadLetterRecordResult;
 import com.nursena.payflow.eventprocessing.application.port.out.KafkaDeadLetterReplayRepositoryPort;
 import com.nursena.payflow.eventprocessing.domain.model.KafkaDeadLetterRecord;
 import com.nursena.payflow.eventprocessing.domain.model.KafkaDeadLetterRecordStatus;
@@ -99,7 +99,7 @@ class KafkaDeadLetterReplayClaimIntegrationTest {
             0
         );
 
-        Optional<KafkaDeadLetterRecord> result =
+        ClaimKafkaDeadLetterRecordResult result =
             repositoryPort.tryClaim(
                 recordId,
                 "replay-worker-1",
@@ -108,11 +108,14 @@ class KafkaDeadLetterReplayClaimIntegrationTest {
                 3
             );
 
-        assertThat(result)
-            .isPresent();
+        assertThat(result.isClaimed())
+            .isTrue();
 
         KafkaDeadLetterRecord claimed =
-            result.orElseThrow();
+            result.record();
+
+        assertThat(claimed)
+            .isNotNull();
 
         assertThat(claimed.status())
             .isEqualTo(
@@ -193,18 +196,22 @@ class KafkaDeadLetterReplayClaimIntegrationTest {
             0
         );
 
-        assertThat(
+        ClaimKafkaDeadLetterRecordResult
+            activeLeaseResult =
             repositoryPort.tryClaim(
                 activeRecordId,
                 "new-worker",
                 CLAIMED_AT,
                 LEASE_DURATION,
                 3
-            )
-        )
-            .isEmpty();
+            );
 
-        Optional<KafkaDeadLetterRecord> reclaimed =
+        assertThat(
+            activeLeaseResult.isNotClaimable()
+        )
+            .isTrue();
+
+        ClaimKafkaDeadLetterRecordResult reclaimed =
             repositoryPort.tryClaim(
                 expiredRecordId,
                 "new-worker",
@@ -213,11 +220,11 @@ class KafkaDeadLetterReplayClaimIntegrationTest {
                 3
             );
 
-        assertThat(reclaimed)
-            .isPresent();
+        assertThat(reclaimed.isClaimed())
+            .isTrue();
 
         assertThat(
-            reclaimed.orElseThrow().replayCount()
+            reclaimed.record().replayCount()
         )
             .isEqualTo(2);
 
@@ -259,7 +266,7 @@ class KafkaDeadLetterReplayClaimIntegrationTest {
             2
         );
 
-        Optional<KafkaDeadLetterRecord> firstClaim =
+        ClaimKafkaDeadLetterRecordResult firstClaim =
             repositoryPort.tryClaim(
                 derivedRecordId,
                 "replay-worker-1",
@@ -268,22 +275,22 @@ class KafkaDeadLetterReplayClaimIntegrationTest {
                 3
             );
 
-        assertThat(firstClaim)
-            .isPresent();
+        assertThat(firstClaim.isClaimed())
+            .isTrue();
 
         assertThat(
-            firstClaim.orElseThrow()
+            firstClaim.record()
                 .replayAttemptBase()
         )
             .isEqualTo(2);
 
         assertThat(
-            firstClaim.orElseThrow()
+            firstClaim.record()
                 .replayCount()
         )
             .isEqualTo(1);
 
-        Optional<KafkaDeadLetterRecord> secondClaim =
+        ClaimKafkaDeadLetterRecordResult secondClaim =
             repositoryPort.tryClaim(
                 derivedRecordId,
                 "replay-worker-2",
@@ -294,8 +301,8 @@ class KafkaDeadLetterReplayClaimIntegrationTest {
                 3
             );
 
-        assertThat(secondClaim)
-            .isEmpty();
+        assertThat(secondClaim.isNotClaimable())
+            .isTrue();
 
         assertThat(
             stateOf(derivedRecordId)
@@ -346,27 +353,96 @@ class KafkaDeadLetterReplayClaimIntegrationTest {
             0
         );
 
-        assertThat(
+        ClaimKafkaDeadLetterRecordResult
+            nullPayloadResult =
             repositoryPort.tryClaim(
                 nullPayloadId,
                 "replay-worker-1",
                 CLAIMED_AT,
                 LEASE_DURATION,
                 3
-            )
-        )
-            .isEmpty();
+            );
 
         assertThat(
+            nullPayloadResult.isNotClaimable()
+        )
+            .isTrue();
+
+        ClaimKafkaDeadLetterRecordResult
+            deadLetterSourceResult =
             repositoryPort.tryClaim(
                 deadLetterSourceId,
                 "replay-worker-1",
                 CLAIMED_AT,
                 LEASE_DURATION,
                 3
-            )
+            );
+
+        assertThat(
+            deadLetterSourceResult.isNotClaimable()
         )
-            .isEmpty();
+            .isTrue();
+    }
+
+    @Test
+    void shouldDistinguishMissingRecordFromUnclaimableRecord() {
+        UUID missingRecordId =
+            UUID.fromString(
+                "80000000-0000-0000-0000-000000001408"
+            );
+
+        UUID replayedRecordId =
+            UUID.fromString(
+                "80000000-0000-0000-0000-000000001409"
+            );
+
+        insertRecord(
+            replayedRecordId,
+            49L,
+            ORIGINAL_TOPIC,
+            "{}",
+            "REPLAYED",
+            1,
+            CLAIMED_AT.minusSeconds(30),
+            null,
+            null,
+            null,
+            replayedRecordId,
+            0
+        );
+
+        ClaimKafkaDeadLetterRecordResult
+            missingResult =
+            repositoryPort.tryClaim(
+                missingRecordId,
+                "replay-worker-1",
+                CLAIMED_AT,
+                LEASE_DURATION,
+                3
+            );
+
+        ClaimKafkaDeadLetterRecordResult
+            unclaimableResult =
+            repositoryPort.tryClaim(
+                replayedRecordId,
+                "replay-worker-1",
+                CLAIMED_AT,
+                LEASE_DURATION,
+                3
+            );
+
+        assertThat(missingResult.isNotFound())
+            .isTrue();
+
+        assertThat(
+            unclaimableResult.isNotClaimable()
+        )
+            .isTrue();
+
+        assertThat(
+            stateOf(replayedRecordId).status()
+        )
+            .isEqualTo("REPLAYED");
     }
 
     @Test
@@ -408,7 +484,7 @@ class KafkaDeadLetterReplayClaimIntegrationTest {
         CountDownLatch start =
             new CountDownLatch(1);
 
-        List<Future<Optional<KafkaDeadLetterRecord>>>
+        List<Future<ClaimKafkaDeadLetterRecordResult>>
             futures =
             new ArrayList<>();
 
@@ -465,7 +541,7 @@ class KafkaDeadLetterReplayClaimIntegrationTest {
             long successfulClaims = 0;
 
             for (
-                Future<Optional<KafkaDeadLetterRecord>>
+                Future<ClaimKafkaDeadLetterRecordResult>
                     future
                 : futures
             ) {
@@ -473,7 +549,7 @@ class KafkaDeadLetterReplayClaimIntegrationTest {
                     future.get(
                         10,
                         TimeUnit.SECONDS
-                    ).isPresent()
+                    ).isClaimed()
                 ) {
                     successfulClaims++;
                 }
