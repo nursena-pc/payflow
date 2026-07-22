@@ -64,6 +64,15 @@ class OpenApiJsonContractIntegrationTest {
     private static final String TRANSACTIONS_PATH =
         "/api/v1/transactions/me";
 
+    private static final String
+        KAFKA_DEAD_LETTERS_PATH =
+        "/api/v1/operations/kafka/dead-letters";
+
+    private static final String
+        KAFKA_DEAD_LETTER_DETAILS_PATH =
+        KAFKA_DEAD_LETTERS_PATH
+            + "/{recordId}";
+
     @Container
     @ServiceConnection
     private static final PostgreSQLContainer<?> POSTGRES =
@@ -159,7 +168,9 @@ class OpenApiJsonContractIntegrationTest {
             CURRENT_WALLET_PATH,
             TOP_UP_PATH,
             TRANSFERS_PATH,
-            TRANSACTIONS_PATH
+            TRANSACTIONS_PATH,
+            KAFKA_DEAD_LETTERS_PATH,
+            KAFKA_DEAD_LETTER_DETAILS_PATH
         );
 
         JsonNode health =
@@ -328,6 +339,52 @@ class OpenApiJsonContractIntegrationTest {
             "status",
             "from",
             "to"
+        );
+        JsonNode deadLetters =
+            operation(
+                KAFKA_DEAD_LETTERS_PATH,
+                "get"
+            );
+
+        assertAuthenticatedOperation(
+            deadLetters,
+            "listKafkaDeadLetterRecords",
+            new String[] {
+                "200",
+                "400",
+                "401",
+                "403"
+            }
+        );
+
+        assertParameterNames(
+            deadLetters,
+            "page",
+            "size",
+            "status"
+        );
+
+        JsonNode deadLetterDetails =
+            operation(
+                KAFKA_DEAD_LETTER_DETAILS_PATH,
+                "get"
+            );
+
+        assertAuthenticatedOperation(
+            deadLetterDetails,
+            "getKafkaDeadLetterRecord",
+            new String[] {
+                "200",
+                "400",
+                "401",
+                "403",
+                "404"
+            }
+        );
+
+        assertParameterNames(
+            deadLetterDetails,
+            "recordId"
         );
     }
 
@@ -534,6 +591,191 @@ class OpenApiJsonContractIntegrationTest {
         assertThat(
             fieldNames(historyItemProperties)
         ).doesNotContain("idempotencyKey");
+    }
+
+    @Test
+    void shouldExposeKafkaDeadLetterQueryContract() {
+        JsonNode deadLetters =
+            operation(
+                KAFKA_DEAD_LETTERS_PATH,
+                "get"
+            );
+
+        JsonNode page =
+            findParameter(
+                deadLetters,
+                "page"
+            );
+
+        assertQueryParameter(page);
+
+        assertThat(
+            page.path("schema")
+                .path("minimum")
+                .asInt()
+        ).isZero();
+
+        assertThat(
+            page.path("schema")
+                .path("default")
+                .asInt()
+        ).isZero();
+
+        JsonNode size =
+            findParameter(
+                deadLetters,
+                "size"
+            );
+
+        assertQueryParameter(size);
+
+        assertThat(
+            size.path("schema")
+                .path("minimum")
+                .asInt()
+        ).isEqualTo(1);
+
+        assertThat(
+            size.path("schema")
+                .path("maximum")
+                .asInt()
+        ).isEqualTo(100);
+
+        assertThat(
+            size.path("schema")
+                .path("default")
+                .asInt()
+        ).isEqualTo(20);
+
+        JsonNode status =
+            findParameter(
+                deadLetters,
+                "status"
+            );
+
+        assertQueryParameter(status);
+
+        assertThat(
+            textValues(
+                status.path("schema")
+                    .path("enum")
+            )
+        ).containsExactlyInAnyOrder(
+            "RECEIVED",
+            "REPLAYING",
+            "REPLAYED",
+            "REPLAY_FAILED",
+            "DISCARDED"
+        );
+
+        JsonNode deadLetterDetails =
+            operation(
+                KAFKA_DEAD_LETTER_DETAILS_PATH,
+                "get"
+            );
+
+        JsonNode recordId =
+            findParameter(
+                deadLetterDetails,
+                "recordId"
+            );
+
+        assertThat(
+            recordId.path("in").asText()
+        ).isEqualTo("path");
+
+        assertThat(
+            recordId.path("required").asBoolean()
+        ).isTrue();
+
+        assertThat(
+            recordId.path("schema")
+                .path("type")
+                .asText()
+        ).isEqualTo("string");
+
+        assertThat(
+            recordId.path("schema")
+                .path("format")
+                .asText()
+        ).isEqualTo("uuid");
+
+        JsonNode schemas =
+            openApi
+                .path("components")
+                .path("schemas");
+
+        JsonNode summaryProperties =
+            schemas
+                .path(
+                    "KafkaDeadLetterRecordSummaryResponse"
+                )
+                .path("properties");
+
+        assertThat(
+            fieldNames(summaryProperties)
+        )
+            .contains(
+                "id",
+                "status",
+                "deadLetterTopic",
+                "originalTopic",
+                "replayCount",
+                "replayAttemptBase",
+                "totalReplayAttempts",
+                "payloadAvailable"
+            )
+            .doesNotContain(
+                "payload",
+                "recordKey",
+                "replayLeaseOwner"
+            );
+
+        JsonNode detailsProperties =
+            schemas
+                .path(
+                    "KafkaDeadLetterRecordDetailsResponse"
+                )
+                .path("properties");
+
+        assertThat(
+            fieldNames(detailsProperties)
+        )
+            .contains(
+                "id",
+                "status",
+                "exceptionMessage",
+                "lastReplayError",
+                "replayLeaseUntil",
+                "payloadAvailable"
+            )
+            .doesNotContain(
+                "summary",
+                "payload",
+                "recordKey",
+                "replayLeaseOwner"
+            );
+
+        JsonNode pageProperties =
+            schemas
+                .path(
+                    "KafkaDeadLetterRecordPageResponse"
+                )
+                .path("properties");
+
+        assertThat(
+            fieldNames(pageProperties)
+        ).containsExactlyInAnyOrder(
+            "items",
+            "page",
+            "size",
+            "totalElements",
+            "totalPages",
+            "first",
+            "last",
+            "hasNext",
+            "hasPrevious"
+        );
     }
 
     private JsonNode operation(
