@@ -69,30 +69,26 @@ public class ClaimKafkaDeadLetterRecordService
     public ClaimKafkaDeadLetterRecordResult claim(
         ClaimKafkaDeadLetterRecordCommand command
     ) {
-        Objects.requireNonNull(
-            command,
-            "command must not be null"
-        );
+        ClaimKafkaDeadLetterRecordCommand
+            validatedCommand =
+            Objects.requireNonNull(
+                command,
+                "command must not be null"
+            );
 
-        Instant claimedAt =
-            currentTime();
-
-        return repository
-            .tryClaim(
-                command.recordId(),
+        ClaimKafkaDeadLetterRecordResult result =
+            repository.tryClaim(
+                validatedCommand.recordId(),
                 workerId,
-                claimedAt,
+                currentTime(),
                 leaseDuration,
                 maxReplayAttempts
-            )
-            .map(
-                ClaimKafkaDeadLetterRecordResult
-                    ::claimed
-            )
-            .orElseGet(
-                ClaimKafkaDeadLetterRecordResult
-                    ::notClaimable
             );
+
+        return Objects.requireNonNull(
+            result,
+            "claim result must not be null"
+        );
     }
 
     private Instant currentTime() {

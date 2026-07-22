@@ -27,12 +27,13 @@ public record ClaimKafkaDeadLetterRecordResult(
         }
 
         if (
-            outcome == Outcome.NOT_CLAIMABLE
+            outcome != Outcome.CLAIMED
                 && record != null
         ) {
             throw new IllegalArgumentException(
-                "NOT_CLAIMABLE result must not "
-                    + "contain a record."
+                outcome
+                    + " result must not contain "
+                    + "a record."
             );
         }
     }
@@ -51,6 +52,14 @@ public record ClaimKafkaDeadLetterRecordResult(
     }
 
     public static ClaimKafkaDeadLetterRecordResult
+    notFound() {
+        return new ClaimKafkaDeadLetterRecordResult(
+            Outcome.NOT_FOUND,
+            null
+        );
+    }
+
+    public static ClaimKafkaDeadLetterRecordResult
     notClaimable() {
         return new ClaimKafkaDeadLetterRecordResult(
             Outcome.NOT_CLAIMABLE,
@@ -62,9 +71,18 @@ public record ClaimKafkaDeadLetterRecordResult(
         return outcome == Outcome.CLAIMED;
     }
 
+    public boolean isNotFound() {
+        return outcome == Outcome.NOT_FOUND;
+    }
+
+    public boolean isNotClaimable() {
+        return outcome == Outcome.NOT_CLAIMABLE;
+    }
+
     public enum Outcome {
 
         CLAIMED,
+        NOT_FOUND,
         NOT_CLAIMABLE
     }
 }

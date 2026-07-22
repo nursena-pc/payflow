@@ -6,11 +6,10 @@ import java.sql.Timestamp;
 import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 
+import com.nursena.payflow.eventprocessing.application.model.ClaimKafkaDeadLetterRecordResult;
 import com.nursena.payflow.eventprocessing.application.port.out.KafkaDeadLetterReplayLifecyclePort;
 import com.nursena.payflow.eventprocessing.application.port.out.KafkaDeadLetterReplayRepositoryPort;
 import com.nursena.payflow.eventprocessing.domain.model.KafkaDeadLetterRecord;
@@ -28,55 +27,105 @@ class JdbcKafkaDeadLetterReplayRepositoryAdapter
         MAX_WORKER_ID_LENGTH = 200;
 
     private static final String CLAIM_SQL = """
+    WITH target AS MATERIALIZED (
+        SELECT id
+        FROM kafka_dead_letter_records
+        WHERE id = ?
+        FOR UPDATE
+    ),
+    claimed AS (
         UPDATE kafka_dead_letter_records
+            AS record
         SET
             status = 'REPLAYING',
-            replay_count = replay_count + 1,
+            replay_count =
+                record.replay_count + 1,
             last_replayed_at = ?,
             replay_lease_owner = ?,
             replay_lease_until = ?,
             last_replay_error = NULL
-        WHERE id = ?
+        FROM target
+        WHERE record.id = target.id
           AND (
-                replay_attempt_base::BIGINT
-                + replay_count::BIGINT
+                record.replay_attempt_base::BIGINT
+                + record.replay_count::BIGINT
               ) < ?
-          AND payload IS NOT NULL
-          AND btrim(payload) <> ''
-          AND original_topic <> dlt_topic
+          AND record.payload IS NOT NULL
+          AND btrim(record.payload) <> ''
+          AND record.original_topic
+                <> record.dlt_topic
           AND (
-                status IN (
+                record.status IN (
                     'RECEIVED',
                     'REPLAY_FAILED'
                 )
                 OR (
-                    status = 'REPLAYING'
-                    AND replay_lease_until <= ?
+                    record.status = 'REPLAYING'
+                    AND record.replay_lease_until <= ?
                 )
           )
         RETURNING
-            id,
-            dlt_topic,
-            dlt_partition,
-            dlt_offset,
-            original_topic,
-            original_partition,
-            original_offset,
-            original_consumer_group,
-            record_key,
-            payload,
-            exception_type,
-            exception_message,
-            status,
-            replay_count,
-            received_at,
-            last_replayed_at,
-            replay_lease_owner,
-            replay_lease_until,
-            last_replay_error,
-            replay_origin_id,
-            replay_attempt_base
-        """;
+            record.id,
+            record.dlt_topic,
+            record.dlt_partition,
+            record.dlt_offset,
+            record.original_topic,
+            record.original_partition,
+            record.original_offset,
+            record.original_consumer_group,
+            record.record_key,
+            record.payload,
+            record.exception_type,
+            record.exception_message,
+            record.status,
+            record.replay_count,
+            record.received_at,
+            record.last_replayed_at,
+            record.replay_lease_owner,
+            record.replay_lease_until,
+            record.last_replay_error,
+            record.replay_origin_id,
+            record.replay_attempt_base
+    )
+    SELECT
+        CASE
+            WHEN claimed.id IS NOT NULL
+                THEN 'CLAIMED'
+            WHEN EXISTS (
+                SELECT 1
+                FROM target
+            )
+                THEN 'NOT_CLAIMABLE'
+            ELSE 'NOT_FOUND'
+        END AS claim_outcome,
+        claimed.id,
+        claimed.dlt_topic,
+        claimed.dlt_partition,
+        claimed.dlt_offset,
+        claimed.original_topic,
+        claimed.original_partition,
+        claimed.original_offset,
+        claimed.original_consumer_group,
+        claimed.record_key,
+        claimed.payload,
+        claimed.exception_type,
+        claimed.exception_message,
+        claimed.status,
+        claimed.replay_count,
+        claimed.received_at,
+        claimed.last_replayed_at,
+        claimed.replay_lease_owner,
+        claimed.replay_lease_until,
+        claimed.last_replay_error,
+        claimed.replay_origin_id,
+        claimed.replay_attempt_base
+    FROM (
+        VALUES (1)
+    ) AS anchor(value)
+    LEFT JOIN claimed
+        ON TRUE
+    """;
+
     private static final String
         MARK_REPLAYED_SQL = """
         UPDATE kafka_dead_letter_records
@@ -120,7 +169,7 @@ class JdbcKafkaDeadLetterReplayRepositoryAdapter
     }
 
     @Override
-    public Optional<KafkaDeadLetterRecord>
+    public ClaimKafkaDeadLetterRecordResult
     tryClaim(
         UUID recordId,
         String workerId,
@@ -161,34 +210,30 @@ class JdbcKafkaDeadLetterReplayRepositoryAdapter
                 validatedLeaseDuration
             );
 
-        List<KafkaDeadLetterRecord> claimed =
-            jdbcTemplate.query(
+        ClaimKafkaDeadLetterRecordResult result =
+            jdbcTemplate.queryForObject(
                 CLAIM_SQL,
                 JdbcKafkaDeadLetterReplayRepositoryAdapter
-                    ::mapRecord,
+                    ::mapClaimResult,
+                validatedRecordId,
                 Timestamp.from(
                     validatedClaimedAt
                 ),
                 validatedWorkerId,
                 Timestamp.from(leaseUntil),
-                validatedRecordId,
                 maxReplayAttempts,
                 Timestamp.from(
                     validatedClaimedAt
                 )
             );
 
-        if (claimed.size() > 1) {
-            throw new IllegalStateException(
-                "Kafka dead-letter claim returned "
-                    + claimed.size()
-                    + " records."
-            );
-        }
-
-        return claimed.stream()
-            .findFirst();
+        return Objects.requireNonNull(
+            result,
+            "Kafka dead-letter claim result "
+                + "must not be null"
+        );
     }
+
     @Override
     public boolean tryMarkReplayed(
         UUID recordId,
@@ -273,6 +318,44 @@ class JdbcKafkaDeadLetterReplayRepositoryAdapter
             "mark replay failed"
         );
     }
+    private static ClaimKafkaDeadLetterRecordResult
+    mapClaimResult(
+        ResultSet resultSet,
+        int rowNumber
+    ) throws SQLException {
+
+        String outcome =
+            resultSet.getString(
+                "claim_outcome"
+            );
+
+        return switch (outcome) {
+            case "CLAIMED" ->
+                ClaimKafkaDeadLetterRecordResult
+                    .claimed(
+                        mapRecord(
+                            resultSet,
+                            rowNumber
+                        )
+                    );
+
+            case "NOT_FOUND" ->
+                ClaimKafkaDeadLetterRecordResult
+                    .notFound();
+
+            case "NOT_CLAIMABLE" ->
+                ClaimKafkaDeadLetterRecordResult
+                    .notClaimable();
+
+            default ->
+                throw new SQLException(
+                    "Unknown Kafka dead-letter "
+                        + "claim outcome: "
+                        + outcome
+                );
+        };
+    }
+
     private static KafkaDeadLetterRecord
     mapRecord(
         ResultSet resultSet,
