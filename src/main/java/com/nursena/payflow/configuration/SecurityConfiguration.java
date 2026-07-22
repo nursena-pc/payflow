@@ -3,13 +3,16 @@ package com.nursena.payflow.configuration;
 import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.http.HttpMethod.POST;
 
+import com.nursena.payflow.configuration.security.OperationsAuthorities;
+import com.nursena.payflow.configuration.security.PayFlowJwtGrantedAuthoritiesConverter;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
@@ -29,7 +32,8 @@ public class SecurityConfiguration {
 
     @Bean
     SecurityFilterChain securityFilterChain(
-        HttpSecurity http
+        HttpSecurity http,
+        JwtAuthenticationConverter jwtAuthenticationConverter
     ) throws Exception {
         return http
             .csrf(csrf -> csrf.disable())
@@ -41,6 +45,12 @@ public class SecurityConfiguration {
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers(PUBLIC_ENDPOINTS)
                 .permitAll()
+                .requestMatchers(
+                    "/api/v1/operations/**"
+                )
+                .hasAuthority(
+                    OperationsAuthorities.OPERATIONS
+                )
                 .requestMatchers(
                     GET,
                     "/api/v1/users/me",
@@ -59,8 +69,10 @@ public class SecurityConfiguration {
                 .denyAll()
             )
             .oauth2ResourceServer(resourceServer ->
-                resourceServer.jwt(
-                    Customizer.withDefaults()
+                resourceServer.jwt(jwt ->
+                    jwt.jwtAuthenticationConverter(
+                        jwtAuthenticationConverter
+                    )
                 )
             )
             .httpBasic(httpBasic ->
@@ -70,6 +82,18 @@ public class SecurityConfiguration {
                 formLogin.disable()
             )
             .build();
+    }
+
+    @Bean
+    JwtAuthenticationConverter jwtAuthenticationConverter() {
+        JwtAuthenticationConverter converter =
+            new JwtAuthenticationConverter();
+
+        converter.setJwtGrantedAuthoritiesConverter(
+            new PayFlowJwtGrantedAuthoritiesConverter()
+        );
+
+        return converter;
     }
 
     @Bean
