@@ -73,6 +73,16 @@ class OpenApiJsonContractIntegrationTest {
         KAFKA_DEAD_LETTERS_PATH
             + "/{recordId}";
 
+    private static final String
+        KAFKA_DEAD_LETTER_REPLAY_PATH =
+        KAFKA_DEAD_LETTERS_PATH
+            + "/{recordId}/replay";
+
+    private static final String
+        KAFKA_DEAD_LETTER_DISCARD_PATH =
+        KAFKA_DEAD_LETTERS_PATH
+            + "/{recordId}/discard";
+
     @Container
     @ServiceConnection
     private static final PostgreSQLContainer<?> POSTGRES =
@@ -170,7 +180,9 @@ class OpenApiJsonContractIntegrationTest {
             TRANSFERS_PATH,
             TRANSACTIONS_PATH,
             KAFKA_DEAD_LETTERS_PATH,
-            KAFKA_DEAD_LETTER_DETAILS_PATH
+            KAFKA_DEAD_LETTER_DETAILS_PATH,
+            KAFKA_DEAD_LETTER_REPLAY_PATH,
+            KAFKA_DEAD_LETTER_DISCARD_PATH
         );
 
         JsonNode health =
@@ -369,6 +381,56 @@ class OpenApiJsonContractIntegrationTest {
                 KAFKA_DEAD_LETTER_DETAILS_PATH,
                 "get"
             );
+
+        JsonNode replayDeadLetter =
+            operation(
+                KAFKA_DEAD_LETTER_REPLAY_PATH,
+                "post"
+            );
+
+        assertAuthenticatedOperation(
+            replayDeadLetter,
+            "replayKafkaDeadLetterRecord",
+            new String[] {
+                "200",
+                "400",
+                "401",
+                "403",
+                "404",
+                "409",
+                "502",
+                "503"
+            }
+        );
+
+        assertParameterNames(
+            replayDeadLetter,
+            "recordId"
+        );
+
+        JsonNode discardDeadLetter =
+            operation(
+                KAFKA_DEAD_LETTER_DISCARD_PATH,
+                "post"
+            );
+
+        assertAuthenticatedOperation(
+            discardDeadLetter,
+            "discardKafkaDeadLetterRecord",
+            new String[] {
+                "204",
+                "400",
+                "401",
+                "403",
+                "404",
+                "409"
+            }
+        );
+
+        assertParameterNames(
+            discardDeadLetter,
+            "recordId"
+        );
 
         assertAuthenticatedOperation(
             deadLetterDetails,
@@ -680,25 +742,7 @@ class OpenApiJsonContractIntegrationTest {
                 "recordId"
             );
 
-        assertThat(
-            recordId.path("in").asText()
-        ).isEqualTo("path");
-
-        assertThat(
-            recordId.path("required").asBoolean()
-        ).isTrue();
-
-        assertThat(
-            recordId.path("schema")
-                .path("type")
-                .asText()
-        ).isEqualTo("string");
-
-        assertThat(
-            recordId.path("schema")
-                .path("format")
-                .asText()
-        ).isEqualTo("uuid");
+        assertUuidPathParameter(recordId);
 
         JsonNode schemas =
             openApi
@@ -777,6 +821,118 @@ class OpenApiJsonContractIntegrationTest {
             "hasPrevious"
         );
     }
+
+    @Test
+    void shouldExposeKafkaDeadLetterCommandContract() {
+        JsonNode replay =
+            operation(
+                KAFKA_DEAD_LETTER_REPLAY_PATH,
+                "post"
+            );
+
+        JsonNode replayRecordId =
+            findParameter(
+                replay,
+                "recordId"
+            );
+
+        assertUuidPathParameter(replayRecordId);
+
+        JsonNode replaySuccess =
+            replay
+                .path("responses")
+                .path("200")
+                .path("content")
+                .path(
+                    MediaType.APPLICATION_JSON_VALUE
+                )
+                .path("schema");
+
+        assertThat(
+            replaySuccess.path("$ref").asText()
+        ).isEqualTo(
+            "#/components/schemas/"
+                + "KafkaDeadLetterReplayResponse"
+        );
+
+        JsonNode replayProperties =
+            openApi
+                .path("components")
+                .path("schemas")
+                .path(
+                    "KafkaDeadLetterReplayResponse"
+                )
+                .path("properties");
+
+        assertThat(
+            fieldNames(replayProperties)
+        )
+            .containsExactlyInAnyOrder(
+                "recordId",
+                "status"
+            )
+            .doesNotContain(
+                "payload",
+                "recordKey",
+                "replayLeaseOwner",
+                "exceptionMessage",
+                "lastReplayError"
+            );
+
+        JsonNode replayResponseRecordId =
+            replayProperties.path("recordId");
+
+        assertThat(
+            replayResponseRecordId
+                .path("type")
+                .asText()
+        ).isEqualTo("string");
+
+        assertThat(
+            replayResponseRecordId
+                .path("format")
+                .asText()
+        ).isEqualTo("uuid");
+
+        JsonNode replayStatus =
+            replayProperties.path("status");
+
+        assertThat(
+            replayStatus.path("type").asText()
+        ).isEqualTo("string");
+
+        assertThat(
+            textValues(
+                replayStatus.path("enum")
+            )
+        ).containsExactly("REPLAYED");
+
+        JsonNode discard =
+            operation(
+                KAFKA_DEAD_LETTER_DISCARD_PATH,
+                "post"
+            );
+
+        JsonNode discardRecordId =
+            findParameter(
+                discard,
+                "recordId"
+            );
+
+        assertUuidPathParameter(discardRecordId);
+
+        JsonNode discardSuccess =
+            discard
+                .path("responses")
+                .path("204");
+
+        assertThat(discardSuccess.isObject())
+            .isTrue();
+
+        assertThat(discardSuccess.has("content"))
+            .isFalse();
+    }
+
 
     private JsonNode operation(
         String path,
@@ -919,6 +1075,28 @@ class OpenApiJsonContractIntegrationTest {
                         + expectedName
                 )
             );
+    }
+    private static void assertUuidPathParameter(
+        JsonNode parameter
+    ) {
+        assertThat(parameter.path("in").asText())
+            .isEqualTo("path");
+
+        assertThat(
+            parameter.path("required").asBoolean()
+        ).isTrue();
+
+        assertThat(
+            parameter.path("schema")
+                .path("type")
+                .asText()
+        ).isEqualTo("string");
+
+        assertThat(
+            parameter.path("schema")
+                .path("format")
+                .asText()
+        ).isEqualTo("uuid");
     }
 
     private static void assertQueryParameter(
