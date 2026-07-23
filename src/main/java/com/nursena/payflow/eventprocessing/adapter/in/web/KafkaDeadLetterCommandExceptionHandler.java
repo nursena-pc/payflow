@@ -5,6 +5,8 @@ import java.util.List;
 
 import com.nursena.payflow.common.api.ApiError;
 import com.nursena.payflow.eventprocessing.domain.exception
+    .KafkaDeadLetterCommandAuditException;
+import com.nursena.payflow.eventprocessing.domain.exception
     .KafkaDeadLetterCommandException;
 import com.nursena.payflow.eventprocessing.domain.exception
     .KafkaDeadLetterRecordNotFoundException;
@@ -61,6 +63,39 @@ KafkaDeadLetterCommandExceptionHandler {
         );
     }
 
+    @ExceptionHandler(
+        KafkaDeadLetterCommandAuditException.class
+    )
+    ResponseEntity<ApiError> handleAuditFailure(
+        KafkaDeadLetterCommandAuditException
+            exception,
+        HttpServletRequest request
+    ) {
+        return response(
+            auditStatusOf(exception),
+            auditCodeOf(exception),
+            exception.getMessage(),
+            request
+        );
+    }
+
+    @ExceptionHandler(
+        KafkaDeadLetterOperatorIdentityException.class
+    )
+    ResponseEntity<ApiError> handleInvalidOperatorIdentity(
+        KafkaDeadLetterOperatorIdentityException
+            exception,
+        HttpServletRequest request
+    ) {
+        return response(
+            HttpStatus.UNAUTHORIZED,
+            KafkaDeadLetterOperatorIdentityException
+                .CODE,
+            exception.getMessage(),
+            request
+        );
+    }
+
     @ExceptionHandler({
         HandlerMethodValidationException.class,
         MethodArgumentTypeMismatchException.class
@@ -75,6 +110,39 @@ KafkaDeadLetterCommandExceptionHandler {
             "Request validation failed.",
             request
         );
+    }
+
+    private static HttpStatus auditStatusOf(
+        KafkaDeadLetterCommandAuditException
+            exception
+    ) {
+        return switch (exception.getReason()) {
+            case ATTEMPT_PERSISTENCE_FAILED,
+                 COMPLETION_PERSISTENCE_FAILED ->
+                HttpStatus.SERVICE_UNAVAILABLE;
+
+            case COMMAND_INTERNAL_FAILURE ->
+                HttpStatus.INTERNAL_SERVER_ERROR;
+        };
+    }
+
+    private static String auditCodeOf(
+        KafkaDeadLetterCommandAuditException
+            exception
+    ) {
+        return switch (exception.getReason()) {
+            case ATTEMPT_PERSISTENCE_FAILED ->
+                "KAFKA_DEAD_LETTER_COMMAND_"
+                    + "AUDIT_UNAVAILABLE";
+
+            case COMPLETION_PERSISTENCE_FAILED ->
+                "KAFKA_DEAD_LETTER_COMMAND_"
+                    + "AUDIT_COMPLETION_UNAVAILABLE";
+
+            case COMMAND_INTERNAL_FAILURE ->
+                "KAFKA_DEAD_LETTER_COMMAND_"
+                    + "INTERNAL_FAILURE";
+        };
     }
 
     private static HttpStatus statusOf(
