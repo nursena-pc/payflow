@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "9c519cd7-2f77-464b-a5b6-308f7167afb1",
     "name": "PayFlow API",
-    "description": "Executable local workflow for the PayFlow simulated digital-wallet API. No real money is processed.",
+    "description": "Executable local workflow for the PayFlow simulated digital-wallet API, including manually gated Kafka dead-letter operations. No real money is processed.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "event": [
@@ -895,6 +895,291 @@
                   "pm.response.json().items.forEach(function (entry) {",
                   "    pm.expect(entry.direction).to.eql('OUTGOING');",
                   "    pm.expect(entry.status).to.eql('COMPLETED');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Operations",
+      "description": "Manual operator-only Kafka dead-letter workflow. Configure operatorAccessToken with a valid role=ADMIN JWT. Select and set deadLetterRecordId deliberately before running details, replay, or discard commands.",
+      "item": [
+        {
+          "name": "List Kafka Dead-Letter Records",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{operatorAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/operations/kafka/dead-letters?page=0&size=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "operations",
+                "kafka",
+                "dead-letters"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                },
+                {
+                  "key": "status",
+                  "value": "REPLAY_FAILED",
+                  "description": "Optional status filter. Enable deliberately when needed.",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Lists safe Kafka dead-letter operational metadata. The disabled status query can be enabled with RECEIVED, REPLAYING, REPLAYED, REPLAY_FAILED, or DISCARDED."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const operatorAccessToken = String(pm.environment.get('operatorAccessToken') || '').trim();",
+                  "if (!operatorAccessToken) {",
+                  "    throw new Error('Set operatorAccessToken to a valid ADMIN JWT before running Operations requests.');",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response is JSON', function () {",
+                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+                  "});",
+                  "const response = pm.response.json();",
+                  "pm.expect(response.items).to.be.an('array');",
+                  "pm.expect(response.page).to.be.a('number');",
+                  "pm.expect(response.size).to.be.a('number');",
+                  "pm.expect(response.totalElements).to.be.a('number');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Kafka Dead-Letter Record",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{operatorAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/operations/kafka/dead-letters/{{deadLetterRecordId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "operations",
+                "kafka",
+                "dead-letters",
+                "{{deadLetterRecordId}}"
+              ]
+            },
+            "description": "Returns authorized operational details for the deliberately selected dead-letter record."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const operatorAccessToken = String(pm.environment.get('operatorAccessToken') || '').trim();",
+                  "if (!operatorAccessToken) {",
+                  "    throw new Error('Set operatorAccessToken to a valid ADMIN JWT before running Operations requests.');",
+                  "}",
+                  "const deadLetterRecordId = String(pm.environment.get('deadLetterRecordId') || '').trim();",
+                  "const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;",
+                  "if (!uuidPattern.test(deadLetterRecordId)) {",
+                  "    throw new Error('Set deadLetterRecordId to a valid Kafka dead-letter UUID before running this request.');",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response is JSON', function () {",
+                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+                  "});",
+                  "const response = pm.response.json();",
+                  "const expectedId = String(pm.environment.get('deadLetterRecordId')).toLowerCase();",
+                  "pm.expect(String(response.id).toLowerCase()).to.eql(expectedId);",
+                  "pm.expect(response.status).to.be.a('string');",
+                  "pm.expect(response).to.not.have.property('payload');",
+                  "pm.expect(response).to.not.have.property('recordKey');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Replay Kafka Dead-Letter Record",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{operatorAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/operations/kafka/dead-letters/{{deadLetterRecordId}}/replay",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "operations",
+                "kafka",
+                "dead-letters",
+                "{{deadLetterRecordId}}",
+                "replay"
+              ]
+            },
+            "description": "Replays the deliberately selected claimable record. This mutates lifecycle state and publishes to the original Kafka topic."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const operatorAccessToken = String(pm.environment.get('operatorAccessToken') || '').trim();",
+                  "if (!operatorAccessToken) {",
+                  "    throw new Error('Set operatorAccessToken to a valid ADMIN JWT before running Operations requests.');",
+                  "}",
+                  "const deadLetterRecordId = String(pm.environment.get('deadLetterRecordId') || '').trim();",
+                  "const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;",
+                  "if (!uuidPattern.test(deadLetterRecordId)) {",
+                  "    throw new Error('Set deadLetterRecordId to a valid Kafka dead-letter UUID before running this request.');",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response is JSON', function () {",
+                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+                  "});",
+                  "const response = pm.response.json();",
+                  "const expectedId = String(pm.environment.get('deadLetterRecordId')).toLowerCase();",
+                  "pm.expect(String(response.recordId).toLowerCase()).to.eql(expectedId);",
+                  "pm.expect(response.status).to.eql('REPLAYED');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Discard Kafka Dead-Letter Record",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{operatorAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/operations/kafka/dead-letters/{{deadLetterRecordId}}/discard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "operations",
+                "kafka",
+                "dead-letters",
+                "{{deadLetterRecordId}}",
+                "discard"
+              ]
+            },
+            "description": "Idempotently discards the deliberately selected eligible record. This mutates lifecycle state and prevents later replay."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const operatorAccessToken = String(pm.environment.get('operatorAccessToken') || '').trim();",
+                  "if (!operatorAccessToken) {",
+                  "    throw new Error('Set operatorAccessToken to a valid ADMIN JWT before running Operations requests.');",
+                  "}",
+                  "const deadLetterRecordId = String(pm.environment.get('deadLetterRecordId') || '').trim();",
+                  "const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;",
+                  "if (!uuidPattern.test(deadLetterRecordId)) {",
+                  "    throw new Error('Set deadLetterRecordId to a valid Kafka dead-letter UUID before running this request.');",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 204', function () { pm.response.to.have.status(204); });",
+                  "pm.test('Response body is empty', function () {",
+                  "    pm.expect(pm.response.text()).to.eql('');",
                   "});"
                 ]
               }

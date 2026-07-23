@@ -93,6 +93,11 @@ public class ReplayKafkaDeadLetterRecordService
                 )
             );
 
+        if (claimResult.isNotFound()) {
+            return ReplayKafkaDeadLetterRecordResult
+                .notFound();
+        }
+
         if (!claimResult.isClaimed()) {
             return ReplayKafkaDeadLetterRecordResult
                 .notClaimable();

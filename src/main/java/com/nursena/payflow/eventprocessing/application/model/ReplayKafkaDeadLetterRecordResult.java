@@ -15,6 +15,13 @@ public record ReplayKafkaDeadLetterRecordResult(
     }
 
     public static ReplayKafkaDeadLetterRecordResult
+    notFound() {
+        return new ReplayKafkaDeadLetterRecordResult(
+            Outcome.NOT_FOUND
+        );
+    }
+
+    public static ReplayKafkaDeadLetterRecordResult
     notClaimable() {
         return new ReplayKafkaDeadLetterRecordResult(
             Outcome.NOT_CLAIMABLE
@@ -42,6 +49,10 @@ public record ReplayKafkaDeadLetterRecordResult(
         );
     }
 
+    public boolean isNotFound() {
+        return outcome == Outcome.NOT_FOUND;
+    }
+
     public boolean isNotClaimable() {
         return outcome == Outcome.NOT_CLAIMABLE;
     }
@@ -60,6 +71,7 @@ public record ReplayKafkaDeadLetterRecordResult(
 
     public enum Outcome {
 
+        NOT_FOUND,
         NOT_CLAIMABLE,
         REPLAYED,
         REPLAY_FAILED,
