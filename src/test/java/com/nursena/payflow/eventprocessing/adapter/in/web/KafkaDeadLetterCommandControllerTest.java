@@ -21,17 +21,19 @@ import com.nursena.payflow.configuration
 import com.nursena.payflow.configuration.security
     .OperationsAuthorities;
 import com.nursena.payflow.eventprocessing.application.model
-    .DiscardKafkaDeadLetterRecordCommand;
+    .OperatorDiscardKafkaDeadLetterRecordCommand;
 import com.nursena.payflow.eventprocessing.application.model
     .DiscardKafkaDeadLetterRecordResult;
 import com.nursena.payflow.eventprocessing.application.model
-    .ReplayKafkaDeadLetterRecordCommand;
+    .OperatorReplayKafkaDeadLetterRecordCommand;
 import com.nursena.payflow.eventprocessing.application.model
     .ReplayKafkaDeadLetterRecordResult;
 import com.nursena.payflow.eventprocessing.application.port.in
-    .DiscardKafkaDeadLetterRecordUseCase;
+    .OperatorDiscardKafkaDeadLetterRecordUseCase;
 import com.nursena.payflow.eventprocessing.application.port.in
-    .ReplayKafkaDeadLetterRecordUseCase;
+    .OperatorReplayKafkaDeadLetterRecordUseCase;
+import com.nursena.payflow.eventprocessing.domain.exception
+    .KafkaDeadLetterCommandAuditException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet
@@ -55,6 +57,11 @@ import org.springframework.test.web.servlet.request
 })
 class KafkaDeadLetterCommandControllerTest {
 
+    private static final UUID OPERATOR_ID =
+        UUID.fromString(
+            "70000000-0000-0000-0000-000000002401"
+        );
+
     private static final UUID RECORD_ID =
         UUID.fromString(
             "80000000-0000-0000-0000-000000002401"
@@ -73,11 +80,11 @@ class KafkaDeadLetterCommandControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private ReplayKafkaDeadLetterRecordUseCase
+    private OperatorReplayKafkaDeadLetterRecordUseCase
         replayUseCase;
 
     @MockitoBean
-    private DiscardKafkaDeadLetterRecordUseCase
+    private OperatorDiscardKafkaDeadLetterRecordUseCase
         discardUseCase;
 
     @MockitoBean
@@ -87,8 +94,9 @@ class KafkaDeadLetterCommandControllerTest {
     void shouldReplayRecordForAuthorizedOperator()
         throws Exception {
 
-        ReplayKafkaDeadLetterRecordCommand command =
-            new ReplayKafkaDeadLetterRecordCommand(
+        OperatorReplayKafkaDeadLetterRecordCommand command =
+            new OperatorReplayKafkaDeadLetterRecordCommand(
+                OPERATOR_ID,
                 RECORD_ID
             );
 
@@ -135,8 +143,9 @@ class KafkaDeadLetterCommandControllerTest {
     void shouldReturnNotFoundWhenReplayRecordIsMissing()
         throws Exception {
 
-        ReplayKafkaDeadLetterRecordCommand command =
-            new ReplayKafkaDeadLetterRecordCommand(
+        OperatorReplayKafkaDeadLetterRecordCommand command =
+            new OperatorReplayKafkaDeadLetterRecordCommand(
+                OPERATOR_ID,
                 RECORD_ID
             );
 
@@ -185,8 +194,9 @@ class KafkaDeadLetterCommandControllerTest {
     void shouldReturnConflictWhenRecordCannotBeReplayed()
         throws Exception {
 
-        ReplayKafkaDeadLetterRecordCommand command =
-            new ReplayKafkaDeadLetterRecordCommand(
+        OperatorReplayKafkaDeadLetterRecordCommand command =
+            new OperatorReplayKafkaDeadLetterRecordCommand(
+                OPERATOR_ID,
                 RECORD_ID
             );
 
@@ -236,8 +246,9 @@ class KafkaDeadLetterCommandControllerTest {
     void shouldReturnBadGatewayWhenReplayPublicationFails()
         throws Exception {
 
-        ReplayKafkaDeadLetterRecordCommand command =
-            new ReplayKafkaDeadLetterRecordCommand(
+        OperatorReplayKafkaDeadLetterRecordCommand command =
+            new OperatorReplayKafkaDeadLetterRecordCommand(
+                OPERATOR_ID,
                 RECORD_ID
             );
 
@@ -286,8 +297,9 @@ class KafkaDeadLetterCommandControllerTest {
     void shouldReturnServiceUnavailableForUnresolvedReplay()
         throws Exception {
 
-        ReplayKafkaDeadLetterRecordCommand command =
-            new ReplayKafkaDeadLetterRecordCommand(
+        OperatorReplayKafkaDeadLetterRecordCommand command =
+            new OperatorReplayKafkaDeadLetterRecordCommand(
+                OPERATOR_ID,
                 RECORD_ID
             );
 
@@ -339,8 +351,9 @@ class KafkaDeadLetterCommandControllerTest {
     void shouldDiscardRecordForAuthorizedOperator()
         throws Exception {
 
-        DiscardKafkaDeadLetterRecordCommand command =
-            new DiscardKafkaDeadLetterRecordCommand(
+        OperatorDiscardKafkaDeadLetterRecordCommand command =
+            new OperatorDiscardKafkaDeadLetterRecordCommand(
+                OPERATOR_ID,
                 RECORD_ID
             );
 
@@ -368,8 +381,9 @@ class KafkaDeadLetterCommandControllerTest {
     void shouldTreatRepeatedDiscardAsSuccessful()
         throws Exception {
 
-        DiscardKafkaDeadLetterRecordCommand command =
-            new DiscardKafkaDeadLetterRecordCommand(
+        OperatorDiscardKafkaDeadLetterRecordCommand command =
+            new OperatorDiscardKafkaDeadLetterRecordCommand(
+                OPERATOR_ID,
                 RECORD_ID
             );
 
@@ -397,8 +411,9 @@ class KafkaDeadLetterCommandControllerTest {
     void shouldReturnNotFoundWhenDiscardRecordIsMissing()
         throws Exception {
 
-        DiscardKafkaDeadLetterRecordCommand command =
-            new DiscardKafkaDeadLetterRecordCommand(
+        OperatorDiscardKafkaDeadLetterRecordCommand command =
+            new OperatorDiscardKafkaDeadLetterRecordCommand(
+                OPERATOR_ID,
                 RECORD_ID
             );
 
@@ -440,8 +455,9 @@ class KafkaDeadLetterCommandControllerTest {
     void shouldReturnConflictWhenRecordCannotBeDiscarded()
         throws Exception {
 
-        DiscardKafkaDeadLetterRecordCommand command =
-            new DiscardKafkaDeadLetterRecordCommand(
+        OperatorDiscardKafkaDeadLetterRecordCommand command =
+            new OperatorDiscardKafkaDeadLetterRecordCommand(
+                OPERATOR_ID,
                 RECORD_ID
             );
 
@@ -550,6 +566,217 @@ class KafkaDeadLetterCommandControllerTest {
     }
 
     @Test
+    void shouldRejectMalformedOperatorIdentity()
+        throws Exception {
+
+        mockMvc.perform(
+                post(REPLAY_PATH)
+                    .with(malformedOperatorJwt())
+            )
+            .andExpect(status().isUnauthorized())
+            .andExpect(
+                jsonPath("$.status")
+                    .value(401)
+            )
+            .andExpect(
+                jsonPath("$.code")
+                    .value(
+                        "KAFKA_DEAD_LETTER_OPERATOR_"
+                            + "IDENTITY_INVALID"
+                    )
+            )
+            .andExpect(
+                jsonPath("$.message")
+                    .value(
+                        "Authenticated operator "
+                            + "identity is invalid."
+                    )
+            )
+            .andExpect(
+                jsonPath("$.path")
+                    .value(REPLAY_PATH)
+            );
+
+        verifyNoInteractions(
+            replayUseCase,
+            discardUseCase
+        );
+    }
+
+    @Test
+    void shouldReturnServiceUnavailableWhenAuditAttemptFails()
+        throws Exception {
+
+        OperatorReplayKafkaDeadLetterRecordCommand command =
+            new OperatorReplayKafkaDeadLetterRecordCommand(
+                OPERATOR_ID,
+                RECORD_ID
+            );
+
+        when(
+            replayUseCase.replay(command)
+        ).thenThrow(
+            KafkaDeadLetterCommandAuditException
+                .attemptPersistenceFailed(
+                    new IllegalStateException(
+                        "sensitive database detail"
+                    )
+                )
+        );
+
+        mockMvc.perform(
+                post(REPLAY_PATH)
+                    .with(operatorJwt())
+            )
+            .andExpect(
+                status().isServiceUnavailable()
+            )
+            .andExpect(
+                jsonPath("$.status")
+                    .value(503)
+            )
+            .andExpect(
+                jsonPath("$.code")
+                    .value(
+                        "KAFKA_DEAD_LETTER_COMMAND_"
+                            + "AUDIT_UNAVAILABLE"
+                    )
+            )
+            .andExpect(
+                jsonPath("$.message")
+                    .value(
+                        "Kafka dead-letter command "
+                            + "audit attempt could not "
+                            + "be persisted."
+                    )
+            )
+            .andExpect(
+                jsonPath("$.path")
+                    .value(REPLAY_PATH)
+            );
+
+        verify(replayUseCase)
+            .replay(command);
+
+        verifyNoInteractions(discardUseCase);
+    }
+
+    @Test
+    void shouldReturnServiceUnavailableWhenCompletionAuditFails()
+        throws Exception {
+
+        OperatorDiscardKafkaDeadLetterRecordCommand command =
+            new OperatorDiscardKafkaDeadLetterRecordCommand(
+                OPERATOR_ID,
+                RECORD_ID
+            );
+
+        when(
+            discardUseCase.discard(command)
+        ).thenThrow(
+            KafkaDeadLetterCommandAuditException
+                .completionPersistenceFailed(
+                    new IllegalStateException(
+                        "sensitive database detail"
+                    )
+                )
+        );
+
+        mockMvc.perform(
+                post(DISCARD_PATH)
+                    .with(operatorJwt())
+            )
+            .andExpect(
+                status().isServiceUnavailable()
+            )
+            .andExpect(
+                jsonPath("$.status")
+                    .value(503)
+            )
+            .andExpect(
+                jsonPath("$.code")
+                    .value(
+                        "KAFKA_DEAD_LETTER_COMMAND_"
+                            + "AUDIT_COMPLETION_UNAVAILABLE"
+                    )
+            )
+            .andExpect(
+                jsonPath("$.message")
+                    .value(
+                        "Kafka dead-letter command "
+                            + "completion could not be "
+                            + "audited safely."
+                    )
+            )
+            .andExpect(
+                jsonPath("$.path")
+                    .value(DISCARD_PATH)
+            );
+
+        verify(discardUseCase)
+            .discard(command);
+
+        verifyNoInteractions(replayUseCase);
+    }
+
+    @Test
+    void shouldReturnInternalServerErrorForUnexpectedCommandFailure()
+        throws Exception {
+
+        OperatorReplayKafkaDeadLetterRecordCommand command =
+            new OperatorReplayKafkaDeadLetterRecordCommand(
+                OPERATOR_ID,
+                RECORD_ID
+            );
+
+        when(
+            replayUseCase.replay(command)
+        ).thenThrow(
+            KafkaDeadLetterCommandAuditException
+                .commandInternalFailure(
+                    new IllegalStateException(
+                        "sensitive command detail"
+                    )
+                )
+        );
+
+        mockMvc.perform(
+                post(REPLAY_PATH)
+                    .with(operatorJwt())
+            )
+            .andExpect(
+                status().isInternalServerError()
+            )
+            .andExpect(
+                jsonPath("$.status")
+                    .value(500)
+            )
+            .andExpect(
+                jsonPath("$.code")
+                    .value(
+                        "KAFKA_DEAD_LETTER_COMMAND_"
+                            + "INTERNAL_FAILURE"
+                    )
+            )
+            .andExpect(
+                jsonPath("$.message")
+                    .value(
+                        "Kafka dead-letter command "
+                            + "failed unexpectedly."
+                    )
+            )
+            .andExpect(
+                jsonPath("$.path")
+                    .value(REPLAY_PATH)
+            );
+
+        verify(replayUseCase)
+            .replay(command);
+
+        verifyNoInteractions(discardUseCase);
+    }
+
+    @Test
     void shouldRejectMalformedReplayRecordIdentifier()
         throws Exception {
 
@@ -620,6 +847,11 @@ class KafkaDeadLetterCommandControllerTest {
     private static RequestPostProcessor
     operatorJwt() {
         return jwt()
+            .jwt(
+                builder -> builder.subject(
+                    OPERATOR_ID.toString()
+                )
+            )
             .authorities(
                 new SimpleGrantedAuthority(
                     OperationsAuthorities.OPERATIONS
@@ -630,9 +862,29 @@ class KafkaDeadLetterCommandControllerTest {
     private static RequestPostProcessor
     nonOperatorJwt() {
         return jwt()
+            .jwt(
+                builder -> builder.subject(
+                    OPERATOR_ID.toString()
+                )
+            )
             .authorities(
                 new SimpleGrantedAuthority(
                     "PAYFLOW_CUSTOMER"
+                )
+            );
+    }
+
+    private static RequestPostProcessor
+    malformedOperatorJwt() {
+        return jwt()
+            .jwt(
+                builder -> builder.subject(
+                    "not-a-uuid"
+                )
+            )
+            .authorities(
+                new SimpleGrantedAuthority(
+                    OperationsAuthorities.OPERATIONS
                 )
             );
     }

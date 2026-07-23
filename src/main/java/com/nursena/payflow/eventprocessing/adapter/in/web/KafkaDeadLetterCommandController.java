@@ -10,17 +10,17 @@ import com.nursena.payflow.common.api.ApiError;
 import com.nursena.payflow.configuration
     .OpenApiConfiguration;
 import com.nursena.payflow.eventprocessing.application.model
-    .DiscardKafkaDeadLetterRecordCommand;
+    .OperatorDiscardKafkaDeadLetterRecordCommand;
 import com.nursena.payflow.eventprocessing.application.model
     .DiscardKafkaDeadLetterRecordResult;
 import com.nursena.payflow.eventprocessing.application.model
-    .ReplayKafkaDeadLetterRecordCommand;
+    .OperatorReplayKafkaDeadLetterRecordCommand;
 import com.nursena.payflow.eventprocessing.application.model
     .ReplayKafkaDeadLetterRecordResult;
 import com.nursena.payflow.eventprocessing.application.port.in
-    .DiscardKafkaDeadLetterRecordUseCase;
+    .OperatorDiscardKafkaDeadLetterRecordUseCase;
 import com.nursena.payflow.eventprocessing.application.port.in
-    .ReplayKafkaDeadLetterRecordUseCase;
+    .OperatorReplayKafkaDeadLetterRecordUseCase;
 import com.nursena.payflow.eventprocessing.domain.exception
     .KafkaDeadLetterCommandException;
 import com.nursena.payflow.eventprocessing.domain.exception
@@ -37,6 +37,9 @@ import io.swagger.v3.oas.annotations.security
     .SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation
+    .AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation
@@ -57,16 +60,16 @@ import org.springframework.web.bind.annotation
 )
 public class KafkaDeadLetterCommandController {
 
-    private final ReplayKafkaDeadLetterRecordUseCase
+    private final OperatorReplayKafkaDeadLetterRecordUseCase
         replayUseCase;
 
-    private final DiscardKafkaDeadLetterRecordUseCase
+    private final OperatorDiscardKafkaDeadLetterRecordUseCase
         discardUseCase;
 
     public KafkaDeadLetterCommandController(
-        ReplayKafkaDeadLetterRecordUseCase
+        OperatorReplayKafkaDeadLetterRecordUseCase
             replayUseCase,
-        DiscardKafkaDeadLetterRecordUseCase
+        OperatorDiscardKafkaDeadLetterRecordUseCase
             discardUseCase
     ) {
         this.replayUseCase =
@@ -129,7 +132,9 @@ public class KafkaDeadLetterCommandController {
         @ApiResponse(
             responseCode = "401",
             description =
-                "Bearer token is missing or invalid."
+                "Bearer token or authenticated "
+                    + "operator identity is missing "
+                    + "or invalid."
         ),
         @ApiResponse(
             responseCode = "403",
@@ -178,10 +183,25 @@ public class KafkaDeadLetterCommandController {
             )
         ),
         @ApiResponse(
+            responseCode = "500",
+            description =
+                "The authorized command failed "
+                    + "unexpectedly.",
+            content = @Content(
+                mediaType =
+                    APPLICATION_JSON_VALUE,
+                schema = @Schema(
+                    implementation =
+                        ApiError.class
+                )
+            )
+        ),
+        @ApiResponse(
             responseCode = "503",
             description =
                 "The replay outcome could not be "
-                    + "resolved safely.",
+                    + "resolved safely or command "
+                    + "auditing is unavailable.",
             content = @Content(
                 mediaType =
                     APPLICATION_JSON_VALUE,
@@ -195,6 +215,10 @@ public class KafkaDeadLetterCommandController {
     @PostMapping("/{recordId}/replay")
     public ResponseEntity<KafkaDeadLetterReplayResponse>
     replayKafkaDeadLetterRecord(
+        @Parameter(hidden = true)
+        @AuthenticationPrincipal
+        Jwt jwt,
+
         @Parameter(
             description =
                 "Dead-letter record identifier.",
@@ -209,7 +233,8 @@ public class KafkaDeadLetterCommandController {
         ReplayKafkaDeadLetterRecordResult result =
             Objects.requireNonNull(
                 replayUseCase.replay(
-                    new ReplayKafkaDeadLetterRecordCommand(
+                    new OperatorReplayKafkaDeadLetterRecordCommand(
+                        operatorId(jwt),
                         recordId
                     )
                 ),
@@ -260,7 +285,9 @@ public class KafkaDeadLetterCommandController {
         @ApiResponse(
             responseCode = "401",
             description =
-                "Bearer token is missing or invalid."
+                "Bearer token or authenticated "
+                    + "operator identity is missing "
+                    + "or invalid."
         ),
         @ApiResponse(
             responseCode = "403",
@@ -294,11 +321,42 @@ public class KafkaDeadLetterCommandController {
                         ApiError.class
                 )
             )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description =
+                "The authorized command failed "
+                    + "unexpectedly.",
+            content = @Content(
+                mediaType =
+                    APPLICATION_JSON_VALUE,
+                schema = @Schema(
+                    implementation =
+                        ApiError.class
+                )
+            )
+        ),
+        @ApiResponse(
+            responseCode = "503",
+            description =
+                "Command auditing is unavailable.",
+            content = @Content(
+                mediaType =
+                    APPLICATION_JSON_VALUE,
+                schema = @Schema(
+                    implementation =
+                        ApiError.class
+                )
+            )
         )
     })
     @PostMapping("/{recordId}/discard")
     public ResponseEntity<Void>
     discardKafkaDeadLetterRecord(
+        @Parameter(hidden = true)
+        @AuthenticationPrincipal
+        Jwt jwt,
+
         @Parameter(
             description =
                 "Dead-letter record identifier.",
@@ -313,7 +371,8 @@ public class KafkaDeadLetterCommandController {
         DiscardKafkaDeadLetterRecordResult result =
             Objects.requireNonNull(
                 discardUseCase.discard(
-                    new DiscardKafkaDeadLetterRecordCommand(
+                    new OperatorDiscardKafkaDeadLetterRecordCommand(
+                        operatorId(jwt),
                         recordId
                     )
                 ),
@@ -324,6 +383,24 @@ public class KafkaDeadLetterCommandController {
             recordId,
             result
         );
+    }
+
+    private static UUID operatorId(
+        Jwt jwt
+    ) {
+        if (jwt == null || jwt.getSubject() == null) {
+            throw new
+                KafkaDeadLetterOperatorIdentityException();
+        }
+
+        try {
+            return UUID.fromString(
+                jwt.getSubject()
+            );
+        } catch (IllegalArgumentException ignored) {
+            throw new
+                KafkaDeadLetterOperatorIdentityException();
+        }
     }
 
     private static ResponseEntity<

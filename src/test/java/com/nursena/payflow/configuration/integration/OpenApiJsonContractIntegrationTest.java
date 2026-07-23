@@ -398,6 +398,7 @@ class OpenApiJsonContractIntegrationTest {
                 "403",
                 "404",
                 "409",
+                "500",
                 "502",
                 "503"
             }
@@ -423,7 +424,9 @@ class OpenApiJsonContractIntegrationTest {
                 "401",
                 "403",
                 "404",
-                "409"
+                "409",
+                "500",
+                "503"
             }
         );
 
