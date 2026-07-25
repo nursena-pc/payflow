@@ -92,7 +92,7 @@ Completed capabilities include:
 - operator-only, paginated command-audit queries and chronological command timelines
 - Prometheus metrics, Grafana dashboards, and alert rules for Kafka consumer failures
 
-OpenAPI documentation and the executable Postman collection cover the implemented API. Releases through `v0.5.0` are tagged, and the current `v0.6.0` development cycle extends the operations control plane with secured command-audit investigation workflows. See the [roadmap](docs/roadmap.md).
+OpenAPI documentation and the executable Postman collection cover the implemented API. PayFlow v0.6.0 extends the operations control plane with secured command-audit investigation workflows and modernizes the GitHub Actions JavaScript runtimes. See the [roadmap](docs/roadmap.md).
 
 ## Implemented API
 
