@@ -82,6 +82,13 @@ class OpenApiJsonContractIntegrationTest {
         KAFKA_DEAD_LETTER_DISCARD_PATH =
         KAFKA_DEAD_LETTERS_PATH
             + "/{recordId}/discard";
+    private static final String
+        KAFKA_DEAD_LETTER_COMMAND_AUDITS_PATH =
+        "/api/v1/operations/kafka/dead-letter-command-audits";
+    private static final String
+        KAFKA_DEAD_LETTER_COMMAND_AUDIT_TIMELINE_PATH =
+        KAFKA_DEAD_LETTER_COMMAND_AUDITS_PATH
+            + "/{commandId}";
 
     @Container
     @ServiceConnection
@@ -182,7 +189,9 @@ class OpenApiJsonContractIntegrationTest {
             KAFKA_DEAD_LETTERS_PATH,
             KAFKA_DEAD_LETTER_DETAILS_PATH,
             KAFKA_DEAD_LETTER_REPLAY_PATH,
-            KAFKA_DEAD_LETTER_DISCARD_PATH
+            KAFKA_DEAD_LETTER_DISCARD_PATH,
+            KAFKA_DEAD_LETTER_COMMAND_AUDITS_PATH,
+            KAFKA_DEAD_LETTER_COMMAND_AUDIT_TIMELINE_PATH
         );
 
         JsonNode health =
