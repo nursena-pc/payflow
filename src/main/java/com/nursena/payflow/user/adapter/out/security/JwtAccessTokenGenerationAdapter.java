@@ -4,7 +4,7 @@ import java.time.Clock;
 import java.time.Instant;
 
 import com.nursena.payflow.user.application.port.out.GeneratedAccessToken;
-import com.nursena.payflow.user.application.port.out.TokenGenerationPort;
+import com.nursena.payflow.user.application.port.out.AccessTokenGenerationPort;
 import com.nursena.payflow.user.domain.model.User;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
@@ -13,14 +13,14 @@ import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Component;
 
 @Component
-class JwtTokenGenerationAdapter
-    implements TokenGenerationPort {
+class JwtAccessTokenGenerationAdapter
+    implements AccessTokenGenerationPort {
 
     private final JwtEncoder jwtEncoder;
     private final JwtProperties properties;
     private final Clock clock;
 
-    JwtTokenGenerationAdapter(
+    JwtAccessTokenGenerationAdapter(
         JwtEncoder jwtEncoder,
         JwtProperties properties,
         Clock clock

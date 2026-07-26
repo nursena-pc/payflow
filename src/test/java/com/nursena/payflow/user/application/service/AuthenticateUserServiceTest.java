@@ -15,7 +15,7 @@ import com.nursena.payflow.user.application.port.in.AuthenticateUserCommand;
 import com.nursena.payflow.user.application.port.in.AuthenticateUserResult;
 import com.nursena.payflow.user.application.port.out.GeneratedAccessToken;
 import com.nursena.payflow.user.application.port.out.PasswordVerificationPort;
-import com.nursena.payflow.user.application.port.out.TokenGenerationPort;
+import com.nursena.payflow.user.application.port.out.AccessTokenGenerationPort;
 import com.nursena.payflow.user.application.port.out.UserRepositoryPort;
 import com.nursena.payflow.user.domain.exception.InvalidCredentialsException;
 import com.nursena.payflow.user.domain.exception.UserAccountUnavailableException;
@@ -59,7 +59,7 @@ class AuthenticateUserServiceTest {
     private PasswordVerificationPort passwordVerification;
 
     @Mock
-    private TokenGenerationPort tokenGeneration;
+    private AccessTokenGenerationPort accessTokenGeneration;
 
     private AuthenticateUserService authenticateUserService;
 
@@ -68,7 +68,7 @@ class AuthenticateUserServiceTest {
         authenticateUserService = new AuthenticateUserService(
             userRepository,
             passwordVerification,
-            tokenGeneration
+            accessTokenGeneration
         );
     }
 
@@ -85,7 +85,7 @@ class AuthenticateUserServiceTest {
             RAW_PASSWORD,
             PASSWORD_HASH
         )).thenReturn(true);
-        when(tokenGeneration.generate(user))
+        when(accessTokenGeneration.generate(user))
             .thenReturn(new GeneratedAccessToken(
                 ACCESS_TOKEN,
                 EXPIRES_AT
@@ -109,7 +109,7 @@ class AuthenticateUserServiceTest {
             RAW_PASSWORD,
             PASSWORD_HASH
         );
-        verify(tokenGeneration).generate(user);
+        verify(accessTokenGeneration).generate(user);
     }
 
     @Test
@@ -133,7 +133,7 @@ class AuthenticateUserServiceTest {
         verify(userRepository).findByEmail(email);
         verifyNoInteractions(
             passwordVerification,
-            tokenGeneration
+            accessTokenGeneration
         );
     }
 
@@ -161,7 +161,7 @@ class AuthenticateUserServiceTest {
             .isInstanceOf(InvalidCredentialsException.class)
             .hasMessage("Email or password is incorrect.");
 
-        verify(tokenGeneration, never()).generate(user);
+        verify(accessTokenGeneration, never()).generate(user);
     }
 
     @Test
@@ -192,7 +192,7 @@ class AuthenticateUserServiceTest {
                 "User account is not available for authentication."
             );
 
-        verify(tokenGeneration, never()).generate(user);
+        verify(accessTokenGeneration, never()).generate(user);
     }
 
     private static User activeUser(EmailAddress email) {
