@@ -5,7 +5,7 @@ import com.nursena.payflow.user.application.port.in.AuthenticateUserResult;
 import com.nursena.payflow.user.application.port.in.AuthenticateUserUseCase;
 import com.nursena.payflow.user.application.port.out.GeneratedAccessToken;
 import com.nursena.payflow.user.application.port.out.PasswordVerificationPort;
-import com.nursena.payflow.user.application.port.out.TokenGenerationPort;
+import com.nursena.payflow.user.application.port.out.AccessTokenGenerationPort;
 import com.nursena.payflow.user.application.port.out.UserRepositoryPort;
 import com.nursena.payflow.user.domain.exception.InvalidCredentialsException;
 import com.nursena.payflow.user.domain.exception.UserAccountUnavailableException;
@@ -22,16 +22,16 @@ public class AuthenticateUserService
 
     private final UserRepositoryPort userRepository;
     private final PasswordVerificationPort passwordVerification;
-    private final TokenGenerationPort tokenGeneration;
+    private final AccessTokenGenerationPort accessTokenGeneration;
 
     public AuthenticateUserService(
         UserRepositoryPort userRepository,
         PasswordVerificationPort passwordVerification,
-        TokenGenerationPort tokenGeneration
+        AccessTokenGenerationPort accessTokenGeneration
     ) {
         this.userRepository = userRepository;
         this.passwordVerification = passwordVerification;
-        this.tokenGeneration = tokenGeneration;
+        this.accessTokenGeneration = accessTokenGeneration;
     }
 
     @Override
@@ -57,7 +57,7 @@ public class AuthenticateUserService
             throw new UserAccountUnavailableException();
         }
 
-        GeneratedAccessToken token = tokenGeneration.generate(user);
+        GeneratedAccessToken token = accessTokenGeneration.generate(user);
 
         return new AuthenticateUserResult(
             token.value(),

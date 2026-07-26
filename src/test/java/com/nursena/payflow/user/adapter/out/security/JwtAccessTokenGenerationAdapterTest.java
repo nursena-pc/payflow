@@ -21,7 +21,7 @@ import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 
-class JwtTokenGenerationAdapterTest {
+class JwtAccessTokenGenerationAdapterTest {
 
     private static final Instant NOW =
         Instant.parse("2026-07-14T12:00:00Z");
@@ -47,8 +47,8 @@ class JwtTokenGenerationAdapterTest {
             ZoneOffset.UTC
         );
 
-        JwtTokenGenerationAdapter adapter =
-            new JwtTokenGenerationAdapter(
+        JwtAccessTokenGenerationAdapter adapter =
+            new JwtAccessTokenGenerationAdapter(
                 jwtEncoder,
                 properties,
                 clock
