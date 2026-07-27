@@ -45,7 +45,7 @@ This keeps domain rules independent from Spring and infrastructure while avoidin
 
 ## Current status
 
-The repository foundation, identity flow, wallet management, transactional transfer processing, Kafka delivery pipeline, and secure dead-letter operations control plane are implemented.
+The repository foundation, identity flow, wallet management, transactional transfer processing, Kafka delivery pipeline, secure dead-letter operations control plane, and durable refresh-session persistence foundation are implemented.
 
 Completed capabilities include:
 
@@ -56,6 +56,12 @@ Completed capabilities include:
 - user registration with normalized email addresses
 - BCrypt password hashing
 - user login with RSA-signed JWT access tokens
+- refresh-session architecture and threat model with explicit rotation and reuse-detection boundaries
+- refresh-token family and record domain/application contracts
+- PostgreSQL refresh-session persistence with SHA-256 digest-only token storage
+- constrained refresh-token lineage, expiration, consumption, and family revocation semantics
+- pessimistic row locking for concurrent refresh-session mutation
+- clean-install and V13-to-V14 refresh-session migration coverage
 - authenticated current-user profile
 - authenticated wallet creation and current-wallet retrieval
 - one-wallet-per-user enforcement at application and database levels
@@ -92,7 +98,7 @@ Completed capabilities include:
 - operator-only, paginated command-audit queries and chronological command timelines
 - Prometheus metrics, Grafana dashboards, and alert rules for Kafka consumer failures
 
-OpenAPI documentation and the executable Postman collection cover the implemented API. PayFlow v0.6.0 extends the operations control plane with secured command-audit investigation workflows and modernizes the GitHub Actions JavaScript runtimes. See the [roadmap](docs/roadmap.md).
+OpenAPI documentation and the executable Postman collection cover the implemented API. PayFlow v0.7.0 establishes the architecture, domain contracts, and PostgreSQL persistence foundation for secure refresh-token rotation. Public refresh-token issuance, rotation, and revocation endpoints are intentionally deferred to a later release. See the [roadmap](docs/roadmap.md).
 
 ## Implemented API
 
@@ -374,11 +380,17 @@ docker compose --profile app up --build
 
 ## Database model
 
-Flyway migrations define users, wallets, payment transactions, immutable ledger entries, transactional outbox records, processed Kafka events, Kafka dead-letter records, and append-only operator command audits.
+Flyway migrations define users, refresh-token families and records, wallets, payment transactions, immutable ledger entries, transactional outbox records, processed Kafka events, Kafka dead-letter records, and append-only operator command audits.
 
 Important database guarantees include:
 
 - unique normalized user email addresses
+- fixed-length and globally unique refresh-token digests
+- plaintext refresh tokens excluded from the persistence schema
+- same-family refresh-token successor lineage
+- paired token-consumption and successor metadata
+- paired family-revocation timestamp and reason metadata
+- token expiration bounded by family expiration
 - one wallet per user
 - non-negative wallet balances
 - optimistic-lock wallet versions
@@ -408,7 +420,7 @@ Transfers and ledger writes require strong relational constraints, transactional
 
 ### Why Redis?
 
-Redis will support bounded, explicitly expiring concerns such as login rate limiting, short-lived wallet summaries, refresh-token metadata, and selected idempotency lookups. PostgreSQL remains the source of truth.
+Redis will support bounded, explicitly expiring concerns such as login rate limiting, short-lived wallet summaries, and selected idempotency lookups. PostgreSQL remains the source of truth for durable financial and refresh-session lifecycle state.
 
 ### Why Kafka?
 
