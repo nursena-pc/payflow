@@ -23,7 +23,9 @@ public final class OpenApiExamples {
         {
           "accessToken": "eyJhbGciOiJSUzI1NiJ9...",
           "tokenType": "Bearer",
-          "expiresAt": "2026-07-17T12:15:00Z"
+          "expiresAt": "2026-07-17T12:15:00Z",
+          "refreshToken": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA",
+          "refreshTokenExpiresAt": "2026-07-24T12:00:00Z"
         }
         """;
 

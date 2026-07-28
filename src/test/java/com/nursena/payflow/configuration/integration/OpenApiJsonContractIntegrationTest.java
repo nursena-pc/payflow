@@ -463,6 +463,92 @@ class OpenApiJsonContractIntegrationTest {
     }
 
     @Test
+    void shouldExposeLoginCredentialPairContract() {
+        JsonNode login =
+            operation(
+                LOGIN_PATH,
+                "post"
+            );
+
+        JsonNode successSchema =
+            login
+                .path("responses")
+                .path("200")
+                .path("content")
+                .path(
+                    MediaType.APPLICATION_JSON_VALUE
+                )
+                .path("schema");
+
+        assertThat(
+            successSchema
+                .path("$ref")
+                .asText()
+        ).isEqualTo(
+            "#/components/schemas/"
+                + "AuthenticateUserResponse"
+        );
+
+        JsonNode properties =
+            openApi
+                .path("components")
+                .path("schemas")
+                .path(
+                    "AuthenticateUserResponse"
+                )
+                .path("properties");
+
+        assertThat(
+            fieldNames(properties)
+        )
+            .containsExactlyInAnyOrder(
+                "accessToken",
+                "tokenType",
+                "expiresAt",
+                "refreshToken",
+                "refreshTokenExpiresAt"
+            )
+            .doesNotContain(
+                "tokenDigest",
+                "familyId",
+                "recordId",
+                "userId",
+                "revokedAt",
+                "consumedAt",
+                "successorId"
+            );
+
+        assertThat(
+            properties
+                .path("expiresAt")
+                .path("format")
+                .asText()
+        ).isEqualTo("date-time");
+
+        assertThat(
+            properties
+                .path(
+                    "refreshTokenExpiresAt"
+                )
+                .path("format")
+                .asText()
+        ).isEqualTo("date-time");
+
+        assertThat(
+            properties
+                .path("accessToken")
+                .path("type")
+                .asText()
+        ).isEqualTo("string");
+
+        assertThat(
+            properties
+                .path("refreshToken")
+                .path("type")
+                .asText()
+        ).isEqualTo("string");
+    }
+    @Test
     void shouldExposeTransferContract() {
         JsonNode transfer =
             operation(

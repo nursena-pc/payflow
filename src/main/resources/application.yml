@@ -73,6 +73,9 @@ payflow:
     jwt:
       issuer: https://api.payflow.local
       access-token-ttl: 15m
+    refresh-session:
+      refresh-token-ttl: ${REFRESH_TOKEN_TTL:7d}
+      family-ttl: ${REFRESH_TOKEN_FAMILY_TTL:30d}
   outbox:
     kafka:
       send-timeout: ${OUTBOX_KAFKA_SEND_TIMEOUT:10s}
