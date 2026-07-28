@@ -5,7 +5,9 @@ import java.util.Objects;
 
 public record AuthenticateUserResult(
     String accessToken,
-    Instant expiresAt
+    Instant expiresAt,
+    String refreshToken,
+    Instant refreshTokenExpiresAt
 ) {
 
     public AuthenticateUserResult {
@@ -17,11 +19,30 @@ public record AuthenticateUserResult(
             expiresAt,
             "expiresAt must not be null"
         );
+        Objects.requireNonNull(
+            refreshToken,
+            "refreshToken must not be null"
+        );
+        Objects.requireNonNull(
+            refreshTokenExpiresAt,
+            "refreshTokenExpiresAt must not be null"
+        );
 
         if (accessToken.isBlank()) {
             throw new IllegalArgumentException(
                 "accessToken must not be blank"
             );
         }
+
+        if (refreshToken.isBlank()) {
+            throw new IllegalArgumentException(
+                "refreshToken must not be blank"
+            );
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "AuthenticateUserResult[redacted]";
     }
 }
