@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.nursena.payflow.common.api.ApiError;
 import com.nursena.payflow.user.domain.exception.InvalidCredentialsException;
+import com.nursena.payflow.user.domain.exception.InvalidRefreshTokenException;
 import com.nursena.payflow.user.domain.exception.UserAccountUnavailableException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.core.Ordered;
@@ -16,7 +17,10 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @RestControllerAdvice(
-    assignableTypes = AuthenticateUserController.class
+    assignableTypes = {
+        AuthenticateUserController.class,
+        RotateRefreshCredentialsController.class
+    }
 )
 public class UserAuthenticationExceptionHandler {
 
@@ -40,6 +44,21 @@ public class UserAuthenticationExceptionHandler {
     ) {
         return buildResponse(
             HttpStatus.FORBIDDEN,
+            exception.getCode(),
+            exception.getMessage(),
+            request
+        );
+    }
+
+    @ExceptionHandler(
+        InvalidRefreshTokenException.class
+    )
+    ResponseEntity<ApiError> handleInvalidRefreshToken(
+        InvalidRefreshTokenException exception,
+        HttpServletRequest request
+    ) {
+        return buildResponse(
+            HttpStatus.UNAUTHORIZED,
             exception.getCode(),
             exception.getMessage(),
             request
