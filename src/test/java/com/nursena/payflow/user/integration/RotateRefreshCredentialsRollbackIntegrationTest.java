@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
@@ -17,8 +18,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nursena.payflow.user.application.port.out.AccessTokenGenerationPort;
 import com.nursena.payflow.user.application.port.out.GeneratedAccessToken;
 import com.nursena.payflow.user.application.port.out.RefreshTokenDigestPort;
+import com.nursena.payflow.user.application.port.out.RefreshTokenFamilyRepositoryPort;
 import com.nursena.payflow.user.application.port.out.RefreshTokenRecordRepositoryPort;
 import com.nursena.payflow.user.domain.model.RefreshTokenDigest;
+import com.nursena.payflow.user.domain.model.RefreshTokenFamily;
+import com.nursena.payflow.user.domain.model.RefreshTokenFamilyId;
+import com.nursena.payflow.user.domain.model.RefreshTokenFamilyRevocationReason;
 import com.nursena.payflow.user.domain.model.RefreshTokenRecord;
 import com.nursena.payflow.user.domain.model.RefreshTokenRecordId;
 import com.nursena.payflow.user.domain.model.User;
@@ -79,12 +84,17 @@ class RotateRefreshCredentialsRollbackIntegrationTest {
         recordRepository;
 
     @Autowired
+    private FailureInjectingFamilyRepository
+        familyRepository;
+
+    @Autowired
     private FailureInjectingAccessTokenGeneration
         accessTokenGeneration;
 
     @BeforeEach
     void setUp() {
         recordRepository.reset();
+        familyRepository.reset();
         accessTokenGeneration.reset();
 
         jdbcTemplate.update(
@@ -192,6 +202,70 @@ class RotateRefreshCredentialsRollbackIntegrationTest {
         assertInitialSessionUnchanged(
             refreshToken
         );
+    }
+
+    @Test
+    void shouldRollbackWhenReuseRevocationPersistenceFails()
+        throws Exception {
+
+        String initialRefreshToken =
+            issueInitialRefreshToken(
+                "reuse-revocation-failure"
+            );
+
+        org.springframework.test.web.servlet
+        .MvcResult firstRotation =
+            refresh(initialRefreshToken)
+                .andExpect(status().isOk())
+                .andReturn();
+
+        JsonNode firstResponse =
+            objectMapper.readTree(
+                firstRotation
+                    .getResponse()
+                    .getContentAsByteArray()
+            );
+
+        String successorToken =
+            firstResponse
+                .path("refreshToken")
+                .asText();
+
+        int accessGenerationCountBeforeReuse =
+            accessTokenGeneration
+                .generationCount();
+
+        familyRepository.failAfterNextSave(
+            "family revocation persistence failed"
+        );
+
+        assertThatThrownBy(() ->
+            refresh(initialRefreshToken)
+        )
+            .isInstanceOf(
+                jakarta.servlet.ServletException.class
+            )
+            .hasRootCauseInstanceOf(
+                IllegalStateException.class
+            )
+            .hasRootCauseMessage(
+                "family revocation persistence failed"
+            );
+
+        assertFamilyRevocationRolledBack(
+            initialRefreshToken
+        );
+
+        assertThat(
+            accessTokenGeneration
+                .generationCount()
+        )
+            .isEqualTo(
+                accessGenerationCountBeforeReuse
+            );
+
+        refresh(successorToken)
+            .andExpect(status().isOk());
     }
 
     private String issueInitialRefreshToken(
@@ -341,6 +415,93 @@ class RotateRefreshCredentialsRollbackIntegrationTest {
             .isFalse();
     }
 
+    private void assertFamilyRevocationRolledBack(
+        String initialRefreshToken
+    ) {
+        byte[] digest =
+            refreshTokenDigest
+                .digest(initialRefreshToken)
+                .value();
+
+        FamilyState familyState =
+            jdbcTemplate.queryForObject(
+                """
+                SELECT family.revoked_at,
+                       family.revocation_reason
+                FROM refresh_token_families family
+                JOIN refresh_token_records record
+                  ON record.family_id = family.id
+                WHERE record.token_digest = ?
+                """,
+                (resultSet, rowNumber) ->
+                    new FamilyState(
+                        resultSet
+                            .getTimestamp(
+                                "revoked_at"
+                            ),
+                        resultSet.getString(
+                            "revocation_reason"
+                        )
+                    ),
+                digest
+            );
+
+        Integer recordCount =
+            jdbcTemplate.queryForObject(
+                """
+                SELECT COUNT(*)
+                FROM refresh_token_records
+                """,
+                Integer.class
+            );
+
+        Integer consumedCount =
+            jdbcTemplate.queryForObject(
+                """
+                SELECT COUNT(*)
+                FROM refresh_token_records
+                WHERE consumed_at IS NOT NULL
+                  AND successor_id IS NOT NULL
+                """,
+                Integer.class
+            );
+
+        Integer unconsumedCount =
+            jdbcTemplate.queryForObject(
+                """
+                SELECT COUNT(*)
+                FROM refresh_token_records
+                WHERE consumed_at IS NULL
+                  AND successor_id IS NULL
+                """,
+                Integer.class
+            );
+
+        assertThat(familyState)
+            .isNotNull();
+
+        assertThat(familyState.revokedAt())
+            .isNull();
+
+        assertThat(familyState.reason())
+            .isNull();
+
+        assertThat(recordCount)
+            .isEqualTo(2);
+
+        assertThat(consumedCount)
+            .isEqualTo(1);
+
+        assertThat(unconsumedCount)
+            .isEqualTo(1);
+    }
+
+    private record FamilyState(
+        java.sql.Timestamp revokedAt,
+        String reason
+    ) {
+    }
+
     private record Credentials(
         String email,
         String password
@@ -367,6 +528,20 @@ class RotateRefreshCredentialsRollbackIntegrationTest {
             RefreshTokenRecordRepositoryPort delegate
         ) {
             return new FailureInjectingRecordRepository(
+                delegate
+            );
+        }
+
+        @Bean
+        @Primary
+        FailureInjectingFamilyRepository
+        failureInjectingRotationFamilyRepository(
+            @Qualifier(
+                "refreshTokenFamilyPersistenceAdapter"
+            )
+            RefreshTokenFamilyRepositoryPort delegate
+        ) {
+            return new FailureInjectingFamilyRepository(
                 delegate
             );
         }
@@ -460,6 +635,82 @@ class RotateRefreshCredentialsRollbackIntegrationTest {
         }
     }
 
+    static final class FailureInjectingFamilyRepository
+        implements RefreshTokenFamilyRepositoryPort {
+
+        private final RefreshTokenFamilyRepositoryPort
+            delegate;
+
+        private final AtomicBoolean
+            failAfterNextSave =
+            new AtomicBoolean();
+
+        private volatile String failureMessage =
+            "";
+
+        FailureInjectingFamilyRepository(
+            RefreshTokenFamilyRepositoryPort delegate
+        ) {
+            this.delegate = delegate;
+        }
+
+        void failAfterNextSave(
+            String message
+        ) {
+            failureMessage = message;
+            failAfterNextSave.set(true);
+        }
+
+        void reset() {
+            failAfterNextSave.set(false);
+            failureMessage = "";
+        }
+
+        @Override
+        public RefreshTokenFamily save(
+            RefreshTokenFamily family
+        ) {
+            RefreshTokenFamily saved =
+                delegate.save(family);
+
+            if (
+                failAfterNextSave.compareAndSet(
+                    true,
+                    false
+                )
+            ) {
+                throw new IllegalStateException(
+                    failureMessage
+                );
+            }
+
+            return saved;
+        }
+
+        @Override
+        public Optional<RefreshTokenFamily>
+        findByIdForUpdate(
+            RefreshTokenFamilyId familyId
+        ) {
+            return delegate.findByIdForUpdate(
+                familyId
+            );
+        }
+
+        @Override
+        public int revokeAllActiveByUserId(
+            UUID userId,
+            Instant revokedAt,
+            RefreshTokenFamilyRevocationReason reason
+        ) {
+            return delegate.revokeAllActiveByUserId(
+                userId,
+                revokedAt,
+                reason
+            );
+        }
+    }
+
     static final class FailureInjectingAccessTokenGeneration
         implements AccessTokenGenerationPort {
 
@@ -469,6 +720,10 @@ class RotateRefreshCredentialsRollbackIntegrationTest {
         private final AtomicBoolean
             failNextGeneration =
             new AtomicBoolean();
+
+        private final AtomicInteger
+            generationCount =
+            new AtomicInteger();
 
         FailureInjectingAccessTokenGeneration(
             AccessTokenGenerationPort delegate
@@ -482,12 +737,19 @@ class RotateRefreshCredentialsRollbackIntegrationTest {
 
         void reset() {
             failNextGeneration.set(false);
+            generationCount.set(0);
+        }
+
+        int generationCount() {
+            return generationCount.get();
         }
 
         @Override
         public GeneratedAccessToken generate(
             User user
         ) {
+            generationCount.incrementAndGet();
+
             if (
                 failNextGeneration.compareAndSet(
                     true,
