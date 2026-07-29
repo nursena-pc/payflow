@@ -205,6 +205,56 @@ class RotateRefreshCredentialsRollbackIntegrationTest {
     }
 
     @Test
+    void shouldRollbackWhenCurrentSessionLogoutRevocationPersistenceFails()
+        throws Exception {
+
+        String refreshToken =
+            issueInitialRefreshToken(
+                "logout-revocation-failure"
+            );
+
+        int accessGenerationCountBeforeLogout =
+            accessTokenGeneration
+                .generationCount();
+
+        familyRepository.failAfterNextSave(
+            "current-session logout revocation persistence failed"
+        );
+
+        assertThatThrownBy(() ->
+            logout(refreshToken)
+        )
+            .isInstanceOf(
+                jakarta.servlet.ServletException.class
+            )
+            .hasRootCauseInstanceOf(
+                IllegalStateException.class
+            )
+            .hasRootCauseMessage(
+                "current-session logout revocation persistence failed"
+            );
+
+        assertInitialSessionUnchanged(
+            refreshToken
+        );
+
+        assertFamilyRemainsActive(
+            refreshToken
+        );
+
+        assertThat(
+            accessTokenGeneration
+                .generationCount()
+        )
+            .isEqualTo(
+                accessGenerationCountBeforeLogout
+            );
+
+        refresh(refreshToken)
+            .andExpect(status().isOk());
+    }
+
+    @Test
     void shouldRollbackWhenReuseRevocationPersistenceFails()
         throws Exception {
 
@@ -344,6 +394,66 @@ class RotateRefreshCredentialsRollbackIntegrationTest {
                     )
                 )
         );
+    }
+
+    private org.springframework.test.web.servlet
+    .ResultActions logout(
+        String refreshToken
+    ) throws Exception {
+
+        return mockMvc.perform(
+            post("/api/v1/auth/logout")
+                .contentType(
+                    MediaType.APPLICATION_JSON
+                )
+                .content(
+                    objectMapper.writeValueAsString(
+                        new RefreshRequest(
+                            refreshToken
+                        )
+                    )
+                )
+        );
+    }
+
+    private void assertFamilyRemainsActive(
+        String refreshToken
+    ) {
+        byte[] digest =
+            refreshTokenDigest
+                .digest(refreshToken)
+                .value();
+
+        FamilyState familyState =
+            jdbcTemplate.queryForObject(
+                """
+                SELECT family.revoked_at,
+                       family.revocation_reason
+                FROM refresh_token_families family
+                JOIN refresh_token_records record
+                  ON record.family_id = family.id
+                WHERE record.token_digest = ?
+                """,
+                (resultSet, rowNumber) ->
+                    new FamilyState(
+                        resultSet.getTimestamp(
+                            "revoked_at"
+                        ),
+                        resultSet.getString(
+                            "revocation_reason"
+                        )
+                    ),
+                digest
+            );
+
+        assertThat(familyState)
+            .isNotNull();
+
+        assertThat(familyState.revokedAt())
+            .isNull();
+
+        assertThat(familyState.reason())
+            .isNull();
     }
 
     private void assertInitialSessionUnchanged(

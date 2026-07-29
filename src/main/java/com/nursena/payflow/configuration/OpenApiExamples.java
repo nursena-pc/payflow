@@ -57,6 +57,23 @@ public final class OpenApiExamples {
         }
         """;
 
+    public static final String LOGOUT_VALIDATION_ERROR =
+        """
+        {
+          "timestamp": "2026-07-29T12:00:00Z",
+          "status": 400,
+          "code": "VALIDATION_FAILED",
+          "message": "Request validation failed.",
+          "path": "/api/v1/auth/logout",
+          "violations": [
+            {
+              "field": "refreshToken",
+              "message": "Refresh token is required."
+            }
+          ]
+        }
+        """;
+
     public static final String INVALID_REFRESH_TOKEN =
         """
         {

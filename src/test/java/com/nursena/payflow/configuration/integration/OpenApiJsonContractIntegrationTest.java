@@ -49,6 +49,9 @@ class OpenApiJsonContractIntegrationTest {
     private static final String REFRESH_PATH =
         "/api/v1/auth/refresh";
 
+    private static final String LOGOUT_PATH =
+        "/api/v1/auth/logout";
+
     private static final String USER_PROFILE_PATH =
         "/api/v1/users/me";
 
@@ -184,6 +187,7 @@ class OpenApiJsonContractIntegrationTest {
             REGISTER_PATH,
             LOGIN_PATH,
             REFRESH_PATH,
+            LOGOUT_PATH,
             USER_PROFILE_PATH,
             WALLETS_PATH,
             CURRENT_WALLET_PATH,
@@ -257,6 +261,28 @@ class OpenApiJsonContractIntegrationTest {
             "200",
             "400",
             "401"
+        );
+
+        JsonNode logout =
+            operation(
+                LOGOUT_PATH,
+                "post"
+            );
+
+        assertPublicOperation(logout);
+
+        assertThat(
+            logout
+                .path("operationId")
+                .asText()
+        ).isEqualTo(
+            "revokeCurrentRefreshSession"
+        );
+
+        assertResponseCodes(
+            logout,
+            "204",
+            "400"
         );
     }
 
@@ -725,6 +751,89 @@ class OpenApiJsonContractIntegrationTest {
             .contains(
                 "VALIDATION_FAILED",
                 "Refresh token is required."
+            );
+    }
+
+    @Test
+    void shouldExposeCurrentSessionLogoutContract() {
+        JsonNode logout =
+            operation(
+                LOGOUT_PATH,
+                "post"
+            );
+
+        JsonNode requestSchema =
+            logout
+                .path("requestBody")
+                .path("content")
+                .path(
+                    MediaType.APPLICATION_JSON_VALUE
+                )
+                .path("schema");
+
+        assertThat(
+            requestSchema
+                .path("$ref")
+                .asText()
+        ).isEqualTo(
+            "#/components/schemas/"
+                + "RevokeCurrentRefreshSessionRequest"
+        );
+
+        JsonNode requestProperties =
+            openApi
+                .path("components")
+                .path("schemas")
+                .path(
+                    "RevokeCurrentRefreshSessionRequest"
+                )
+                .path("properties");
+
+        assertThat(
+            fieldNames(requestProperties)
+        ).containsExactly(
+            "refreshToken"
+        );
+
+        assertThat(
+            requestProperties
+                .path("refreshToken")
+                .path("type")
+                .asText()
+        ).isEqualTo("string");
+
+        assertThat(
+            requestProperties
+                .path("refreshToken")
+                .path("writeOnly")
+                .asBoolean()
+        ).isTrue();
+
+        JsonNode responses =
+            logout.path("responses");
+
+        assertThat(responses.has("401"))
+            .isFalse();
+
+        assertThat(
+            responses
+                .path("204")
+                .has("content")
+        ).isFalse();
+
+        assertThat(
+            responses
+                .path("400")
+                .path("content")
+                .path(
+                    MediaType.APPLICATION_JSON_VALUE
+                )
+                .toString()
+        )
+            .contains(
+                "VALIDATION_FAILED",
+                "Refresh token is required.",
+                "/api/v1/auth/logout"
             );
     }
 

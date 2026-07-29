@@ -349,6 +349,324 @@ class RotateRefreshCredentialsConcurrencyIntegrationTest {
         }
     }
 
+    @Test
+    void shouldRejectRotationWhenLogoutHoldsTokenLockFirst()
+        throws Exception {
+
+        String initialRefreshToken =
+            issueInitialRefreshToken();
+
+        recordRepository.holdNextLookup();
+
+        ExecutorService executor =
+            Executors.newFixedThreadPool(2);
+
+        Future<MvcResult> logoutFuture =
+            null;
+
+        Future<MvcResult> refreshFuture =
+            null;
+
+        try {
+            logoutFuture =
+                executor.submit(
+                    () ->
+                        performLogout(
+                            initialRefreshToken
+                        )
+                );
+
+            assertThat(
+                recordRepository
+                    .awaitFirstLock()
+            )
+                .as(
+                    "logout should acquire the refresh-token row lock first"
+                )
+                .isTrue();
+
+            refreshFuture =
+                executor.submit(
+                    () ->
+                        performRefresh(
+                            initialRefreshToken
+                        )
+                );
+
+            assertThat(
+                recordRepository
+                    .awaitSecondLookup()
+            )
+                .as(
+                    "rotation should reach the locked digest lookup"
+                )
+                .isTrue();
+
+            Thread.sleep(300);
+
+            assertThat(refreshFuture.isDone())
+                .as(
+                    "rotation must remain blocked while logout holds the row lock"
+                )
+                .isFalse();
+
+            recordRepository.releaseFirstLookup();
+
+            MvcResult logoutResult =
+                logoutFuture.get(
+                    15,
+                    SECONDS
+                );
+
+            MvcResult refreshResult =
+                refreshFuture.get(
+                    15,
+                    SECONDS
+                );
+
+            assertLogoutCompleted(
+                logoutResult
+            );
+
+            assertRefreshRejected(
+                refreshResult
+            );
+
+            FamilyRevocation logoutRevocation =
+                findFamilyRevocation(
+                    initialRefreshToken
+                );
+
+            assertThat(logoutRevocation.revokedAt())
+                .isNotNull();
+
+            assertThat(logoutRevocation.reason())
+                .isEqualTo(
+                    "CURRENT_SESSION_LOGOUT"
+                );
+
+            assertThat(countRecords())
+                .isEqualTo(1);
+
+            assertRefreshRejected(
+                performRefresh(
+                    initialRefreshToken
+                )
+            );
+
+            assertThat(
+                findFamilyRevocation(
+                    initialRefreshToken
+                )
+            ).isEqualTo(logoutRevocation);
+
+            assertThat(countRecords())
+                .isEqualTo(1);
+        } finally {
+            recordRepository
+                .releaseFirstLookup();
+
+            if (logoutFuture != null) {
+                logoutFuture.cancel(true);
+            }
+
+            if (refreshFuture != null) {
+                refreshFuture.cancel(true);
+            }
+
+            executor.shutdownNow();
+
+            assertThat(
+                executor.awaitTermination(
+                    10,
+                    SECONDS
+                )
+            )
+                .as(
+                    "logout-first concurrency executor should terminate cleanly"
+                )
+                .isTrue();
+        }
+    }
+
+    @Test
+    void shouldRevokeReturnedSuccessorWhenRotationHoldsTokenLockFirst()
+        throws Exception {
+
+        String initialRefreshToken =
+            issueInitialRefreshToken();
+
+        recordRepository.holdNextLookup();
+
+        ExecutorService executor =
+            Executors.newFixedThreadPool(2);
+
+        Future<MvcResult> refreshFuture =
+            null;
+
+        Future<MvcResult> logoutFuture =
+            null;
+
+        try {
+            refreshFuture =
+                executor.submit(
+                    () ->
+                        performRefresh(
+                            initialRefreshToken
+                        )
+                );
+
+            assertThat(
+                recordRepository
+                    .awaitFirstLock()
+            )
+                .as(
+                    "rotation should acquire the refresh-token row lock first"
+                )
+                .isTrue();
+
+            logoutFuture =
+                executor.submit(
+                    () ->
+                        performLogout(
+                            initialRefreshToken
+                        )
+                );
+
+            assertThat(
+                recordRepository
+                    .awaitSecondLookup()
+            )
+                .as(
+                    "logout should reach the locked digest lookup"
+                )
+                .isTrue();
+
+            Thread.sleep(300);
+
+            assertThat(logoutFuture.isDone())
+                .as(
+                    "logout must remain blocked while rotation holds the row lock"
+                )
+                .isFalse();
+
+            recordRepository.releaseFirstLookup();
+
+            MvcResult refreshResult =
+                refreshFuture.get(
+                    15,
+                    SECONDS
+                );
+
+            MvcResult logoutResult =
+                logoutFuture.get(
+                    15,
+                    SECONDS
+                );
+
+            assertThat(
+                refreshResult
+                    .getResponse()
+                    .getStatus()
+            )
+                .isEqualTo(200);
+
+            assertLogoutCompleted(
+                logoutResult
+            );
+
+            JsonNode refreshResponse =
+                objectMapper.readTree(
+                    refreshResult
+                        .getResponse()
+                        .getContentAsByteArray()
+                );
+
+            String successorToken =
+                refreshResponse
+                    .path("refreshToken")
+                    .asText();
+
+            assertThat(successorToken)
+                .isNotBlank()
+                .isNotEqualTo(
+                    initialRefreshToken
+                );
+
+            FamilyRevocation logoutRevocation =
+                findFamilyRevocation(
+                    initialRefreshToken
+                );
+
+            assertThat(logoutRevocation.revokedAt())
+                .isNotNull();
+
+            assertThat(logoutRevocation.reason())
+                .isEqualTo(
+                    "CURRENT_SESSION_LOGOUT"
+                );
+
+            assertThat(countRecords())
+                .isEqualTo(2);
+
+            assertRefreshRejected(
+                performRefresh(
+                    successorToken
+                )
+            );
+
+            assertThat(
+                findFamilyRevocation(
+                    initialRefreshToken
+                )
+            ).isEqualTo(logoutRevocation);
+
+            assertThat(countRecords())
+                .isEqualTo(2);
+        } finally {
+            recordRepository
+                .releaseFirstLookup();
+
+            if (refreshFuture != null) {
+                refreshFuture.cancel(true);
+            }
+
+            if (logoutFuture != null) {
+                logoutFuture.cancel(true);
+            }
+
+            executor.shutdownNow();
+
+            assertThat(
+                executor.awaitTermination(
+                    10,
+                    SECONDS
+                )
+            )
+                .as(
+                    "rotation-first concurrency executor should terminate cleanly"
+                )
+                .isTrue();
+        }
+    }
+
+    private void assertLogoutCompleted(
+        MvcResult result
+    ) {
+        assertThat(
+            result
+                .getResponse()
+                .getStatus()
+        )
+            .isEqualTo(204);
+
+        assertThat(
+            result
+                .getResponse()
+                .getContentAsByteArray()
+        ).isEmpty();
+    }
+
     private void assertRefreshRejected(
         MvcResult result
     ) throws Exception {
@@ -499,6 +817,26 @@ class RotateRefreshCredentialsConcurrencyIntegrationTest {
 
         return mockMvc.perform(
                 post("/api/v1/auth/refresh")
+                    .contentType(
+                        MediaType.APPLICATION_JSON
+                    )
+                    .content(
+                        objectMapper.writeValueAsString(
+                            new RefreshRequest(
+                                refreshToken
+                            )
+                        )
+                    )
+            )
+            .andReturn();
+    }
+
+    private MvcResult performLogout(
+        String refreshToken
+    ) throws Exception {
+
+        return mockMvc.perform(
+                post("/api/v1/auth/logout")
                     .contentType(
                         MediaType.APPLICATION_JSON
                     )
