@@ -52,6 +52,9 @@ class OpenApiJsonContractIntegrationTest {
     private static final String LOGOUT_PATH =
         "/api/v1/auth/logout";
 
+    private static final String LOGOUT_ALL_PATH =
+        "/api/v1/auth/logout-all";
+
     private static final String USER_PROFILE_PATH =
         "/api/v1/users/me";
 
@@ -188,6 +191,7 @@ class OpenApiJsonContractIntegrationTest {
             LOGIN_PATH,
             REFRESH_PATH,
             LOGOUT_PATH,
+            LOGOUT_ALL_PATH,
             USER_PROFILE_PATH,
             WALLETS_PATH,
             CURRENT_WALLET_PATH,

@@ -6,6 +6,7 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 
 import com.nursena.payflow.user.adapter.in.web.CurrentUserProfileController;
+import com.nursena.payflow.user.adapter.in.web.RevokeAllRefreshSessionsController;
 import com.nursena.payflow.wallet.adapter.in.web.GetCurrentWalletController;
 import com.nursena.payflow.wallet.adapter.in.web.OpenWalletController;
 import com.nursena.payflow.wallet.adapter.in.web.OpenWalletRequest;
@@ -125,6 +126,29 @@ class AuthenticatedApiDocumentationTest {
         );
     }
 
+    @Test
+    void shouldDocumentAllSessionLogout()
+        throws NoSuchMethodException {
+
+        Method method =
+            RevokeAllRefreshSessionsController
+                .class
+                .getDeclaredMethod(
+                    "logoutAll",
+                    Jwt.class
+                );
+
+        assertAuthenticatedDocumentation(
+            RevokeAllRefreshSessionsController
+                .class,
+            method,
+            "Authentication",
+            "revokeAllRefreshSessions",
+            "204",
+            "401",
+            "500"
+        );
+    }
     private static void assertAuthenticatedDocumentation(
         Class<?> controllerType,
         Method method,
