@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -12,11 +13,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.time.Instant;
 
 import com.nursena.payflow.configuration.SecurityConfiguration;
-import com.nursena.payflow.user.application.port.in.AuthenticateUserCommand;
-import com.nursena.payflow.user.application.port.in.AuthenticateUserResult;
-import com.nursena.payflow.user.application.port.in.AuthenticateUserUseCase;
-import com.nursena.payflow.user.domain.exception.InvalidCredentialsException;
-import com.nursena.payflow.user.domain.exception.UserAccountUnavailableException;
+import com.nursena.payflow.user.application.port.in.RotateRefreshCredentialsCommand;
+import com.nursena.payflow.user.application.port.in.RotateRefreshCredentialsResult;
+import com.nursena.payflow.user.application.port.in.RotateRefreshCredentialsUseCase;
+import com.nursena.payflow.user.domain.exception.InvalidRefreshTokenException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -26,12 +26,20 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(AuthenticateUserController.class)
+@WebMvcTest(
+    RotateRefreshCredentialsController.class
+)
 @Import({
     SecurityConfiguration.class,
     UserAuthenticationExceptionHandler.class
 })
-class AuthenticateUserControllerTest {
+class RotateRefreshCredentialsControllerTest {
+
+    private static final String CURRENT_TOKEN =
+        "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA";
+
+    private static final String SUCCESSOR_TOKEN =
+        "ICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj8";
 
     private static final Instant ACCESS_EXPIRES_AT =
         Instant.parse(
@@ -47,37 +55,36 @@ class AuthenticateUserControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private AuthenticateUserUseCase
-        authenticateUserUseCase;
+    private RotateRefreshCredentialsUseCase
+        rotateRefreshCredentialsUseCase;
 
     @MockitoBean
     private JwtDecoder jwtDecoder;
 
     @Test
-    void shouldAuthenticateUserAndReturnCredentialPair()
+    void shouldRotateCredentialsWithoutBearerAuthentication()
         throws Exception {
 
-        when(authenticateUserUseCase.authenticate(
-            any(AuthenticateUserCommand.class)
+        when(rotateRefreshCredentialsUseCase.rotate(
+            any(RotateRefreshCredentialsCommand.class)
         ))
             .thenReturn(
-                new AuthenticateUserResult(
+                new RotateRefreshCredentialsResult(
                     "signed-access-token",
                     ACCESS_EXPIRES_AT,
-                    "opaque-refresh-token",
+                    SUCCESSOR_TOKEN,
                     REFRESH_EXPIRES_AT
                 )
             );
 
         mockMvc.perform(
-                post("/api/v1/auth/login")
+                post("/api/v1/auth/refresh")
                     .contentType(
                         MediaType.APPLICATION_JSON
                     )
                     .content("""
                         {
-                          "email": "nursena@example.com",
-                          "password": "StrongPassword123!"
+                          "refreshToken": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA"
                         }
                         """)
             )
@@ -107,7 +114,7 @@ class AuthenticateUserControllerTest {
                 jsonPath(
                     "$.refreshToken"
                 ).value(
-                    "opaque-refresh-token"
+                    SUCCESSOR_TOKEN
                 )
             )
             .andExpect(
@@ -126,56 +133,34 @@ class AuthenticateUserControllerTest {
                 jsonPath(
                     "$.familyId"
                 ).doesNotExist()
+            )
+            .andExpect(
+                jsonPath(
+                    "$.recordId"
+                ).doesNotExist()
             );
 
-        verify(authenticateUserUseCase)
-            .authenticate(
+        verify(rotateRefreshCredentialsUseCase)
+            .rotate(
                 argThat(command ->
-                    command.email().equals(
-                        "nursena@example.com"
-                    )
-                        && command.rawPassword()
-                            .equals(
-                                "StrongPassword123!"
-                            )
+                    command.refreshToken()
+                        .equals(CURRENT_TOKEN)
                 )
             );
     }
 
     @Test
-    void shouldRedactCredentialValuesFromResponseToString() {
-        AuthenticateUserResponse response =
-            new AuthenticateUserResponse(
-                "secret-access-token",
-                "Bearer",
-                ACCESS_EXPIRES_AT,
-                "secret-refresh-token",
-                REFRESH_EXPIRES_AT
-            );
-
-        assertThat(response.toString())
-            .isEqualTo(
-                "AuthenticateUserResponse[redacted]"
-            )
-            .doesNotContain(
-                "secret-access-token",
-                "secret-refresh-token"
-            );
-    }
-
-    @Test
-    void shouldRejectInvalidEmail()
+    void shouldRejectBlankRefreshToken()
         throws Exception {
 
         mockMvc.perform(
-                post("/api/v1/auth/login")
+                post("/api/v1/auth/refresh")
                     .contentType(
                         MediaType.APPLICATION_JSON
                     )
                     .content("""
                         {
-                          "email": "not-an-email",
-                          "password": "StrongPassword123!"
+                          "refreshToken": " "
                         }
                         """)
             )
@@ -191,31 +176,43 @@ class AuthenticateUserControllerTest {
             )
             .andExpect(
                 jsonPath(
+                    "$.path"
+                ).value(
+                    "/api/v1/auth/refresh"
+                )
+            )
+            .andExpect(
+                jsonPath(
                     "$.violations[0].field"
-                ).value("email")
+                ).value(
+                    "refreshToken"
+                )
             );
+
+        verifyNoInteractions(
+            rotateRefreshCredentialsUseCase
+        );
     }
 
     @Test
-    void shouldReturnUnauthorizedForInvalidCredentials()
+    void shouldReturnUnauthorizedForInvalidRefreshToken()
         throws Exception {
 
-        when(authenticateUserUseCase.authenticate(
-            any(AuthenticateUserCommand.class)
+        when(rotateRefreshCredentialsUseCase.rotate(
+            any(RotateRefreshCredentialsCommand.class)
         ))
             .thenThrow(
-                new InvalidCredentialsException()
+                new InvalidRefreshTokenException()
             );
 
         mockMvc.perform(
-                post("/api/v1/auth/login")
+                post("/api/v1/auth/refresh")
                     .contentType(
                         MediaType.APPLICATION_JSON
                     )
                     .content("""
                         {
-                          "email": "nursena@example.com",
-                          "password": "WrongPassword123!"
+                          "refreshToken": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA"
                         }
                         """)
             )
@@ -226,71 +223,64 @@ class AuthenticateUserControllerTest {
                 jsonPath(
                     "$.code"
                 ).value(
-                    "INVALID_CREDENTIALS"
+                    "REFRESH_TOKEN_INVALID"
                 )
             )
             .andExpect(
                 jsonPath(
                     "$.message"
                 ).value(
-                    "Email or password is incorrect."
+                    "Refresh token is invalid."
                 )
             )
             .andExpect(
                 jsonPath(
                     "$.path"
                 ).value(
-                    "/api/v1/auth/login"
+                    "/api/v1/auth/refresh"
                 )
+            )
+            .andExpect(
+                jsonPath(
+                    "$.violations"
+                ).isEmpty()
             );
     }
 
     @Test
-    void shouldReturnForbiddenForUnavailableAccount()
-        throws Exception {
-
-        when(authenticateUserUseCase.authenticate(
-            any(AuthenticateUserCommand.class)
-        ))
-            .thenThrow(
-                new UserAccountUnavailableException()
+    void shouldRedactRefreshTokenFromRequestToString() {
+        RotateRefreshCredentialsRequest request =
+            new RotateRefreshCredentialsRequest(
+                "secret-refresh-token"
             );
 
-        mockMvc.perform(
-                post("/api/v1/auth/login")
-                    .contentType(
-                        MediaType.APPLICATION_JSON
-                    )
-                    .content("""
-                        {
-                          "email": "nursena@example.com",
-                          "password": "StrongPassword123!"
-                        }
-                        """)
+        assertThat(request.toString())
+            .isEqualTo(
+                "RotateRefreshCredentialsRequest[redacted]"
             )
-            .andExpect(
-                status().isForbidden()
+            .doesNotContain(
+                "secret-refresh-token"
+            );
+    }
+
+    @Test
+    void shouldRedactCredentialsFromResponseToString() {
+        RotateRefreshCredentialsResponse response =
+            new RotateRefreshCredentialsResponse(
+                "secret-access-token",
+                "Bearer",
+                ACCESS_EXPIRES_AT,
+                "secret-refresh-token",
+                REFRESH_EXPIRES_AT
+            );
+
+        assertThat(response.toString())
+            .isEqualTo(
+                "RotateRefreshCredentialsResponse[redacted]"
             )
-            .andExpect(
-                jsonPath(
-                    "$.code"
-                ).value(
-                    "USER_ACCOUNT_UNAVAILABLE"
-                )
-            )
-            .andExpect(
-                jsonPath(
-                    "$.message"
-                ).value(
-                    "User account is not available for authentication."
-                )
-            )
-            .andExpect(
-                jsonPath(
-                    "$.path"
-                ).value(
-                    "/api/v1/auth/login"
-                )
+            .doesNotContain(
+                "secret-access-token",
+                "secret-refresh-token"
             );
     }
 }

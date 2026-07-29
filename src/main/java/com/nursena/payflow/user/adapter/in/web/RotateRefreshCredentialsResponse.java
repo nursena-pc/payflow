@@ -6,12 +6,12 @@ import java.util.Objects;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(
-    name = "AuthenticateUserResponse",
+    name = "RotateRefreshCredentialsResponse",
     description =
-        "Access and refresh credentials returned after "
-            + "successful authentication."
+        "New access and refresh credentials returned "
+            + "after successful refresh-token rotation."
 )
-public record AuthenticateUserResponse(
+public record RotateRefreshCredentialsResponse(
 
     @Schema(
         description = "RSA-signed JWT access token.",
@@ -28,28 +28,29 @@ public record AuthenticateUserResponse(
 
     @Schema(
         description = "Access-token expiration time.",
-        example = "2026-07-17T12:15:00Z",
+        example = "2026-07-28T12:15:00Z",
         format = "date-time"
     )
     Instant expiresAt,
 
     @Schema(
         description =
-            "Opaque refresh token used to obtain new credentials.",
+            "New opaque refresh token replacing the "
+                + "presented refresh token.",
         example =
-            "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA"
+            "ICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj8"
     )
     String refreshToken,
 
     @Schema(
-        description = "Refresh-token expiration time.",
-        example = "2026-07-24T12:00:00Z",
+        description = "New refresh-token expiration time.",
+        example = "2026-08-04T12:00:00Z",
         format = "date-time"
     )
     Instant refreshTokenExpiresAt
 ) {
 
-    public AuthenticateUserResponse {
+    public RotateRefreshCredentialsResponse {
         Objects.requireNonNull(
             accessToken,
             "accessToken must not be null"
@@ -92,6 +93,6 @@ public record AuthenticateUserResponse(
 
     @Override
     public String toString() {
-        return "AuthenticateUserResponse[redacted]";
+        return "RotateRefreshCredentialsResponse[redacted]";
     }
 }

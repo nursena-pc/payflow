@@ -4,6 +4,8 @@ import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.test.web.servlet.request
     .MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request
+    .MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result
     .MockMvcResultMatchers.status;
 
@@ -49,6 +51,16 @@ class SecurityConfigurationTest {
     private JwtDecoder jwtDecoder;
     @MockitoBean
     private SecurityProbeController.ProbeService probeService;
+    @Test
+    void shouldPermitAnonymousCurrentSessionLogout()
+        throws Exception {
+
+        mockMvc.perform(
+                post("/api/v1/auth/logout")
+            )
+            .andExpect(status().isNotFound());
+    }
+
     @Test
     void shouldPermitAnonymousRequestToPrometheusEndpoint()
         throws Exception {

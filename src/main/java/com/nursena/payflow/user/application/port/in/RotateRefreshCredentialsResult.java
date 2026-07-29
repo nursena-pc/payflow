@@ -3,14 +3,14 @@ package com.nursena.payflow.user.application.port.in;
 import java.time.Instant;
 import java.util.Objects;
 
-public record AuthenticateUserResult(
+public record RotateRefreshCredentialsResult(
     String accessToken,
     Instant expiresAt,
     String refreshToken,
     Instant refreshTokenExpiresAt
 ) {
 
-    public AuthenticateUserResult {
+    public RotateRefreshCredentialsResult {
         Objects.requireNonNull(
             accessToken,
             "accessToken must not be null"
@@ -43,6 +43,6 @@ public record AuthenticateUserResult(
 
     @Override
     public String toString() {
-        return "AuthenticateUserResult[redacted]";
+        return "RotateRefreshCredentialsResult[redacted]";
     }
 }

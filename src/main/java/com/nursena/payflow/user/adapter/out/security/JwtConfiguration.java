@@ -5,7 +5,6 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.time.Clock;
 import java.util.UUID;
 
 import com.nimbusds.jose.jwk.JWKSet;
@@ -30,10 +29,6 @@ class JwtConfiguration {
 
     private static final int RSA_KEY_SIZE = 2048;
 
-    @Bean
-    Clock jwtClock() {
-        return Clock.systemUTC();
-    }
 
     @Bean
     KeyPair jwtKeyPair() {

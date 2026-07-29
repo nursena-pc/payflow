@@ -23,7 +23,66 @@ public final class OpenApiExamples {
         {
           "accessToken": "eyJhbGciOiJSUzI1NiJ9...",
           "tokenType": "Bearer",
-          "expiresAt": "2026-07-17T12:15:00Z"
+          "expiresAt": "2026-07-17T12:15:00Z",
+          "refreshToken": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA",
+          "refreshTokenExpiresAt": "2026-07-24T12:00:00Z"
+        }
+        """;
+
+    public static final String REFRESH_SUCCESS =
+        """
+        {
+          "accessToken": "eyJhbGciOiJSUzI1NiJ9...",
+          "tokenType": "Bearer",
+          "expiresAt": "2026-07-28T12:15:00Z",
+          "refreshToken": "ICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj8",
+          "refreshTokenExpiresAt": "2026-08-04T12:00:00Z"
+        }
+        """;
+
+    public static final String REFRESH_VALIDATION_ERROR =
+        """
+        {
+          "timestamp": "2026-07-28T12:00:00Z",
+          "status": 400,
+          "code": "VALIDATION_FAILED",
+          "message": "Request validation failed.",
+          "path": "/api/v1/auth/refresh",
+          "violations": [
+            {
+              "field": "refreshToken",
+              "message": "Refresh token is required."
+            }
+          ]
+        }
+        """;
+
+    public static final String LOGOUT_VALIDATION_ERROR =
+        """
+        {
+          "timestamp": "2026-07-29T12:00:00Z",
+          "status": 400,
+          "code": "VALIDATION_FAILED",
+          "message": "Request validation failed.",
+          "path": "/api/v1/auth/logout",
+          "violations": [
+            {
+              "field": "refreshToken",
+              "message": "Refresh token is required."
+            }
+          ]
+        }
+        """;
+
+    public static final String INVALID_REFRESH_TOKEN =
+        """
+        {
+          "timestamp": "2026-07-28T12:00:00Z",
+          "status": 401,
+          "code": "REFRESH_TOKEN_INVALID",
+          "message": "Refresh token is invalid.",
+          "path": "/api/v1/auth/refresh",
+          "violations": []
         }
         """;
 

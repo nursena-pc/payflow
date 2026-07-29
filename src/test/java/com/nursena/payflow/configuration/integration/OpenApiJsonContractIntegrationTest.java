@@ -46,6 +46,12 @@ class OpenApiJsonContractIntegrationTest {
     private static final String LOGIN_PATH =
         "/api/v1/auth/login";
 
+    private static final String REFRESH_PATH =
+        "/api/v1/auth/refresh";
+
+    private static final String LOGOUT_PATH =
+        "/api/v1/auth/logout";
+
     private static final String USER_PROFILE_PATH =
         "/api/v1/users/me";
 
@@ -180,6 +186,8 @@ class OpenApiJsonContractIntegrationTest {
             SYSTEM_HEALTH_PATH,
             REGISTER_PATH,
             LOGIN_PATH,
+            REFRESH_PATH,
+            LOGOUT_PATH,
             USER_PROFILE_PATH,
             WALLETS_PATH,
             CURRENT_WALLET_PATH,
@@ -230,6 +238,51 @@ class OpenApiJsonContractIntegrationTest {
             "400",
             "401",
             "403"
+        );
+
+        JsonNode refresh =
+            operation(
+                REFRESH_PATH,
+                "post"
+            );
+
+        assertPublicOperation(refresh);
+
+        assertThat(
+            refresh
+                .path("operationId")
+                .asText()
+        ).isEqualTo(
+            "rotateRefreshCredentials"
+        );
+
+        assertResponseCodes(
+            refresh,
+            "200",
+            "400",
+            "401"
+        );
+
+        JsonNode logout =
+            operation(
+                LOGOUT_PATH,
+                "post"
+            );
+
+        assertPublicOperation(logout);
+
+        assertThat(
+            logout
+                .path("operationId")
+                .asText()
+        ).isEqualTo(
+            "revokeCurrentRefreshSession"
+        );
+
+        assertResponseCodes(
+            logout,
+            "204",
+            "400"
         );
     }
 
@@ -460,6 +513,328 @@ class OpenApiJsonContractIntegrationTest {
             deadLetterDetails,
             "recordId"
         );
+    }
+
+    @Test
+    void shouldExposeLoginCredentialPairContract() {
+        JsonNode login =
+            operation(
+                LOGIN_PATH,
+                "post"
+            );
+
+        JsonNode successSchema =
+            login
+                .path("responses")
+                .path("200")
+                .path("content")
+                .path(
+                    MediaType.APPLICATION_JSON_VALUE
+                )
+                .path("schema");
+
+        assertThat(
+            successSchema
+                .path("$ref")
+                .asText()
+        ).isEqualTo(
+            "#/components/schemas/"
+                + "AuthenticateUserResponse"
+        );
+
+        JsonNode properties =
+            openApi
+                .path("components")
+                .path("schemas")
+                .path(
+                    "AuthenticateUserResponse"
+                )
+                .path("properties");
+
+        assertThat(
+            fieldNames(properties)
+        )
+            .containsExactlyInAnyOrder(
+                "accessToken",
+                "tokenType",
+                "expiresAt",
+                "refreshToken",
+                "refreshTokenExpiresAt"
+            )
+            .doesNotContain(
+                "tokenDigest",
+                "familyId",
+                "recordId",
+                "userId",
+                "revokedAt",
+                "consumedAt",
+                "successorId"
+            );
+
+        assertThat(
+            properties
+                .path("expiresAt")
+                .path("format")
+                .asText()
+        ).isEqualTo("date-time");
+
+        assertThat(
+            properties
+                .path(
+                    "refreshTokenExpiresAt"
+                )
+                .path("format")
+                .asText()
+        ).isEqualTo("date-time");
+
+        assertThat(
+            properties
+                .path("accessToken")
+                .path("type")
+                .asText()
+        ).isEqualTo("string");
+
+        assertThat(
+            properties
+                .path("refreshToken")
+                .path("type")
+                .asText()
+        ).isEqualTo("string");
+    }
+    @Test
+    void shouldExposeRefreshCredentialPairContract() {
+        JsonNode refresh =
+            operation(
+                REFRESH_PATH,
+                "post"
+            );
+
+        JsonNode requestSchema =
+            refresh
+                .path("requestBody")
+                .path("content")
+                .path(
+                    MediaType.APPLICATION_JSON_VALUE
+                )
+                .path("schema");
+
+        assertThat(
+            requestSchema
+                .path("$ref")
+                .asText()
+        ).isEqualTo(
+            "#/components/schemas/"
+                + "RotateRefreshCredentialsRequest"
+        );
+
+        JsonNode schemas =
+            openApi
+                .path("components")
+                .path("schemas");
+
+        JsonNode requestProperties =
+            schemas
+                .path(
+                    "RotateRefreshCredentialsRequest"
+                )
+                .path("properties");
+
+        assertThat(
+            fieldNames(requestProperties)
+        ).containsExactly(
+            "refreshToken"
+        );
+
+        assertThat(
+            requestProperties
+                .path("refreshToken")
+                .path("type")
+                .asText()
+        ).isEqualTo("string");
+
+        assertThat(
+            requestProperties
+                .path("refreshToken")
+                .path("writeOnly")
+                .asBoolean()
+        ).isTrue();
+
+        JsonNode successSchema =
+            refresh
+                .path("responses")
+                .path("200")
+                .path("content")
+                .path(
+                    MediaType.APPLICATION_JSON_VALUE
+                )
+                .path("schema");
+
+        assertThat(
+            successSchema
+                .path("$ref")
+                .asText()
+        ).isEqualTo(
+            "#/components/schemas/"
+                + "RotateRefreshCredentialsResponse"
+        );
+
+        JsonNode responseProperties =
+            schemas
+                .path(
+                    "RotateRefreshCredentialsResponse"
+                )
+                .path("properties");
+
+        assertThat(
+            fieldNames(responseProperties)
+        )
+            .containsExactlyInAnyOrder(
+                "accessToken",
+                "tokenType",
+                "expiresAt",
+                "refreshToken",
+                "refreshTokenExpiresAt"
+            )
+            .doesNotContain(
+                "tokenDigest",
+                "familyId",
+                "recordId",
+                "userId",
+                "revokedAt",
+                "consumedAt",
+                "successorId"
+            );
+
+        assertThat(
+            responseProperties
+                .path("expiresAt")
+                .path("format")
+                .asText()
+        ).isEqualTo("date-time");
+
+        assertThat(
+            responseProperties
+                .path(
+                    "refreshTokenExpiresAt"
+                )
+                .path("format")
+                .asText()
+        ).isEqualTo("date-time");
+
+        JsonNode unauthorizedContent =
+            refresh
+                .path("responses")
+                .path("401")
+                .path("content")
+                .path(
+                    MediaType.APPLICATION_JSON_VALUE
+                );
+
+        assertThat(
+            unauthorizedContent.toString()
+        )
+            .contains(
+                "REFRESH_TOKEN_INVALID",
+                "Refresh token is invalid."
+            );
+
+        assertThat(
+            refresh
+                .path("responses")
+                .path("400")
+                .path("content")
+                .path(
+                    MediaType.APPLICATION_JSON_VALUE
+                )
+                .toString()
+        )
+            .contains(
+                "VALIDATION_FAILED",
+                "Refresh token is required."
+            );
+    }
+
+    @Test
+    void shouldExposeCurrentSessionLogoutContract() {
+        JsonNode logout =
+            operation(
+                LOGOUT_PATH,
+                "post"
+            );
+
+        JsonNode requestSchema =
+            logout
+                .path("requestBody")
+                .path("content")
+                .path(
+                    MediaType.APPLICATION_JSON_VALUE
+                )
+                .path("schema");
+
+        assertThat(
+            requestSchema
+                .path("$ref")
+                .asText()
+        ).isEqualTo(
+            "#/components/schemas/"
+                + "RevokeCurrentRefreshSessionRequest"
+        );
+
+        JsonNode requestProperties =
+            openApi
+                .path("components")
+                .path("schemas")
+                .path(
+                    "RevokeCurrentRefreshSessionRequest"
+                )
+                .path("properties");
+
+        assertThat(
+            fieldNames(requestProperties)
+        ).containsExactly(
+            "refreshToken"
+        );
+
+        assertThat(
+            requestProperties
+                .path("refreshToken")
+                .path("type")
+                .asText()
+        ).isEqualTo("string");
+
+        assertThat(
+            requestProperties
+                .path("refreshToken")
+                .path("writeOnly")
+                .asBoolean()
+        ).isTrue();
+
+        JsonNode responses =
+            logout.path("responses");
+
+        assertThat(responses.has("401"))
+            .isFalse();
+
+        assertThat(
+            responses
+                .path("204")
+                .has("content")
+        ).isFalse();
+
+        assertThat(
+            responses
+                .path("400")
+                .path("content")
+                .path(
+                    MediaType.APPLICATION_JSON_VALUE
+                )
+                .toString()
+        )
+            .contains(
+                "VALIDATION_FAILED",
+                "Refresh token is required.",
+                "/api/v1/auth/logout"
+            );
     }
 
     @Test

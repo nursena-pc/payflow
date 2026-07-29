@@ -4,9 +4,9 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 import com.nursena.payflow.common.api.ApiError;
 import com.nursena.payflow.configuration.OpenApiExamples;
-import com.nursena.payflow.user.application.port.in.AuthenticateUserCommand;
-import com.nursena.payflow.user.application.port.in.AuthenticateUserResult;
-import com.nursena.payflow.user.application.port.in.AuthenticateUserUseCase;
+import com.nursena.payflow.user.application.port.in.RotateRefreshCredentialsCommand;
+import com.nursena.payflow.user.application.port.in.RotateRefreshCredentialsResult;
+import com.nursena.payflow.user.application.port.in.RotateRefreshCredentialsUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -28,41 +28,44 @@ import org.springframework.web.bind.annotation.RestController;
 )
 @RestController
 @RequestMapping("/api/v1/auth")
-public class AuthenticateUserController {
+public class RotateRefreshCredentialsController {
 
-    private static final String TOKEN_TYPE = "Bearer";
+    private static final String TOKEN_TYPE =
+        "Bearer";
 
-    private final AuthenticateUserUseCase
-        authenticateUserUseCase;
+    private final RotateRefreshCredentialsUseCase
+        rotateRefreshCredentialsUseCase;
 
-    public AuthenticateUserController(
-        AuthenticateUserUseCase authenticateUserUseCase
+    public RotateRefreshCredentialsController(
+        RotateRefreshCredentialsUseCase
+            rotateRefreshCredentialsUseCase
     ) {
-        this.authenticateUserUseCase =
-            authenticateUserUseCase;
+        this.rotateRefreshCredentialsUseCase =
+            rotateRefreshCredentialsUseCase;
     }
 
     @Operation(
-        operationId = "authenticateUser",
-        summary = "Authenticate a user",
+        operationId = "rotateRefreshCredentials",
+        summary = "Rotate refresh credentials",
         description =
-            "Validates user credentials and returns "
-                + "an RSA-signed JWT access token and "
-                + "an opaque refresh token."
+            "Consumes an active opaque refresh token "
+                + "and returns a new access and refresh "
+                + "credential pair."
     )
     @ApiResponses({
         @ApiResponse(
             responseCode = "200",
-            description = "Authentication succeeded.",
+            description =
+                "Refresh credentials rotated successfully.",
             content = @Content(
                 mediaType = APPLICATION_JSON_VALUE,
                 schema = @Schema(
                     implementation =
-                        AuthenticateUserResponse.class
+                        RotateRefreshCredentialsResponse.class
                 ),
                 examples = @ExampleObject(
                     value =
-                        OpenApiExamples.LOGIN_SUCCESS
+                        OpenApiExamples.REFRESH_SUCCESS
                 )
             )
         ),
@@ -77,28 +80,14 @@ public class AuthenticateUserController {
                 examples = @ExampleObject(
                     value =
                         OpenApiExamples
-                            .LOGIN_VALIDATION_ERROR
+                            .REFRESH_VALIDATION_ERROR
                 )
             )
         ),
         @ApiResponse(
             responseCode = "401",
-            description = "Credentials are invalid.",
-            content = @Content(
-                mediaType = APPLICATION_JSON_VALUE,
-                schema = @Schema(
-                    implementation = ApiError.class
-                ),
-                examples = @ExampleObject(
-                    value =
-                        OpenApiExamples.INVALID_CREDENTIALS
-                )
-            )
-        ),
-        @ApiResponse(
-            responseCode = "403",
             description =
-                "The user account cannot be authenticated.",
+                "The refresh credential is invalid.",
             content = @Content(
                 mediaType = APPLICATION_JSON_VALUE,
                 schema = @Schema(
@@ -107,30 +96,30 @@ public class AuthenticateUserController {
                 examples = @ExampleObject(
                     value =
                         OpenApiExamples
-                            .USER_ACCOUNT_UNAVAILABLE
+                            .INVALID_REFRESH_TOKEN
                 )
             )
         )
     })
-    @PostMapping("/login")
-    public ResponseEntity<AuthenticateUserResponse>
-    authenticate(
+    @PostMapping("/refresh")
+    public ResponseEntity<
+        RotateRefreshCredentialsResponse
+    > rotate(
         @Valid @RequestBody
-        AuthenticateUserRequest request
+        RotateRefreshCredentialsRequest request
     ) {
-        AuthenticateUserCommand command =
-            new AuthenticateUserCommand(
-                request.email(),
-                request.password()
+        RotateRefreshCredentialsCommand command =
+            new RotateRefreshCredentialsCommand(
+                request.refreshToken()
             );
 
-        AuthenticateUserResult result =
-            authenticateUserUseCase.authenticate(
+        RotateRefreshCredentialsResult result =
+            rotateRefreshCredentialsUseCase.rotate(
                 command
             );
 
-        AuthenticateUserResponse response =
-            new AuthenticateUserResponse(
+        RotateRefreshCredentialsResponse response =
+            new RotateRefreshCredentialsResponse(
                 result.accessToken(),
                 TOKEN_TYPE,
                 result.expiresAt(),
