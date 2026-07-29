@@ -76,7 +76,7 @@ class RotateRefreshCredentialsIntegrationTest {
     }
 
     @Test
-    void shouldRotateAndPersistSingleSuccessor()
+    void shouldRotateOnceAndDurablyRevokeFamilyOnReuse()
         throws Exception {
 
         InitialCredential initial =
@@ -356,6 +356,47 @@ class RotateRefreshCredentialsIntegrationTest {
         assertThat(recordCount)
             .isEqualTo(2);
 
+        assertRefreshTokenRejected(
+            initial.refreshToken()
+        );
+
+        FamilyRevocation reuseRevocation =
+            findFamilyRevocation(
+                persisted.predecessorFamilyId()
+            );
+
+        assertThat(reuseRevocation.revokedAt())
+            .isNotNull()
+            .isAfterOrEqualTo(
+                persisted.predecessorConsumedAt()
+            );
+
+        assertThat(reuseRevocation.reason())
+            .isEqualTo("REUSE_DETECTED");
+
+        assertThat(countRecords())
+            .isEqualTo(2);
+
+        assertRefreshTokenRejected(
+            successorToken
+        );
+
+        FamilyRevocation afterSuccessorAttempt =
+            findFamilyRevocation(
+                persisted.predecessorFamilyId()
+            );
+
+        assertThat(afterSuccessorAttempt)
+            .isEqualTo(reuseRevocation);
+
+        assertThat(countRecords())
+            .isEqualTo(2);
+    }
+
+    private void assertRefreshTokenRejected(
+        String refreshToken
+    ) throws Exception {
+
         mockMvc.perform(
                 post("/api/v1/auth/refresh")
                     .contentType(
@@ -364,7 +405,7 @@ class RotateRefreshCredentialsIntegrationTest {
                     .content(
                         objectMapper.writeValueAsString(
                             new RefreshRequest(
-                                initial.refreshToken()
+                                refreshToken
                             )
                         )
                     )
@@ -385,7 +426,55 @@ class RotateRefreshCredentialsIntegrationTest {
                 ).value(
                     "Refresh token is invalid."
                 )
+            )
+            .andExpect(
+                jsonPath(
+                    "$.accessToken"
+                ).doesNotExist()
+            )
+            .andExpect(
+                jsonPath(
+                    "$.refreshToken"
+                ).doesNotExist()
             );
+    }
+
+    private FamilyRevocation findFamilyRevocation(
+        UUID familyId
+    ) {
+        return jdbcTemplate.queryForObject(
+            """
+            SELECT revoked_at, revocation_reason
+            FROM refresh_token_families
+            WHERE id = ?
+            """,
+            (resultSet, rowNumber) ->
+                new FamilyRevocation(
+                    nullableInstant(
+                        resultSet,
+                        "revoked_at"
+                    ),
+                    resultSet.getString(
+                        "revocation_reason"
+                    )
+                ),
+            familyId
+        );
+    }
+
+    private int countRecords() {
+        Integer count =
+            jdbcTemplate.queryForObject(
+                """
+                SELECT COUNT(*)
+                FROM refresh_token_records
+                """,
+                Integer.class
+            );
+
+        return count == null
+            ? 0
+            : count;
     }
 
     private InitialCredential issueInitialCredential(
@@ -540,6 +629,12 @@ class RotateRefreshCredentialsIntegrationTest {
     private record InitialCredential(
         String email,
         String refreshToken
+    ) {
+    }
+
+    private record FamilyRevocation(
+        Instant revokedAt,
+        String reason
     ) {
     }
 

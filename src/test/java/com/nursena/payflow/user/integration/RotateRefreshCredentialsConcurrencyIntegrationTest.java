@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
@@ -242,7 +243,7 @@ class RotateRefreshCredentialsConcurrencyIntegrationTest {
                     Integer.class
                 );
 
-            Integer activeCount =
+            Integer unconsumedCount =
                 jdbcTemplate.queryForObject(
                     """
                     SELECT COUNT(*)
@@ -251,6 +252,11 @@ class RotateRefreshCredentialsConcurrencyIntegrationTest {
                       AND successor_id IS NULL
                     """,
                     Integer.class
+                );
+
+            FamilyRevocation reuseRevocation =
+                findFamilyRevocation(
+                    initialRefreshToken
                 );
 
             byte[] successorDigest =
@@ -272,8 +278,14 @@ class RotateRefreshCredentialsConcurrencyIntegrationTest {
             assertThat(consumedCount)
                 .isEqualTo(1);
 
-            assertThat(activeCount)
+            assertThat(unconsumedCount)
                 .isEqualTo(1);
+
+            assertThat(reuseRevocation.revokedAt())
+                .isNotNull();
+
+            assertThat(reuseRevocation.reason())
+                .isEqualTo("REUSE_DETECTED");
 
             assertThat(successorDigest)
                 .containsExactly(
@@ -289,6 +301,27 @@ class RotateRefreshCredentialsConcurrencyIntegrationTest {
                 )
             )
                 .isFalse();
+
+            MvcResult successorResult =
+                performRefresh(
+                    successorToken
+                );
+
+            assertRefreshRejected(
+                successorResult
+            );
+
+            FamilyRevocation
+                afterSuccessorAttempt =
+                findFamilyRevocation(
+                    initialRefreshToken
+                );
+
+            assertThat(afterSuccessorAttempt)
+                .isEqualTo(reuseRevocation);
+
+            assertThat(countRecords())
+                .isEqualTo(2);
         } finally {
             recordRepository
                 .releaseFirstLookup();
@@ -314,6 +347,95 @@ class RotateRefreshCredentialsConcurrencyIntegrationTest {
                 )
                 .isTrue();
         }
+    }
+
+    private void assertRefreshRejected(
+        MvcResult result
+    ) throws Exception {
+        assertThat(
+            result
+                .getResponse()
+                .getStatus()
+        )
+            .isEqualTo(401);
+
+        JsonNode response =
+            objectMapper.readTree(
+                result
+                    .getResponse()
+                    .getContentAsByteArray()
+            );
+
+        assertThat(
+            response
+                .path("code")
+                .asText()
+        )
+            .isEqualTo(
+                "REFRESH_TOKEN_INVALID"
+            );
+
+        assertThat(
+            response
+                .path("message")
+                .asText()
+        )
+            .isEqualTo(
+                "Refresh token is invalid."
+            );
+
+        assertThat(response.has("accessToken"))
+            .isFalse();
+
+        assertThat(response.has("refreshToken"))
+            .isFalse();
+    }
+
+    private FamilyRevocation findFamilyRevocation(
+        String refreshToken
+    ) {
+        byte[] digest =
+            refreshTokenDigest
+                .digest(refreshToken)
+                .value();
+
+        return jdbcTemplate.queryForObject(
+            """
+            SELECT family.revoked_at,
+                   family.revocation_reason
+            FROM refresh_token_families family
+            JOIN refresh_token_records record
+              ON record.family_id = family.id
+            WHERE record.token_digest = ?
+            """,
+            (resultSet, rowNumber) ->
+                new FamilyRevocation(
+                    resultSet
+                        .getTimestamp(
+                            "revoked_at"
+                        )
+                        .toInstant(),
+                    resultSet.getString(
+                        "revocation_reason"
+                    )
+                ),
+            digest
+        );
+    }
+
+    private int countRecords() {
+        Integer count =
+            jdbcTemplate.queryForObject(
+                """
+                SELECT COUNT(*)
+                FROM refresh_token_records
+                """,
+                Integer.class
+            );
+
+        return count == null
+            ? 0
+            : count;
     }
 
     private String issueInitialRefreshToken()
@@ -389,6 +511,12 @@ class RotateRefreshCredentialsConcurrencyIntegrationTest {
                     )
             )
             .andReturn();
+    }
+
+    private record FamilyRevocation(
+        Instant revokedAt,
+        String reason
+    ) {
     }
 
     private record Credentials(
