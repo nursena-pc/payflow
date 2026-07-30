@@ -11,6 +11,7 @@ import com.nursena.payflow.user.adapter.in.web.AuthenticateUserRequest;
 import com.nursena.payflow.user.adapter.in.web.RegisterUserController;
 import com.nursena.payflow.user.adapter.in.web.RegisterUserRequest;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.servlet.http.HttpServletRequest;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -65,7 +66,8 @@ class PublicApiDocumentationTest {
             AuthenticateUserController.class
                 .getDeclaredMethod(
                     "authenticate",
-                    AuthenticateUserRequest.class
+                    AuthenticateUserRequest.class,
+                    HttpServletRequest.class
                 );
 
         assertDocumentation(
@@ -76,7 +78,9 @@ class PublicApiDocumentationTest {
             "200",
             "400",
             "401",
-            "403"
+            "403",
+            "429",
+            "503"
         );
     }
 

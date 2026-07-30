@@ -1,3 +1,4 @@
+
 package com.nursena.payflow.user.application.service;
 
 import java.time.Clock;
@@ -6,43 +7,89 @@ import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 import java.util.UUID;
 
-import com.nursena.payflow.user.application.port.in.AuthenticateUserCommand;
-import com.nursena.payflow.user.application.port.in.AuthenticateUserResult;
-import com.nursena.payflow.user.application.port.in.AuthenticateUserUseCase;
-import com.nursena.payflow.user.application.port.out.AccessTokenGenerationPort;
-import com.nursena.payflow.user.application.port.out.GeneratedAccessToken;
-import com.nursena.payflow.user.application.port.out.GeneratedRefreshToken;
-import com.nursena.payflow.user.application.port.out.PasswordVerificationPort;
-import com.nursena.payflow.user.application.port.out.RefreshTokenDigestPort;
-import com.nursena.payflow.user.application.port.out.RefreshTokenFamilyRepositoryPort;
-import com.nursena.payflow.user.application.port.out.RefreshTokenGenerationPort;
-import com.nursena.payflow.user.application.port.out.RefreshTokenRecordRepositoryPort;
-import com.nursena.payflow.user.application.port.out.UserRepositoryPort;
-import com.nursena.payflow.user.domain.exception.InvalidCredentialsException;
-import com.nursena.payflow.user.domain.exception.UserAccountUnavailableException;
+import com.nursena.payflow.user.application.exception
+    .LoginRateLimitExceededException;
+import com.nursena.payflow.user.application.port.in
+    .AuthenticateUserCommand;
+import com.nursena.payflow.user.application.port.in
+    .AuthenticateUserResult;
+import com.nursena.payflow.user.application.port.in
+    .AuthenticateUserUseCase;
+import com.nursena.payflow.user.application.port.out
+    .AccessTokenGenerationPort;
+import com.nursena.payflow.user.application.port.out
+    .GeneratedAccessToken;
+import com.nursena.payflow.user.application.port.out
+    .GeneratedRefreshToken;
+import com.nursena.payflow.user.application.port.out
+    .LoginRateLimitDecision;
+import com.nursena.payflow.user.application.port.out
+    .LoginRateLimitPort;
+import com.nursena.payflow.user.application.port.out
+    .LoginRateLimitRequest;
+import com.nursena.payflow.user.application.port.out
+    .PasswordVerificationPort;
+import com.nursena.payflow.user.application.port.out
+    .RefreshTokenDigestPort;
+import com.nursena.payflow.user.application.port.out
+    .RefreshTokenFamilyRepositoryPort;
+import com.nursena.payflow.user.application.port.out
+    .RefreshTokenGenerationPort;
+import com.nursena.payflow.user.application.port.out
+    .RefreshTokenRecordRepositoryPort;
+import com.nursena.payflow.user.application.port.out
+    .UserRepositoryPort;
+import com.nursena.payflow.user.domain.exception
+    .InvalidCredentialsException;
+import com.nursena.payflow.user.domain.exception
+    .UserAccountUnavailableException;
 import com.nursena.payflow.user.domain.model.EmailAddress;
-import com.nursena.payflow.user.domain.model.RefreshTokenDigest;
-import com.nursena.payflow.user.domain.model.RefreshTokenFamily;
-import com.nursena.payflow.user.domain.model.RefreshTokenFamilyId;
-import com.nursena.payflow.user.domain.model.RefreshTokenRecord;
-import com.nursena.payflow.user.domain.model.RefreshTokenRecordId;
+import com.nursena.payflow.user.domain.model
+    .RefreshTokenDigest;
+import com.nursena.payflow.user.domain.model
+    .RefreshTokenFamily;
+import com.nursena.payflow.user.domain.model
+    .RefreshTokenFamilyId;
+import com.nursena.payflow.user.domain.model
+    .RefreshTokenRecord;
+import com.nursena.payflow.user.domain.model
+    .RefreshTokenRecordId;
 import com.nursena.payflow.user.domain.model.User;
-import com.nursena.payflow.user.domain.model.UserStatus;
+import com.nursena.payflow.user.domain.model
+    .UserStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation
+    .Transactional;
 
 @Service
 public class AuthenticateUserService
     implements AuthenticateUserUseCase {
 
     private final UserRepositoryPort userRepository;
-    private final PasswordVerificationPort passwordVerification;
-    private final RefreshTokenGenerationPort refreshTokenGeneration;
-    private final RefreshTokenDigestPort refreshTokenDigest;
-    private final RefreshTokenFamilyRepositoryPort familyRepository;
-    private final RefreshTokenRecordRepositoryPort recordRepository;
-    private final AccessTokenGenerationPort accessTokenGeneration;
-    private final RefreshSessionLifetimePolicy lifetimePolicy;
+
+    private final PasswordVerificationPort
+        passwordVerification;
+
+    private final RefreshTokenGenerationPort
+        refreshTokenGeneration;
+
+    private final RefreshTokenDigestPort
+        refreshTokenDigest;
+
+    private final RefreshTokenFamilyRepositoryPort
+        familyRepository;
+
+    private final RefreshTokenRecordRepositoryPort
+        recordRepository;
+
+    private final AccessTokenGenerationPort
+        accessTokenGeneration;
+
+    private final LoginRateLimitPort loginRateLimit;
+
+    private final RefreshSessionLifetimePolicy
+        lifetimePolicy;
+
     private final Clock clock;
 
     public AuthenticateUserService(
@@ -53,6 +100,7 @@ public class AuthenticateUserService
         RefreshTokenFamilyRepositoryPort familyRepository,
         RefreshTokenRecordRepositoryPort recordRepository,
         AccessTokenGenerationPort accessTokenGeneration,
+        LoginRateLimitPort loginRateLimit,
         RefreshSessionLifetimePolicy lifetimePolicy,
         Clock clock
     ) {
@@ -98,6 +146,12 @@ public class AuthenticateUserService
                 "accessTokenGeneration must not be null"
             );
 
+        this.loginRateLimit =
+            Objects.requireNonNull(
+                loginRateLimit,
+                "loginRateLimit must not be null"
+            );
+
         this.lifetimePolicy =
             Objects.requireNonNull(
                 lifetimePolicy,
@@ -116,17 +170,32 @@ public class AuthenticateUserService
     public AuthenticateUserResult authenticate(
         AuthenticateUserCommand command
     ) {
-        EmailAddress email =
-            EmailAddress.of(command.email());
-
-        User user = userRepository.findByEmail(email)
-            .orElseThrow(
-                InvalidCredentialsException::new
+        AuthenticateUserCommand validatedCommand =
+            Objects.requireNonNull(
+                command,
+                "command must not be null"
             );
+
+        EmailAddress email =
+            EmailAddress.of(
+                validatedCommand.email()
+            );
+
+        enforceRateLimit(
+            email,
+            validatedCommand.clientAddress()
+        );
+
+        User user =
+            userRepository
+                .findByEmail(email)
+                .orElseThrow(
+                    InvalidCredentialsException::new
+                );
 
         boolean passwordMatches =
             passwordVerification.matches(
-                command.rawPassword(),
+                validatedCommand.rawPassword(),
                 user.passwordHash()
             );
 
@@ -135,7 +204,8 @@ public class AuthenticateUserService
         }
 
         if (user.status() != UserStatus.ACTIVE) {
-            throw new UserAccountUnavailableException();
+            throw new
+                UserAccountUnavailableException();
         }
 
         Instant issuedAt =
@@ -144,7 +214,8 @@ public class AuthenticateUserService
                     ChronoUnit.MICROS
                 );
 
-        GeneratedRefreshToken generatedRefreshToken =
+        GeneratedRefreshToken
+            generatedRefreshToken =
             refreshTokenGeneration.generate();
 
         RefreshTokenDigest digest =
@@ -199,11 +270,34 @@ public class AuthenticateUserService
                 user
             );
 
+        loginRateLimit.resetIdentity(email);
+
         return new AuthenticateUserResult(
             accessToken.value(),
             accessToken.expiresAt(),
             generatedRefreshToken.value(),
             savedRecord.expiresAt()
         );
+    }
+
+    private void enforceRateLimit(
+        EmailAddress email,
+        String clientAddress
+    ) {
+        LoginRateLimitDecision decision =
+            loginRateLimit.evaluate(
+                new LoginRateLimitRequest(
+                    email,
+                    clientAddress
+                )
+            );
+
+        if (!decision.isAllowed()) {
+            throw new
+                LoginRateLimitExceededException(
+                decision.blockedDimension(),
+                decision.retryAfter()
+            );
+        }
     }
 }

@@ -45,7 +45,7 @@ This keeps domain rules independent from Spring and infrastructure while avoidin
 
 ## Current status
 
-The repository foundation, identity flow, wallet management, transactional transfer processing, Kafka delivery pipeline, secure dead-letter operations control plane, and durable refresh-session persistence foundation are implemented.
+The repository foundation, identity flow, revocable refresh sessions, Redis-backed login protection, wallet management, transactional transfer processing, Kafka delivery pipeline, and secure dead-letter operations control plane are implemented.
 
 Completed capabilities include:
 
@@ -55,7 +55,10 @@ Completed capabilities include:
 - secure-by-default Spring Security configuration
 - user registration with normalized email addresses
 - BCrypt password hashing
-- user login with RSA-signed JWT access tokens
+- user login with RSA-signed JWT access tokens and opaque refresh credentials
+- Redis-backed fixed-window login limits by normalized identity and direct client peer
+- atomic Lua counter updates with explicit TTL, `429 Retry-After`, and fail-closed `503`
+- low-cardinality login-protection metrics and credential-free security events
 - refresh-session architecture and threat model with explicit rotation and reuse-detection boundaries
 - refresh-token family and record domain/application contracts
 - PostgreSQL refresh-session persistence with SHA-256 digest-only token storage
@@ -98,14 +101,17 @@ Completed capabilities include:
 - operator-only, paginated command-audit queries and chronological command timelines
 - Prometheus metrics, Grafana dashboards, and alert rules for Kafka consumer failures
 
-OpenAPI documentation and the executable Postman collection cover the implemented API. PayFlow v0.7.0 establishes the architecture, domain contracts, and PostgreSQL persistence foundation for secure refresh-token rotation. Public refresh-token issuance, rotation, and revocation endpoints are intentionally deferred to a later release. See the [roadmap](docs/roadmap.md).
+OpenAPI documentation and executable Postman workflows cover the implemented API. The v0.9.0 development line includes refresh-token issuance and rotation, current-session and all-session logout, and Redis-backed login protection with real PostgreSQL and Redis acceptance coverage. See the [roadmap](docs/roadmap.md).
 
 ## Implemented API
 
 | Method | Endpoint | Authentication | Description |
 |---|---|---|---|
 | `POST` | `/api/v1/auth/register` | Public | Registers a new user and stores a BCrypt password hash. |
-| `POST` | `/api/v1/auth/login` | Public | Authenticates a user and returns an RSA-signed JWT access token. |
+| `POST` | `/api/v1/auth/login` | Public | Applies Redis-backed login protection and returns access and refresh credentials. |
+| `POST` | `/api/v1/auth/refresh` | Public | Atomically rotates an active opaque refresh credential. |
+| `POST` | `/api/v1/auth/logout` | Public | Idempotently revokes the refresh-token family represented by the submitted credential. |
+| `POST` | `/api/v1/auth/logout-all` | Bearer JWT | Revokes every active refresh session owned by the authenticated user. |
 | `GET` | `/api/v1/users/me` | Bearer JWT | Returns the authenticated user's safe profile fields. |
 | `POST` | `/api/v1/wallets` | Bearer JWT | Opens a zero-balance wallet for the authenticated user. |
 | `GET` | `/api/v1/wallets/me` | Bearer JWT | Returns the authenticated user's wallet summary. |
@@ -120,6 +126,24 @@ OpenAPI documentation and the executable Postman collection cover the implemente
 | `GET` | `/api/v1/operations/kafka/dead-letter-command-audits/{commandId}` | Bearer JWT with `role=ADMIN` | Returns the chronological audit timeline for one operator command. |
 | `GET` | `/api/v1/system/health` | Configuration-dependent | Exposes the application health status. |
 
+### Redis-backed login protection
+
+`POST /api/v1/auth/login` evaluates normalized-identity and direct-client counters
+in one Redis Lua script before user lookup or password verification. The default
+policy allows five attempts per identity and twenty attempts per client in a
+fixed fifteen-minute window.
+
+Excessive attempts return `429 LOGIN_RATE_LIMIT_EXCEEDED` with a positive
+`Retry-After` header. Redis decision or reset failures return fail-closed
+`503 LOGIN_RATE_LIMIT_UNAVAILABLE`. Error responses remain generic and do not
+reveal whether an identity exists.
+
+A successful login resets only the identity counter; the client counter retains
+its original expiration. Redis keys contain SHA-256 digests rather than raw
+identity or client values.
+
+See [Redis-Backed Login Rate Limiting](docs/login-rate-limiting.md) for policy,
+configuration, metrics, reverse-proxy trust boundaries, and operational checks.
 ### Simulated wallet top-up
 
 ```http
@@ -227,6 +251,7 @@ Import:
 
 - `postman/PayFlow.postman_collection.json`
 - `postman/PayFlow.local.postman_environment.json`
+- `postman/PayFlow.login-rate-limit.postman_collection.json` for the separate, deliberately disruptive security workflow
 
 Select the **PayFlow Local** environment and run the standard application workflow folders in this order:
 
@@ -420,7 +445,7 @@ Transfers and ledger writes require strong relational constraints, transactional
 
 ### Why Redis?
 
-Redis will support bounded, explicitly expiring concerns such as login rate limiting, short-lived wallet summaries, and selected idempotency lookups. PostgreSQL remains the source of truth for durable financial and refresh-session lifecycle state.
+Redis stores bounded, explicitly expiring login-attempt counters. Atomic Lua execution keeps identity and client decisions consistent across application instances, while PostgreSQL remains the source of truth for durable financial and refresh-session lifecycle state.
 
 ### Why Kafka?
 

@@ -1,15 +1,19 @@
 # PayFlow Postman Collection
 
-This collection provides an executable local workflow for the PayFlow simulated digital-wallet API plus manually gated Kafka dead-letter operations and command-audit investigation.
+The Postman assets provide an executable local workflow for the PayFlow simulated digital-wallet API, manually gated Kafka dead-letter operations, and a separate deliberately disruptive login rate-limit verification workflow.
 
 ## Import
 
-Import both files into Postman:
+Import the standard workflow assets:
 
 - `PayFlow.postman_collection.json`
 - `PayFlow.local.postman_environment.json`
 
 Select the **PayFlow Local** environment.
+
+Import `PayFlow.login-rate-limit.postman_collection.json` separately when
+verifying the Redis-backed identity threshold. The dedicated collection has its
+own safe collection variables and does not require committed credentials.
 
 ## Prerequisites
 
@@ -46,6 +50,30 @@ Run **Operations** separately. It is not part of the unattended application work
 
 The public registration and login workflow does not grant operations authority automatically.
 
+## Login rate-limit workflow
+
+Run **PayFlow Login Rate-Limit Verification** separately from the normal
+application workflow. It intentionally consumes login attempts.
+
+1. Ensure Redis and the application are running with the default identity limit
+   of five attempts.
+2. Run the complete **Identity Threshold** folder in order.
+3. Attempt 1 generates a unique unregistered email address.
+4. Attempts 1 through 5 verify the generic `401 INVALID_CREDENTIALS` contract.
+5. Attempt 6 verifies `429 LOGIN_RATE_LIMIT_EXCEEDED` and a positive
+   `Retry-After` header.
+
+The workflow uses no real account and clears its generated collection variable
+after the blocked attempt. Rerun the folder from attempt 1 rather than sending
+individual requests out of order.
+
+To verify fail-closed behavior manually, stop Redis after the application has
+started and send a login request. The expected response is
+`503 LOGIN_RATE_LIMIT_UNAVAILABLE`. Restore Redis before running the standard
+authentication workflow.
+
+See [`../docs/login-rate-limiting.md`](../docs/login-rate-limiting.md) for the
+complete security and operations contract.
 ## Operations workflow
 
 1. Obtain an admin JWT from a trusted local identity or test setup.
