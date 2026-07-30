@@ -2,13 +2,13 @@
 
 ## Current delivery focus
 
-PayFlow v0.8.0 is the latest tagged baseline. The active development line uses
-`0.9.0-SNAPSHOT`.
+PayFlow v0.8.0 is the latest tagged baseline. The v0.9.0 release candidate uses
+the Maven version `0.9.0`.
 
-The v0.9.0 increment focuses on distributed Redis-backed login protection and
-release readiness for the completed refresh-session security lifecycle. PayFlow
-remains a modular monolith. PostgreSQL is the system of record; Redis is used
-only for bounded, explicitly expiring abuse-control state.
+The v0.9.0 increment delivers distributed Redis-backed login protection and
+completes the refresh-session security lifecycle. PayFlow remains a modular
+monolith. PostgreSQL is the system of record; Redis is used only for bounded,
+explicitly expiring abuse-control state.
 
 ## Delivered platform baseline
 
@@ -113,11 +113,12 @@ fail-closed behavior when Redis cannot make a safe decision.
 
 ### Increment 5 — Pull request and release readiness
 
-- [ ] Synchronize the feature branch with the latest `origin/main`
-- [ ] Open the pull request linked to issue #98
-- [ ] Pass protected-branch CI and review checks
-- [ ] Merge through the protected pull-request workflow
-- [ ] Publish v0.9.0 release notes
+- [x] Synchronize the feature branch with the latest `origin/main`
+- [x] Open the pull request linked to issue #98
+- [x] Pass protected-branch CI and review checks
+- [x] Merge through the protected pull-request workflow
+- [x] Prepare v0.9.0 release notes
+- [x] Add a tag-triggered release workflow
 - [ ] Publish the executable JAR and SHA-256 checksum
 - [ ] Tag the verified release commit as `v0.9.0`
 
@@ -149,9 +150,12 @@ The release is ready only when:
 - [x] plaintext refresh tokens and authentication credentials are excluded from persistence and logs
 - [x] OpenAPI and Postman contracts match the implementation
 - [x] all local automated tests pass
-- [ ] the pull request is approved and merged
-- [ ] protected-branch CI passes on the merge candidate
-- [ ] release notes, executable JAR, and SHA-256 checksum are published
+- [x] the feature pull request is merged
+- [x] protected-branch CI passes on the merge candidate
+- [x] release notes are prepared
+- [ ] the v0.9.0 tag is published
+- [ ] the executable JAR and SHA-256 checksum are published
+- [ ] the GitHub Release is published
 
 ## Future candidates
 

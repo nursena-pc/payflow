@@ -101,7 +101,7 @@ Completed capabilities include:
 - operator-only, paginated command-audit queries and chronological command timelines
 - Prometheus metrics, Grafana dashboards, and alert rules for Kafka consumer failures
 
-OpenAPI documentation and executable Postman workflows cover the implemented API. The v0.9.0 development line includes refresh-token issuance and rotation, current-session and all-session logout, and Redis-backed login protection with real PostgreSQL and Redis acceptance coverage. See the [roadmap](docs/roadmap.md).
+OpenAPI documentation and executable Postman workflows cover the implemented API. The v0.9.0 release candidate includes refresh-token issuance and rotation, current-session and all-session logout, and Redis-backed login protection with real PostgreSQL and Redis acceptance coverage. See the [v0.9.0 release notes](docs/releases/v0.9.0.md) and the [roadmap](docs/roadmap.md).
 
 ## Implemented API
 

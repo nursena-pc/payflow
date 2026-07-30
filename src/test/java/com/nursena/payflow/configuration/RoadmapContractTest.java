@@ -22,7 +22,7 @@ class RoadmapContractTest {
         Path.of("docs", "roadmap.md");
 
     @Test
-    void shouldAlignRoadmapWithActiveMavenDevelopmentVersion()
+    void shouldAlignRoadmapWithReleaseVersion()
         throws Exception {
 
         String projectVersion =
@@ -32,21 +32,23 @@ class RoadmapContractTest {
             Files.readString(ROADMAP_PATH);
 
         assertThat(projectVersion)
-            .isEqualTo("0.9.0-SNAPSHOT");
+            .isEqualTo("0.9.0");
 
         assertThat(roadmap)
             .contains(
-                "`" + projectVersion + "`",
+                "Maven version `" + projectVersion + "`",
                 "## v0.9.0 — Redis-Backed Login Protection",
                 "- [x] Verify identity and client thresholds with real Redis",
                 "- [x] Verify HTTP `429` and `Retry-After`",
                 "- [x] Verify Redis outage produces fail-closed HTTP `503`",
-                "- [x] Add a dedicated, credential-free Postman verification collection",
-                "- [ ] Open the pull request linked to issue #98",
-                "- [ ] Tag the verified release commit as `v0.9.0`"
+                "- [x] Open the pull request linked to issue #98",
+                "- [x] Merge through the protected pull-request workflow",
+                "- [x] Prepare v0.9.0 release notes",
+                "- [ ] Tag the verified release commit as `v0.9.0`",
+                "- [ ] the GitHub Release is published"
             )
             .doesNotContain(
-                "active development line uses\n`0.7.0-SNAPSHOT`",
+                "0.9.0-SNAPSHOT",
                 "## v0.7.0 — Identity and Session Security"
             );
     }
