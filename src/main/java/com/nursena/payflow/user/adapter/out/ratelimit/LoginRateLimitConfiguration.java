@@ -1,13 +1,18 @@
+
 package com.nursena.payflow.user.adapter.out.ratelimit;
 
 import java.util.List;
 
-import com.nursena.payflow.user.application.port.out.LoginRateLimitPort;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import com.nursena.payflow.user.application.port.out
+    .LoginRateLimitPort;
+import io.micrometer.core.instrument.MeterRegistry;
+import org.springframework.boot.context.properties
+    .EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.data.redis.core.script
+    .DefaultRedisScript;
 import org.springframework.data.redis.core.script.RedisScript;
 
 @Configuration(proxyBeanMethods = false)
@@ -84,15 +89,26 @@ class LoginRateLimitConfiguration {
     }
 
     @Bean
+    LoginRateLimitMetrics loginRateLimitMetrics(
+        MeterRegistry meterRegistry
+    ) {
+        return new LoginRateLimitMetrics(
+            meterRegistry
+        );
+    }
+
+    @Bean
     LoginRateLimitPort loginRateLimitPort(
         StringRedisTemplate redisTemplate,
         RedisScript<List<Long>> loginRateLimitScript,
-        LoginRateLimitProperties properties
+        LoginRateLimitProperties properties,
+        LoginRateLimitMetrics metrics
     ) {
         return new RedisLoginRateLimitAdapter(
             redisTemplate,
             loginRateLimitScript,
-            properties
+            properties,
+            metrics
         );
     }
 }

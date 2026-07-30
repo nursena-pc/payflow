@@ -3,7 +3,9 @@ package com.nursena.payflow.user.application.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -18,11 +20,19 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.nursena.payflow.user.application.exception
+    .LoginRateLimitExceededException;
+import com.nursena.payflow.user.application.exception
+    .LoginRateLimitUnavailableException;
 import com.nursena.payflow.user.application.port.in.AuthenticateUserCommand;
 import com.nursena.payflow.user.application.port.in.AuthenticateUserResult;
 import com.nursena.payflow.user.application.port.out.AccessTokenGenerationPort;
 import com.nursena.payflow.user.application.port.out.GeneratedAccessToken;
 import com.nursena.payflow.user.application.port.out.GeneratedRefreshToken;
+import com.nursena.payflow.user.application.port.out.LoginRateLimitDecision;
+import com.nursena.payflow.user.application.port.out.LoginRateLimitDimension;
+import com.nursena.payflow.user.application.port.out.LoginRateLimitPort;
+import com.nursena.payflow.user.application.port.out.LoginRateLimitRequest;
 import com.nursena.payflow.user.application.port.out.PasswordVerificationPort;
 import com.nursena.payflow.user.application.port.out.RefreshTokenDigestPort;
 import com.nursena.payflow.user.application.port.out.RefreshTokenFamilyRepositoryPort;
@@ -108,6 +118,9 @@ class AuthenticateUserServiceTest {
     @Mock
     private AccessTokenGenerationPort accessTokenGeneration;
 
+    @Mock
+    private LoginRateLimitPort loginRateLimit;
+
     private RefreshSessionLifetimePolicy lifetimePolicy;
     private Clock clock;
     private AuthenticateUserService authenticateUserService;
@@ -126,6 +139,16 @@ class AuthenticateUserServiceTest {
                 ZoneOffset.UTC
             );
 
+        lenient()
+            .when(
+                loginRateLimit.evaluate(
+                    any(LoginRateLimitRequest.class)
+                )
+            )
+            .thenReturn(
+                LoginRateLimitDecision.allowed()
+            );
+
         authenticateUserService =
             new AuthenticateUserService(
                 userRepository,
@@ -135,6 +158,7 @@ class AuthenticateUserServiceTest {
                 familyRepository,
                 recordRepository,
                 accessTokenGeneration,
+                loginRateLimit,
                 lifetimePolicy,
                 clock
             );
@@ -204,7 +228,8 @@ class AuthenticateUserServiceTest {
             authenticateUserService.authenticate(
                 new AuthenticateUserCommand(
                     "  NURSENA@EXAMPLE.COM  ",
-                    RAW_PASSWORD
+                    RAW_PASSWORD,
+                    "203.0.113.10"
                 )
             );
 
@@ -331,6 +356,18 @@ class AuthenticateUserServiceTest {
                 RAW_PASSWORD,
                 PASSWORD_HASH
             );
+
+        verify(loginRateLimit)
+            .evaluate(
+                argThat(request ->
+                    request.identity().equals(email)
+                        && request.clientAddress()
+                            .equals("203.0.113.10")
+                )
+            );
+
+        verify(loginRateLimit)
+            .resetIdentity(email);
     }
 
     @Test
@@ -380,7 +417,8 @@ class AuthenticateUserServiceTest {
             authenticateUserService.authenticate(
                 new AuthenticateUserCommand(
                     "unknown@example.com",
-                    RAW_PASSWORD
+                    RAW_PASSWORD,
+                    "203.0.113.10"
                 )
             )
         )
@@ -429,7 +467,8 @@ class AuthenticateUserServiceTest {
             authenticateUserService.authenticate(
                 new AuthenticateUserCommand(
                     "nursena@example.com",
-                    "IncorrectPassword123!"
+                    "IncorrectPassword123!",
+                    "203.0.113.10"
                 )
             )
         )
@@ -471,7 +510,8 @@ class AuthenticateUserServiceTest {
             authenticateUserService.authenticate(
                 new AuthenticateUserCommand(
                     "nursena@example.com",
-                    RAW_PASSWORD
+                    RAW_PASSWORD,
+                    "203.0.113.10"
                 )
             )
         )
@@ -642,6 +682,199 @@ class AuthenticateUserServiceTest {
             .generate(user);
     }
 
+    @Test
+    void shouldRejectBlockedAttemptBeforeUserLookup() {
+        when(
+            loginRateLimit.evaluate(
+                any(LoginRateLimitRequest.class)
+            )
+        )
+            .thenReturn(
+                LoginRateLimitDecision.blocked(
+                    LoginRateLimitDimension.BOTH,
+                    Duration.ofSeconds(420)
+                )
+            );
+
+        assertThatThrownBy(() ->
+            authenticateUserService.authenticate(
+                command()
+            )
+        )
+            .isInstanceOf(
+                LoginRateLimitExceededException.class
+            )
+            .hasMessage(
+                "Too many login attempts. "
+                    + "Try again later."
+            )
+            .satisfies(exception -> {
+                LoginRateLimitExceededException
+                    rateLimitException =
+                    (LoginRateLimitExceededException)
+                        exception;
+
+                assertThat(
+                    rateLimitException
+                        .getBlockedDimension()
+                )
+                    .isEqualTo(
+                        LoginRateLimitDimension.BOTH
+                    );
+
+                assertThat(
+                    rateLimitException
+                        .getRetryAfter()
+                )
+                    .isEqualTo(
+                        Duration.ofSeconds(420)
+                    );
+            });
+
+        verifyNoInteractions(
+            userRepository,
+            passwordVerification,
+            refreshTokenGeneration,
+            refreshTokenDigest,
+            familyRepository,
+            recordRepository,
+            accessTokenGeneration
+        );
+
+        verify(loginRateLimit, never())
+            .resetIdentity(
+                any(EmailAddress.class)
+            );
+    }
+
+    @Test
+    void shouldFailClosedBeforeUserLookupWhenLimiterIsUnavailable() {
+        LoginRateLimitUnavailableException failure =
+            new LoginRateLimitUnavailableException(
+                new IllegalStateException(
+                    "redis unavailable"
+                )
+            );
+
+        when(
+            loginRateLimit.evaluate(
+                any(LoginRateLimitRequest.class)
+            )
+        )
+            .thenThrow(failure);
+
+        assertThatThrownBy(() ->
+            authenticateUserService.authenticate(
+                command()
+            )
+        )
+            .isSameAs(failure);
+
+        verifyNoInteractions(
+            userRepository,
+            passwordVerification,
+            refreshTokenGeneration,
+            refreshTokenDigest,
+            familyRepository,
+            recordRepository,
+            accessTokenGeneration
+        );
+
+        verify(loginRateLimit, never())
+            .resetIdentity(
+                any(EmailAddress.class)
+            );
+    }
+
+    @Test
+    void shouldRetainIdentityCounterAfterInvalidCredentials() {
+        EmailAddress email =
+            EmailAddress.of(
+                "nursena@example.com"
+            );
+
+        when(userRepository.findByEmail(email))
+            .thenReturn(
+                Optional.empty()
+            );
+
+        assertThatThrownBy(() ->
+            authenticateUserService.authenticate(
+                command()
+            )
+        )
+            .isInstanceOf(
+                InvalidCredentialsException.class
+            );
+
+        verify(loginRateLimit, never())
+            .resetIdentity(email);
+    }
+
+    @Test
+    void shouldPropagateIdentityResetFailureAfterCredentialIssuance() {
+        User user =
+            activeUser(
+                EmailAddress.of(
+                    "nursena@example.com"
+                )
+            );
+
+        stubValidAuthentication(user);
+
+        when(familyRepository.save(
+            any(RefreshTokenFamily.class)
+        ))
+            .thenAnswer(
+                invocation ->
+                    invocation.getArgument(0)
+            );
+
+        when(recordRepository.save(
+            any(RefreshTokenRecord.class)
+        ))
+            .thenAnswer(
+                invocation ->
+                    invocation.getArgument(0)
+            );
+
+        when(accessTokenGeneration.generate(user))
+            .thenReturn(
+                new GeneratedAccessToken(
+                    ACCESS_TOKEN,
+                    ACCESS_EXPIRES_AT
+                )
+            );
+
+        LoginRateLimitUnavailableException failure =
+            new LoginRateLimitUnavailableException(
+                new IllegalStateException(
+                    "redis reset failed"
+                )
+            );
+
+        org.mockito.Mockito.doThrow(failure)
+            .when(loginRateLimit)
+            .resetIdentity(
+                user.email()
+            );
+
+        assertThatThrownBy(() ->
+            authenticateUserService.authenticate(
+                command()
+            )
+        )
+            .isSameAs(failure);
+
+        verify(accessTokenGeneration)
+            .generate(user);
+
+        verify(loginRateLimit)
+            .resetIdentity(
+                user.email()
+            );
+    }
+
     private void stubValidAuthentication(
         User user
     ) {
@@ -676,7 +909,8 @@ class AuthenticateUserServiceTest {
     private static AuthenticateUserCommand command() {
         return new AuthenticateUserCommand(
             "nursena@example.com",
-            RAW_PASSWORD
+            RAW_PASSWORD,
+            "203.0.113.10"
         );
     }
 

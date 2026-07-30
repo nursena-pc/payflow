@@ -1,14 +1,20 @@
+
 package com.nursena.payflow.user.adapter.out.ratelimit;
 
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 
-import com.nursena.payflow.user.application.exception.LoginRateLimitUnavailableException;
-import com.nursena.payflow.user.application.port.out.LoginRateLimitDecision;
-import com.nursena.payflow.user.application.port.out.LoginRateLimitDimension;
-import com.nursena.payflow.user.application.port.out.LoginRateLimitPort;
-import com.nursena.payflow.user.application.port.out.LoginRateLimitRequest;
+import com.nursena.payflow.user.application.exception
+    .LoginRateLimitUnavailableException;
+import com.nursena.payflow.user.application.port.out
+    .LoginRateLimitDecision;
+import com.nursena.payflow.user.application.port.out
+    .LoginRateLimitDimension;
+import com.nursena.payflow.user.application.port.out
+    .LoginRateLimitPort;
+import com.nursena.payflow.user.application.port.out
+    .LoginRateLimitRequest;
 import com.nursena.payflow.user.domain.model.EmailAddress;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.RedisScript;
@@ -18,11 +24,14 @@ final class RedisLoginRateLimitAdapter
 
     private static final int RESULT_SIZE = 3;
 
-    private static final int IDENTITY_BLOCKED_INDEX = 0;
+    private static final int
+        IDENTITY_BLOCKED_INDEX = 0;
 
-    private static final int CLIENT_BLOCKED_INDEX = 1;
+    private static final int
+        CLIENT_BLOCKED_INDEX = 1;
 
-    private static final int RETRY_AFTER_INDEX = 2;
+    private static final int
+        RETRY_AFTER_INDEX = 2;
 
     private final StringRedisTemplate redisTemplate;
 
@@ -30,10 +39,13 @@ final class RedisLoginRateLimitAdapter
 
     private final LoginRateLimitProperties properties;
 
+    private final LoginRateLimitMetrics metrics;
+
     RedisLoginRateLimitAdapter(
         StringRedisTemplate redisTemplate,
         RedisScript<List<Long>> script,
-        LoginRateLimitProperties properties
+        LoginRateLimitProperties properties,
+        LoginRateLimitMetrics metrics
     ) {
         this.redisTemplate =
             Objects.requireNonNull(
@@ -51,6 +63,12 @@ final class RedisLoginRateLimitAdapter
             Objects.requireNonNull(
                 properties,
                 "properties must not be null"
+            );
+
+        this.metrics =
+            Objects.requireNonNull(
+                metrics,
+                "metrics must not be null"
             );
     }
 
@@ -93,14 +111,27 @@ final class RedisLoginRateLimitAdapter
                     )
                 );
 
-            return parseDecision(result);
+            LoginRateLimitDecision decision =
+                parseDecision(result);
+
+            metrics.recordDecision(decision);
+
+            return decision;
         } catch (
             LoginRateLimitUnavailableException exception
         ) {
+            metrics.recordRedisFailure(
+                "evaluate"
+            );
+
             throw exception;
         } catch (
             RuntimeException exception
         ) {
+            metrics.recordRedisFailure(
+                "evaluate"
+            );
+
             throw new LoginRateLimitUnavailableException(
                 exception
             );
@@ -135,6 +166,10 @@ final class RedisLoginRateLimitAdapter
         } catch (
             RuntimeException exception
         ) {
+            metrics.recordRedisFailure(
+                "reset"
+            );
+
             throw new LoginRateLimitUnavailableException(
                 exception
             );

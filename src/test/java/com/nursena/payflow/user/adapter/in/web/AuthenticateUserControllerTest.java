@@ -1,29 +1,52 @@
+
 package com.nursena.payflow.user.adapter.in.web;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.request
+    .MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result
+    .MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result
+    .MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result
+    .MockMvcResultMatchers.status;
+import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Duration;
 import java.time.Instant;
 
-import com.nursena.payflow.configuration.SecurityConfiguration;
-import com.nursena.payflow.user.application.port.in.AuthenticateUserCommand;
-import com.nursena.payflow.user.application.port.in.AuthenticateUserResult;
-import com.nursena.payflow.user.application.port.in.AuthenticateUserUseCase;
-import com.nursena.payflow.user.domain.exception.InvalidCredentialsException;
-import com.nursena.payflow.user.domain.exception.UserAccountUnavailableException;
+import com.nursena.payflow.configuration
+    .SecurityConfiguration;
+import com.nursena.payflow.user.application.exception
+    .LoginRateLimitExceededException;
+import com.nursena.payflow.user.application.exception
+    .LoginRateLimitUnavailableException;
+import com.nursena.payflow.user.application.port.in
+    .AuthenticateUserCommand;
+import com.nursena.payflow.user.application.port.in
+    .AuthenticateUserResult;
+import com.nursena.payflow.user.application.port.in
+    .AuthenticateUserUseCase;
+import com.nursena.payflow.user.application.port.out
+    .LoginRateLimitDimension;
+import com.nursena.payflow.user.domain.exception
+    .InvalidCredentialsException;
+import com.nursena.payflow.user.domain.exception
+    .UserAccountUnavailableException;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.beans.factory.annotation
+    .Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet
+    .WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito
+    .MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(AuthenticateUserController.class)
@@ -32,6 +55,9 @@ import org.springframework.test.web.servlet.MockMvc;
     UserAuthenticationExceptionHandler.class
 })
 class AuthenticateUserControllerTest {
+
+    private static final String CLIENT_ADDRESS =
+        "203.0.113.10";
 
     private static final Instant ACCESS_EXPIRES_AT =
         Instant.parse(
@@ -70,16 +96,10 @@ class AuthenticateUserControllerTest {
             );
 
         mockMvc.perform(
-                post("/api/v1/auth/login")
-                    .contentType(
-                        MediaType.APPLICATION_JSON
-                    )
-                    .content("""
-                        {
-                          "email": "nursena@example.com",
-                          "password": "StrongPassword123!"
-                        }
-                        """)
+                loginRequest(
+                    "nursena@example.com",
+                    "StrongPassword123!"
+                )
             )
             .andExpect(
                 status().isOk()
@@ -138,6 +158,10 @@ class AuthenticateUserControllerTest {
                             .equals(
                                 "StrongPassword123!"
                             )
+                        && command.clientAddress()
+                            .equals(
+                                CLIENT_ADDRESS
+                            )
                 )
             );
     }
@@ -168,16 +192,10 @@ class AuthenticateUserControllerTest {
         throws Exception {
 
         mockMvc.perform(
-                post("/api/v1/auth/login")
-                    .contentType(
-                        MediaType.APPLICATION_JSON
-                    )
-                    .content("""
-                        {
-                          "email": "not-an-email",
-                          "password": "StrongPassword123!"
-                        }
-                        """)
+                loginRequest(
+                    "not-an-email",
+                    "StrongPassword123!"
+                )
             )
             .andExpect(
                 status().isBadRequest()
@@ -208,16 +226,10 @@ class AuthenticateUserControllerTest {
             );
 
         mockMvc.perform(
-                post("/api/v1/auth/login")
-                    .contentType(
-                        MediaType.APPLICATION_JSON
-                    )
-                    .content("""
-                        {
-                          "email": "nursena@example.com",
-                          "password": "WrongPassword123!"
-                        }
-                        """)
+                loginRequest(
+                    "nursena@example.com",
+                    "WrongPassword123!"
+                )
             )
             .andExpect(
                 status().isUnauthorized()
@@ -257,16 +269,10 @@ class AuthenticateUserControllerTest {
             );
 
         mockMvc.perform(
-                post("/api/v1/auth/login")
-                    .contentType(
-                        MediaType.APPLICATION_JSON
-                    )
-                    .content("""
-                        {
-                          "email": "nursena@example.com",
-                          "password": "StrongPassword123!"
-                        }
-                        """)
+                loginRequest(
+                    "nursena@example.com",
+                    "StrongPassword123!"
+                )
             )
             .andExpect(
                 status().isForbidden()
@@ -282,7 +288,8 @@ class AuthenticateUserControllerTest {
                 jsonPath(
                     "$.message"
                 ).value(
-                    "User account is not available for authentication."
+                    "User account is not available "
+                        + "for authentication."
                 )
             )
             .andExpect(
@@ -292,5 +299,146 @@ class AuthenticateUserControllerTest {
                     "/api/v1/auth/login"
                 )
             );
+    }
+
+    @Test
+    void shouldReturnTooManyRequestsWithRetryAfter()
+        throws Exception {
+
+        when(authenticateUserUseCase.authenticate(
+            any(AuthenticateUserCommand.class)
+        ))
+            .thenThrow(
+                new LoginRateLimitExceededException(
+                    LoginRateLimitDimension.IDENTITY,
+                    Duration.ofSeconds(420)
+                )
+            );
+
+        mockMvc.perform(
+                loginRequest(
+                    "nursena@example.com",
+                    "WrongPassword123!"
+                )
+            )
+            .andExpect(
+                status().isTooManyRequests()
+            )
+            .andExpect(
+                header().string(
+                    HttpHeaders.RETRY_AFTER,
+                    "420"
+                )
+            )
+            .andExpect(
+                jsonPath("$.status")
+                    .value(429)
+            )
+            .andExpect(
+                jsonPath("$.code")
+                    .value(
+                        "LOGIN_RATE_LIMIT_EXCEEDED"
+                    )
+            )
+            .andExpect(
+                jsonPath("$.message")
+                    .value(
+                        "Too many login attempts. "
+                            + "Try again later."
+                    )
+            )
+            .andExpect(
+                jsonPath("$.path")
+                    .value(
+                        "/api/v1/auth/login"
+                    )
+            )
+            .andExpect(
+                jsonPath("$.violations")
+                    .isEmpty()
+            );
+    }
+
+    @Test
+    void shouldFailClosedWhenLoginProtectionIsUnavailable()
+        throws Exception {
+
+        when(authenticateUserUseCase.authenticate(
+            any(AuthenticateUserCommand.class)
+        ))
+            .thenThrow(
+                new LoginRateLimitUnavailableException(
+                    new IllegalStateException(
+                        "redis-host:6379 unavailable"
+                    )
+                )
+            );
+
+        mockMvc.perform(
+                loginRequest(
+                    "nursena@example.com",
+                    "StrongPassword123!"
+                )
+            )
+            .andExpect(
+                status().isServiceUnavailable()
+            )
+            .andExpect(
+                jsonPath("$.status")
+                    .value(503)
+            )
+            .andExpect(
+                jsonPath("$.code")
+                    .value(
+                        "LOGIN_RATE_LIMIT_UNAVAILABLE"
+                    )
+            )
+            .andExpect(
+                jsonPath("$.message")
+                    .value(
+                        "Login protection is "
+                            + "temporarily unavailable."
+                    )
+            )
+            .andExpect(
+                jsonPath("$.path")
+                    .value(
+                        "/api/v1/auth/login"
+                    )
+            )
+            .andExpect(
+                jsonPath("$.violations")
+                    .isEmpty()
+            );
+    }
+
+    private static org.springframework.test.web.servlet
+        .request.MockHttpServletRequestBuilder
+    loginRequest(
+        String email,
+        String password
+    ) {
+        String body =
+            """
+            {
+              "email": "%s",
+              "password": "%s"
+            }
+            """.formatted(
+                email,
+                password
+            );
+
+        return post("/api/v1/auth/login")
+            .with(request -> {
+                request.setRemoteAddr(
+                    CLIENT_ADDRESS
+                );
+                return request;
+            })
+            .contentType(
+                MediaType.APPLICATION_JSON
+            )
+            .content(body);
     }
 }

@@ -241,8 +241,28 @@ class OpenApiJsonContractIntegrationTest {
             "200",
             "400",
             "401",
-            "403"
+            "403",
+            "429",
+            "503"
         );
+
+        JsonNode retryAfterHeader =
+            login
+                .path("responses")
+                .path("429")
+                .path("headers")
+                .path("Retry-After");
+
+        assertThat(retryAfterHeader.isObject())
+            .isTrue();
+
+        assertThat(
+            retryAfterHeader
+                .path("schema")
+                .path("minimum")
+                .asInt()
+        )
+            .isEqualTo(1);
 
         JsonNode refresh =
             operation(

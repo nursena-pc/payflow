@@ -1,21 +1,34 @@
+
 package com.nursena.payflow.user.adapter.out.ratelimit;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions
+    .assertThat;
+import static org.assertj.core.api.Assertions
+    .assertThatThrownBy;
 
 import java.time.Duration;
 import java.util.List;
 
-import com.nursena.payflow.user.application.exception.LoginRateLimitUnavailableException;
-import com.nursena.payflow.user.application.port.out.LoginRateLimitDecision;
-import com.nursena.payflow.user.application.port.out.LoginRateLimitDimension;
-import com.nursena.payflow.user.application.port.out.LoginRateLimitRequest;
+import com.nursena.payflow.user.application.exception
+    .LoginRateLimitUnavailableException;
+import com.nursena.payflow.user.application.port.out
+    .LoginRateLimitDecision;
+import com.nursena.payflow.user.application.port.out
+    .LoginRateLimitDimension;
+import com.nursena.payflow.user.application.port.out
+    .LoginRateLimitRequest;
 import com.nursena.payflow.user.domain.model.EmailAddress;
+import io.micrometer.core.instrument.simple
+    .SimpleMeterRegistry;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.script.DefaultRedisScript;
-import org.springframework.data.redis.core.script.RedisScript;
+import org.springframework.data.redis.core
+    .StringRedisTemplate;
+import org.springframework.data.redis.core.script
+    .DefaultRedisScript;
+import org.springframework.data.redis.core.script
+    .RedisScript;
 
 class RedisLoginRateLimitAdapterTest {
 
@@ -36,6 +49,10 @@ class RedisLoginRateLimitAdapterTest {
     private RecordingStringRedisTemplate
         redisTemplate;
 
+    private SimpleMeterRegistry meterRegistry;
+
+    private LoginRateLimitMetrics metrics;
+
     private RedisLoginRateLimitAdapter adapter;
 
     @BeforeEach
@@ -43,12 +60,26 @@ class RedisLoginRateLimitAdapterTest {
         redisTemplate =
             new RecordingStringRedisTemplate();
 
+        meterRegistry =
+            new SimpleMeterRegistry();
+
+        metrics =
+            new LoginRateLimitMetrics(
+                meterRegistry
+            );
+
         adapter =
             new RedisLoginRateLimitAdapter(
                 redisTemplate,
                 script(),
-                ENABLED_PROPERTIES
+                ENABLED_PROPERTIES,
+                metrics
             );
+    }
+
+    @AfterEach
+    void tearDown() {
+        meterRegistry.close();
     }
 
     @Test
@@ -87,6 +118,12 @@ class RedisLoginRateLimitAdapterTest {
                 "5",
                 "20"
             );
+
+        assertDecisionCount(
+            "allowed",
+            "none",
+            1.0
+        );
     }
 
     @Test
@@ -115,6 +152,12 @@ class RedisLoginRateLimitAdapterTest {
             .isEqualTo(
                 Duration.ofSeconds(840)
             );
+
+        assertDecisionCount(
+            "blocked",
+            "identity",
+            1.0
+        );
     }
 
     @Test
@@ -140,10 +183,16 @@ class RedisLoginRateLimitAdapterTest {
             .isEqualTo(
                 Duration.ofMinutes(15)
             );
+
+        assertDecisionCount(
+            "blocked",
+            "both",
+            1.0
+        );
     }
 
     @Test
-    void shouldSkipRedisWhenDisabled() {
+    void shouldSkipRedisAndMetricsWhenDisabled() {
         RedisLoginRateLimitAdapter disabledAdapter =
             new RedisLoginRateLimitAdapter(
                 redisTemplate,
@@ -153,7 +202,8 @@ class RedisLoginRateLimitAdapterTest {
                     Duration.ofMinutes(15),
                     5,
                     20
-                )
+                ),
+                metrics
             );
 
         LoginRateLimitDecision decision =
@@ -173,10 +223,18 @@ class RedisLoginRateLimitAdapterTest {
 
         assertThat(redisTemplate.deletedKey)
             .isNull();
+
+        assertThat(
+            meterRegistry.find(
+                LoginRateLimitMetrics
+                    .DECISIONS_METRIC
+            ).counter()
+        )
+            .isNull();
     }
 
     @Test
-    void shouldTranslateRedisEvaluationFailure() {
+    void shouldTranslateAndMeasureRedisEvaluationFailure() {
         IllegalStateException redisFailure =
             new IllegalStateException(
                 "redis-host:6379 unavailable"
@@ -201,10 +259,15 @@ class RedisLoginRateLimitAdapterTest {
             .hasMessageNotContaining(
                 "redis-host"
             );
+
+        assertRedisFailureCount(
+            "evaluate",
+            1.0
+        );
     }
 
     @Test
-    void shouldRejectMalformedScriptResult() {
+    void shouldRejectMalformedScriptResultAndMeasureFailure() {
         redisTemplate.scriptResult =
             List.of(
                 0L,
@@ -223,6 +286,11 @@ class RedisLoginRateLimitAdapterTest {
                 "Login protection is "
                     + "temporarily unavailable."
             );
+
+        assertRedisFailureCount(
+            "evaluate",
+            1.0
+        );
     }
 
     @Test
@@ -239,6 +307,77 @@ class RedisLoginRateLimitAdapterTest {
             .doesNotContain(
                 "nursena@example.com"
             );
+    }
+
+    @Test
+    void shouldTranslateAndMeasureRedisResetFailure() {
+        IllegalStateException redisFailure =
+            new IllegalStateException(
+                "redis reset failed"
+            );
+
+        redisTemplate.deleteFailure =
+            redisFailure;
+
+        assertThatThrownBy(() ->
+            adapter.resetIdentity(
+                IDENTITY
+            )
+        )
+            .isInstanceOf(
+                LoginRateLimitUnavailableException.class
+            )
+            .hasCause(redisFailure);
+
+        assertRedisFailureCount(
+            "reset",
+            1.0
+        );
+    }
+
+    private void assertDecisionCount(
+        String outcome,
+        String dimension,
+        double expectedCount
+    ) {
+        assertThat(
+            meterRegistry
+                .get(
+                    LoginRateLimitMetrics
+                        .DECISIONS_METRIC
+                )
+                .tag(
+                    "outcome",
+                    outcome
+                )
+                .tag(
+                    "dimension",
+                    dimension
+                )
+                .counter()
+                .count()
+        )
+            .isEqualTo(expectedCount);
+    }
+
+    private void assertRedisFailureCount(
+        String operation,
+        double expectedCount
+    ) {
+        assertThat(
+            meterRegistry
+                .get(
+                    LoginRateLimitMetrics
+                        .REDIS_FAILURES_METRIC
+                )
+                .tag(
+                    "operation",
+                    operation
+                )
+                .counter()
+                .count()
+        )
+            .isEqualTo(expectedCount);
     }
 
     @SuppressWarnings({
@@ -271,6 +410,8 @@ class RedisLoginRateLimitAdapterTest {
             );
 
         private RuntimeException executeFailure;
+
+        private RuntimeException deleteFailure;
 
         private int executions;
 
@@ -306,6 +447,10 @@ class RedisLoginRateLimitAdapterTest {
         public Boolean delete(
             String key
         ) {
+            if (deleteFailure != null) {
+                throw deleteFailure;
+            }
+
             deletedKey = key;
             return true;
         }

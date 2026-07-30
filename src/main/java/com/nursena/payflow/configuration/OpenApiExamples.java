@@ -144,6 +144,30 @@ public final class OpenApiExamples {
         }
         """;
 
+    public static final String LOGIN_RATE_LIMIT_EXCEEDED =
+        """
+        {
+          "timestamp": "2026-07-30T12:00:00Z",
+          "status": 429,
+          "code": "LOGIN_RATE_LIMIT_EXCEEDED",
+          "message": "Too many login attempts. Try again later.",
+          "path": "/api/v1/auth/login",
+          "violations": []
+        }
+        """;
+
+    public static final String LOGIN_RATE_LIMIT_UNAVAILABLE =
+        """
+        {
+          "timestamp": "2026-07-30T12:00:00Z",
+          "status": 503,
+          "code": "LOGIN_RATE_LIMIT_UNAVAILABLE",
+          "message": "Login protection is temporarily unavailable.",
+          "path": "/api/v1/auth/login",
+          "violations": []
+        }
+        """;
+
     public static final String USER_ACCOUNT_UNAVAILABLE =
         """
         {

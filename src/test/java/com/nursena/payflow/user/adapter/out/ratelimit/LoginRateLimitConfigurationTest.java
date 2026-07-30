@@ -1,16 +1,26 @@
+
 package com.nursena.payflow.user.adapter.out.ratelimit;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions
+    .assertThat;
 import static org.mockito.Mockito.mock;
 
 import java.time.Duration;
 
-import com.nursena.payflow.user.application.port.out.LoginRateLimitPort;
+import com.nursena.payflow.user.application.port.out
+    .LoginRateLimitPort;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple
+    .SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.runner.ApplicationContextRunner;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.script.RedisScript;
+import org.springframework.boot.test.context.runner
+    .ApplicationContextRunner;
+import org.springframework.data.redis.connection
+    .RedisConnectionFactory;
+import org.springframework.data.redis.core
+    .StringRedisTemplate;
+import org.springframework.data.redis.core.script
+    .RedisScript;
 
 class LoginRateLimitConfigurationTest {
 
@@ -18,11 +28,16 @@ class LoginRateLimitConfigurationTest {
         new ApplicationContextRunner()
             .withBean(
                 StringRedisTemplate.class,
-                () -> new StringRedisTemplate(
-                    mock(
-                        RedisConnectionFactory.class
+                () ->
+                    new StringRedisTemplate(
+                        mock(
+                            RedisConnectionFactory.class
+                        )
                     )
-                )
+            )
+            .withBean(
+                MeterRegistry.class,
+                SimpleMeterRegistry::new
             )
             .withUserConfiguration(
                 LoginRateLimitConfiguration.class
@@ -49,6 +64,9 @@ class LoginRateLimitConfigurationTest {
                     )
                     .hasSingleBean(
                         LoginRateLimitPort.class
+                    )
+                    .hasSingleBean(
+                        LoginRateLimitMetrics.class
                     )
                     .hasSingleBean(
                         RedisScript.class
