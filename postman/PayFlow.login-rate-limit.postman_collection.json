@@ -1,0 +1,401 @@
+{
+  "info": {
+    "_postman_id": "8ab283ab-ebb9-4728-a8b0-dee607126686",
+    "name": "PayFlow Login Rate-Limit Verification",
+    "description": "Dedicated, deliberately disruptive verification workflow for the Redis-backed PayFlow login identity threshold. Run separately from the standard application workflow. No real credentials are included.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "rateLimitEmail",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Identity Threshold",
+      "description": "Run this complete folder in order. Attempt 1 creates a unique unregistered identity. Attempts 1-5 expect 401 INVALID_CREDENTIALS; attempt 6 expects 429 LOGIN_RATE_LIMIT_EXCEEDED with Retry-After.",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (pm.info.requestName === 'Failed Login Attempt 1') {",
+              "  const suffix = `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;",
+              "  pm.collectionVariables.set('rateLimitEmail', `rate-limit-${suffix}@example.com`);",
+              "}",
+              "",
+              "if (!pm.collectionVariables.get('rateLimitEmail')) {",
+              "  throw new Error('Run the complete Identity Threshold folder from attempt 1.');",
+              "}"
+            ]
+          }
+        }
+      ],
+      "item": [
+        {
+          "name": "Failed Login Attempt 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"attempt remains below the identity threshold\", function () {",
+                  "  pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test(\"invalid-credential contract remains generic\", function () {",
+                  "  pm.expect(response.code).to.eql('INVALID_CREDENTIALS');",
+                  "  pm.expect(response.message).to.eql('Email or password is incorrect.');",
+                  "  pm.expect(response.violations).to.eql([]);",
+                  "  pm.expect(response).not.to.have.property('userId');",
+                  "  pm.expect(response).not.to.have.property('userExists');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{rateLimitEmail}}\",\n  \"password\": \"WrongPassword123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Uses an intentionally unregistered identity so the first five attempts return the same generic invalid-credential response and the sixth attempt is blocked by the identity rate limit."
+          },
+          "response": []
+        },
+        {
+          "name": "Failed Login Attempt 2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"attempt remains below the identity threshold\", function () {",
+                  "  pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test(\"invalid-credential contract remains generic\", function () {",
+                  "  pm.expect(response.code).to.eql('INVALID_CREDENTIALS');",
+                  "  pm.expect(response.message).to.eql('Email or password is incorrect.');",
+                  "  pm.expect(response.violations).to.eql([]);",
+                  "  pm.expect(response).not.to.have.property('userId');",
+                  "  pm.expect(response).not.to.have.property('userExists');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{rateLimitEmail}}\",\n  \"password\": \"WrongPassword123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Uses an intentionally unregistered identity so the first five attempts return the same generic invalid-credential response and the sixth attempt is blocked by the identity rate limit."
+          },
+          "response": []
+        },
+        {
+          "name": "Failed Login Attempt 3",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"attempt remains below the identity threshold\", function () {",
+                  "  pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test(\"invalid-credential contract remains generic\", function () {",
+                  "  pm.expect(response.code).to.eql('INVALID_CREDENTIALS');",
+                  "  pm.expect(response.message).to.eql('Email or password is incorrect.');",
+                  "  pm.expect(response.violations).to.eql([]);",
+                  "  pm.expect(response).not.to.have.property('userId');",
+                  "  pm.expect(response).not.to.have.property('userExists');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{rateLimitEmail}}\",\n  \"password\": \"WrongPassword123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Uses an intentionally unregistered identity so the first five attempts return the same generic invalid-credential response and the sixth attempt is blocked by the identity rate limit."
+          },
+          "response": []
+        },
+        {
+          "name": "Failed Login Attempt 4",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"attempt remains below the identity threshold\", function () {",
+                  "  pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test(\"invalid-credential contract remains generic\", function () {",
+                  "  pm.expect(response.code).to.eql('INVALID_CREDENTIALS');",
+                  "  pm.expect(response.message).to.eql('Email or password is incorrect.');",
+                  "  pm.expect(response.violations).to.eql([]);",
+                  "  pm.expect(response).not.to.have.property('userId');",
+                  "  pm.expect(response).not.to.have.property('userExists');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{rateLimitEmail}}\",\n  \"password\": \"WrongPassword123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Uses an intentionally unregistered identity so the first five attempts return the same generic invalid-credential response and the sixth attempt is blocked by the identity rate limit."
+          },
+          "response": []
+        },
+        {
+          "name": "Failed Login Attempt 5",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"attempt remains below the identity threshold\", function () {",
+                  "  pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test(\"invalid-credential contract remains generic\", function () {",
+                  "  pm.expect(response.code).to.eql('INVALID_CREDENTIALS');",
+                  "  pm.expect(response.message).to.eql('Email or password is incorrect.');",
+                  "  pm.expect(response.violations).to.eql([]);",
+                  "  pm.expect(response).not.to.have.property('userId');",
+                  "  pm.expect(response).not.to.have.property('userExists');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{rateLimitEmail}}\",\n  \"password\": \"WrongPassword123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Uses an intentionally unregistered identity so the first five attempts return the same generic invalid-credential response and the sixth attempt is blocked by the identity rate limit."
+          },
+          "response": []
+        },
+        {
+          "name": "Failed Login Attempt 6",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"rate limit returns 429\", function () {",
+                  "  pm.response.to.have.status(429);",
+                  "});",
+                  "",
+                  "const retryAfter = pm.response.headers.get('Retry-After');",
+                  "pm.test(\"Retry-After is a positive whole number\", function () {",
+                  "  pm.expect(retryAfter).to.match(/^[1-9]\\d*$/);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test(\"rate-limit error contract is stable\", function () {",
+                  "  pm.expect(response.code).to.eql('LOGIN_RATE_LIMIT_EXCEEDED');",
+                  "  pm.expect(response.message).to.eql('Too many login attempts. Try again later.');",
+                  "  pm.expect(response.violations).to.eql([]);",
+                  "  pm.expect(response).not.to.have.property('userId');",
+                  "  pm.expect(response).not.to.have.property('userExists');",
+                  "});",
+                  "",
+                  "pm.collectionVariables.unset('rateLimitEmail');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{rateLimitEmail}}\",\n  \"password\": \"WrongPassword123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Uses an intentionally unregistered identity so the first five attempts return the same generic invalid-credential response and the sixth attempt is blocked by the identity rate limit."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
