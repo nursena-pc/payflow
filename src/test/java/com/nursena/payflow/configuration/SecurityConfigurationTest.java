@@ -62,6 +62,42 @@ class SecurityConfigurationTest {
     }
 
     @Test
+    void shouldRejectAnonymousAllSessionLogout()
+        throws Exception {
+
+        mockMvc.perform(
+                post(
+                    "/api/v1/auth/logout-all"
+                )
+            )
+            .andExpect(
+                status().isUnauthorized()
+            );
+    }
+
+    @Test
+    void shouldPermitAuthenticatedAllSessionLogoutMatcher()
+        throws Exception {
+
+        mockDecodedJwt(
+            "user-token",
+            "USER"
+        );
+
+        mockMvc.perform(
+                post(
+                    "/api/v1/auth/logout-all"
+                )
+                    .header(
+                        AUTHORIZATION,
+                        bearer("user-token")
+                    )
+            )
+            .andExpect(
+                status().isNotFound()
+            );
+    }
+    @Test
     void shouldPermitAnonymousRequestToPrometheusEndpoint()
         throws Exception {
 
