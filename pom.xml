@@ -13,7 +13,7 @@
 
     <groupId>com.nursena</groupId>
     <artifactId>payflow</artifactId>
-    <version>0.9.0-SNAPSHOT</version>
+    <version>0.9.0</version>
     <name>PayFlow</name>
     <description>Digital wallet and simulated payment transaction platform</description>
 
