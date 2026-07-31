@@ -104,7 +104,7 @@ Completed capabilities include:
 - operator-only, paginated command-audit queries and chronological command timelines
 - Prometheus metrics, Grafana dashboards, and alert rules for Kafka consumer failures
 
-OpenAPI documentation and executable Postman workflows cover the implemented API. PayFlow v0.9.0 is the latest published release. The v0.10.0 development line now implements spoofing-resistant effective client-address resolution behind explicitly trusted reverse proxies, including safe fallback behavior and bounded observability. See the [trusted client-context ADR](docs/adr/0011-trusted-client-context.md), the [v0.9.0 release notes](docs/releases/v0.9.0.md), and the [roadmap](docs/roadmap.md).
+OpenAPI documentation and executable Postman workflows cover the implemented API. PayFlow v0.9.0 is the latest published release. The v0.10.0 release candidate packages spoofing-resistant effective client-address resolution behind explicitly trusted reverse proxies, safe fallback behavior, bounded observability, and executable operational contracts. See the [v0.10.0 release notes](docs/releases/v0.10.0.md), the [trusted client-context ADR](docs/adr/0011-trusted-client-context.md), and the [roadmap](docs/roadmap.md).
 
 ## Implemented API
 

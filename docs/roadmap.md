@@ -2,8 +2,8 @@
 
 ## Current delivery focus
 
-PayFlow v0.9.0 is the latest tagged release. The active development line uses
-`0.10.0-SNAPSHOT`.
+PayFlow v0.9.0 is the latest tagged release. The v0.10.0 release candidate uses
+the Maven version `0.10.0`.
 
 The v0.10.0 increment focuses on trusted client-address resolution behind
 explicitly configured reverse proxies. The goal is to make client-scoped
@@ -131,8 +131,13 @@ that identity by supplying forwarding headers.
 - [x] Update deployment and login-protection documentation
 - [x] Add reverse-proxy configuration examples
 - [x] Update architecture diagrams where the trust boundary is shown
-- [ ] Pass protected-branch CI and review checks
-- [ ] Publish v0.10.0 release notes and artifacts
+- [x] Pass protected-branch CI and review checks
+- [x] Prepare v0.10.0 release notes
+- [ ] Merge v0.10.0 release preparation through a protected pull request
+- [ ] Tag the verified release commit as `v0.10.0`
+- [ ] Publish `payflow-0.10.0.jar`
+- [ ] Publish and verify `payflow-0.10.0.jar.sha256`
+- [ ] Publish the GitHub Release
 
 ## Explicit v0.10.0 non-goals
 
@@ -163,8 +168,12 @@ The release is ready only when:
 - [x] focused unit, integration, and acceptance tests pass
 - [x] the complete Maven suite passes
 - [x] OpenAPI and operations documentation match the implementation
-- [ ] protected-branch CI passes
-- [ ] v0.10.0 release assets and checksum are published
+- [x] protected-branch CI passes for the feature merge
+- [x] v0.10.0 release notes are prepared
+- [ ] the release-preparation pull request is merged
+- [ ] the v0.10.0 tag is published
+- [ ] the executable JAR and SHA-256 checksum are published
+- [ ] the GitHub Release is published
 
 ## Future candidates
 
