@@ -97,7 +97,7 @@ that identity by supplying forwarding headers.
 
 ### Increment 2 — Client-address resolver
 
-- [ ] Introduce an application-facing client-context abstraction
+- [x] Introduce an application-facing client-context abstraction
 - [x] Keep servlet and header parsing inside the inbound adapter
 - [x] Ignore forwarding headers when the direct peer is not trusted
 - [x] Parse trusted proxy chains from right to left
@@ -107,10 +107,10 @@ that identity by supplying forwarding headers.
 
 ### Increment 3 — Login-protection integration
 
-- [ ] Replace direct `HttpServletRequest#getRemoteAddr` coupling
-- [ ] Feed the resolved effective client into the existing rate-limit port
-- [ ] Preserve identity-counter and client-counter semantics
-- [ ] Preserve generic `401`, stable `429`, and fail-closed `503` contracts
+- [x] Replace direct `HttpServletRequest#getRemoteAddr` coupling
+- [x] Feed the resolved effective client into the existing rate-limit port
+- [x] Preserve identity-counter and client-counter semantics
+- [x] Preserve generic `401`, stable `429`, and fail-closed `503` contracts
 - [ ] Add bounded decision metrics for source and fallback outcome
 - [ ] Keep raw client addresses out of metric labels and logs
 
@@ -122,7 +122,7 @@ that identity by supplying forwarding headers.
 - [x] Verify IPv4, IPv6, and mixed-address chains
 - [x] Verify malformed, oversized, and excessive-hop inputs
 - [x] Verify direct-peer fallback
-- [ ] Verify login rate limiting groups requests by effective client
+- [x] Verify login rate limiting groups requests by effective client
 - [ ] Run the complete Maven verification suite
 
 ### Increment 5 — Public and operational contracts

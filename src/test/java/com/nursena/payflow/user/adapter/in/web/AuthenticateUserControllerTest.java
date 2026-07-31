@@ -17,6 +17,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
 import java.time.Instant;
+import com.nursena.payflow.clientcontext.adapter.in.web
+    .ClientAddressResolver;
+import com.nursena.payflow.clientcontext.domain
+    .ClientAddressResolutionOutcome;
+import com.nursena.payflow.clientcontext.domain
+    .ClientAddressSource;
+import com.nursena.payflow.clientcontext.domain.IpAddress;
+import com.nursena.payflow.clientcontext.domain
+    .ResolvedClientAddress;
 
 import com.nursena.payflow.configuration
     .SecurityConfiguration;
@@ -36,6 +45,8 @@ import com.nursena.payflow.user.domain.exception
     .InvalidCredentialsException;
 import com.nursena.payflow.user.domain.exception
     .UserAccountUnavailableException;
+import jakarta.servlet.http.HttpServletRequest;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation
     .Autowired;
@@ -55,6 +66,9 @@ import org.springframework.test.web.servlet.MockMvc;
     UserAuthenticationExceptionHandler.class
 })
 class AuthenticateUserControllerTest {
+
+    private static final String DIRECT_PEER_ADDRESS =
+        "10.0.0.10";
 
     private static final String CLIENT_ADDRESS =
         "203.0.113.10";
@@ -78,6 +92,27 @@ class AuthenticateUserControllerTest {
 
     @MockitoBean
     private JwtDecoder jwtDecoder;
+
+    @MockitoBean
+    private ClientAddressResolver
+        clientAddressResolver;
+
+    @BeforeEach
+    void resolveEffectiveClientAddress() {
+        when(clientAddressResolver.resolve(
+            any(HttpServletRequest.class)
+        ))
+            .thenReturn(
+                new ResolvedClientAddress(
+                    IpAddress.parse(
+                        CLIENT_ADDRESS
+                    ),
+                    ClientAddressSource.FORWARDED,
+                    ClientAddressResolutionOutcome
+                        .RESOLVED
+                )
+            );
+    }
 
     @Test
     void shouldAuthenticateUserAndReturnCredentialPair()
@@ -432,7 +467,7 @@ class AuthenticateUserControllerTest {
         return post("/api/v1/auth/login")
             .with(request -> {
                 request.setRemoteAddr(
-                    CLIENT_ADDRESS
+                    DIRECT_PEER_ADDRESS
                 );
                 return request;
             })

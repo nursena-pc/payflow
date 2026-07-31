@@ -30,7 +30,7 @@ class TrustedClientContextConfigurationTest {
                         TrustedProxyProperties.class
                     )
                     .hasSingleBean(
-                        ServletClientAddressResolver.class
+                        ClientAddressResolver.class
                     );
 
                 TrustedProxyProperties properties =

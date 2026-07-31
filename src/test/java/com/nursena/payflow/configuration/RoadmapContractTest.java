@@ -58,6 +58,12 @@ class RoadmapContractTest {
                 "- [x] Verify IPv4, IPv6, and mixed-address chains",
                 "- [x] Verify malformed, oversized, and excessive-hop inputs",
                 "- [x] Verify direct-peer fallback",
+                "- [x] Introduce an application-facing client-context abstraction",
+                "- [x] Replace direct `HttpServletRequest#getRemoteAddr` coupling",
+                "- [x] Feed the resolved effective client into the existing rate-limit port",
+                "- [x] Preserve identity-counter and client-counter semantics",
+                "- [x] Preserve generic `401`, stable `429`, and fail-closed `503` contracts",
+                "- [x] Verify login rate limiting groups requests by effective client",
                 "- [ ] only configured proxy networks may influence effective client identity"
             )
             .doesNotContain(

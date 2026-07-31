@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
 class TrustedClientContextConfiguration {
 
     @Bean
-    ServletClientAddressResolver servletClientAddressResolver(
+    ClientAddressResolver clientAddressResolver(
         TrustedProxyProperties properties
     ) {
         return new ServletClientAddressResolver(

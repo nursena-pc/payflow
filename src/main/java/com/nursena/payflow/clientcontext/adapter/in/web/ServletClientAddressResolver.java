@@ -13,7 +13,8 @@ import com.nursena.payflow.clientcontext.domain.TrustedProxyChainResolver;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-public final class ServletClientAddressResolver {
+public final class ServletClientAddressResolver
+    implements ClientAddressResolver {
 
     private static final String FORWARDED_HEADER =
         "Forwarded";
@@ -49,6 +50,7 @@ public final class ServletClientAddressResolver {
             properties.maxForwardedHops();
     }
 
+    @Override
     public ResolvedClientAddress resolve(
         HttpServletRequest request
     ) {
