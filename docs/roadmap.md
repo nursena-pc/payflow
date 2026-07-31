@@ -88,11 +88,11 @@ that identity by supplying forwarding headers.
 
 ### Increment 1 — Threat model and configuration
 
-- [ ] Open the v0.10.0 implementation issue
-- [ ] Define trusted-proxy CIDR configuration
-- [ ] Validate IPv4 and IPv6 network ranges at startup
+- [x] Open the v0.10.0 implementation issue
+- [x] Define trusted-proxy CIDR configuration
+- [x] Validate IPv4 and IPv6 network ranges at startup
 - [ ] Define forwarding-header precedence explicitly
-- [ ] Bound accepted header length and proxy-hop count
+- [x] Bound accepted header length and proxy-hop count
 - [ ] Document direct-peer fallback and failure behavior
 
 ### Increment 2 — Client-address resolver
