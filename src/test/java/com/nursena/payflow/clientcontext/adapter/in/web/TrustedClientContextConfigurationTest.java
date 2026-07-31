@@ -2,6 +2,8 @@ package com.nursena.payflow.clientcontext.adapter.in.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+
 import org.junit.jupiter.api.Test;
 
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
@@ -10,6 +12,10 @@ class TrustedClientContextConfigurationTest {
 
     private final ApplicationContextRunner contextRunner =
         new ApplicationContextRunner()
+            .withBean(
+                SimpleMeterRegistry.class,
+                SimpleMeterRegistry::new
+            )
             .withUserConfiguration(
                 TrustedClientContextConfiguration.class
             );
@@ -31,6 +37,10 @@ class TrustedClientContextConfigurationTest {
                     )
                     .hasSingleBean(
                         ClientAddressResolver.class
+                    )
+                    .hasSingleBean(
+                        ClientAddressResolutionObserver
+                            .class
                     );
 
                 TrustedProxyProperties properties =

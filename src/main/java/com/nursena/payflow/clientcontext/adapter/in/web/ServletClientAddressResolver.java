@@ -26,14 +26,31 @@ public final class ServletClientAddressResolver
     private final ForwardingHeaderParser headerParser;
     private final int maximumHeaderLength;
     private final int maximumHops;
+    private final ClientAddressResolutionObserver observer;
 
     public ServletClientAddressResolver(
         TrustedProxyProperties properties
+    ) {
+        this(
+            properties,
+            ClientAddressResolutionObserver.noOp()
+        );
+    }
+
+    ServletClientAddressResolver(
+        TrustedProxyProperties properties,
+        ClientAddressResolutionObserver observer
     ) {
         Objects.requireNonNull(
             properties,
             "trusted proxy properties must not be null"
         );
+
+        this.observer =
+            Objects.requireNonNull(
+                observer,
+                "client address observer must not be null"
+            );
 
         this.chainResolver =
             new TrustedProxyChainResolver(
@@ -65,10 +82,12 @@ public final class ServletClientAddressResolver
             );
 
         if (!chainResolver.isTrusted(directPeer)) {
-            return direct(
-                directPeer,
-                ClientAddressResolutionOutcome
-                    .UNTRUSTED_PEER
+            return observed(
+                direct(
+                    directPeer,
+                    ClientAddressResolutionOutcome
+                        .UNTRUSTED_PEER
+                )
             );
         }
 
@@ -87,19 +106,23 @@ public final class ServletClientAddressResolver
                 );
 
         if (!selected.present()) {
-            return direct(
-                directPeer,
-                ClientAddressResolutionOutcome
-                    .MISSING_HEADER
+            return observed(
+                direct(
+                    directPeer,
+                    ClientAddressResolutionOutcome
+                        .MISSING_HEADER
+                )
             );
         }
 
         if (selected.oversized()) {
-            return fallback(
-                directPeer,
-                selected.source(),
-                ClientAddressResolutionOutcome
-                    .OVERSIZED_HEADER
+            return observed(
+                fallback(
+                    directPeer,
+                    selected.source(),
+                    ClientAddressResolutionOutcome
+                        .OVERSIZED_HEADER
+                )
             );
         }
 
@@ -122,11 +145,13 @@ public final class ServletClientAddressResolver
                     chain
                 );
 
-            return new ResolvedClientAddress(
-                effectiveAddress,
-                selected.source(),
-                ClientAddressResolutionOutcome
-                    .RESOLVED
+            return observed(
+                new ResolvedClientAddress(
+                    effectiveAddress,
+                    selected.source(),
+                    ClientAddressResolutionOutcome
+                        .RESOLVED
+                )
             );
         }
         catch (
@@ -134,21 +159,36 @@ public final class ServletClientAddressResolver
                 .ExcessiveForwardedHopsException
                 exception
         ) {
-            return fallback(
-                directPeer,
-                selected.source(),
-                ClientAddressResolutionOutcome
-                    .EXCESSIVE_HOPS
+            return observed(
+                fallback(
+                    directPeer,
+                    selected.source(),
+                    ClientAddressResolutionOutcome
+                        .EXCESSIVE_HOPS
+                )
             );
         }
         catch (IllegalArgumentException exception) {
-            return fallback(
-                directPeer,
-                selected.source(),
-                ClientAddressResolutionOutcome
-                    .MALFORMED_HEADER
+            return observed(
+                fallback(
+                    directPeer,
+                    selected.source(),
+                    ClientAddressResolutionOutcome
+                        .MALFORMED_HEADER
+                )
             );
         }
+    }
+
+    private ResolvedClientAddress observed(
+        ResolvedClientAddress resolution
+    ) {
+        observer.record(
+            resolution.source(),
+            resolution.outcome()
+        );
+
+        return resolution;
     }
 
     private CollectedHeader collectHeader(

@@ -63,6 +63,8 @@ class RoadmapContractTest {
                 "- [x] Feed the resolved effective client into the existing rate-limit port",
                 "- [x] Preserve identity-counter and client-counter semantics",
                 "- [x] Preserve generic `401`, stable `429`, and fail-closed `503` contracts",
+                "- [x] Add bounded decision metrics for source and fallback outcome",
+                "- [x] Keep raw client addresses out of metric labels and logs",
                 "- [x] Verify login rate limiting groups requests by effective client",
                 "- [ ] only configured proxy networks may influence effective client identity"
             )

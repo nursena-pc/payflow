@@ -111,8 +111,8 @@ that identity by supplying forwarding headers.
 - [x] Feed the resolved effective client into the existing rate-limit port
 - [x] Preserve identity-counter and client-counter semantics
 - [x] Preserve generic `401`, stable `429`, and fail-closed `503` contracts
-- [ ] Add bounded decision metrics for source and fallback outcome
-- [ ] Keep raw client addresses out of metric labels and logs
+- [x] Add bounded decision metrics for source and fallback outcome
+- [x] Keep raw client addresses out of metric labels and logs
 
 ### Increment 4 — Verification
 
