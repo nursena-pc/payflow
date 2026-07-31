@@ -88,49 +88,49 @@ that identity by supplying forwarding headers.
 
 ### Increment 1 — Threat model and configuration
 
-- [ ] Open the v0.10.0 implementation issue
-- [ ] Define trusted-proxy CIDR configuration
-- [ ] Validate IPv4 and IPv6 network ranges at startup
-- [ ] Define forwarding-header precedence explicitly
-- [ ] Bound accepted header length and proxy-hop count
-- [ ] Document direct-peer fallback and failure behavior
+- [x] Open the v0.10.0 implementation issue
+- [x] Define trusted-proxy CIDR configuration
+- [x] Validate IPv4 and IPv6 network ranges at startup
+- [x] Define forwarding-header precedence explicitly
+- [x] Bound accepted header length and proxy-hop count
+- [x] Document direct-peer fallback and failure behavior
 
 ### Increment 2 — Client-address resolver
 
-- [ ] Introduce an application-facing client-context abstraction
-- [ ] Keep servlet and header parsing inside the inbound adapter
-- [ ] Ignore forwarding headers when the direct peer is not trusted
-- [ ] Parse trusted proxy chains from right to left
-- [ ] Select the first untrusted address as the effective client
-- [ ] Normalize IPv4 and IPv6 literals without DNS resolution
-- [ ] Reject or safely fall back on malformed and obfuscated identifiers
+- [x] Introduce an application-facing client-context abstraction
+- [x] Keep servlet and header parsing inside the inbound adapter
+- [x] Ignore forwarding headers when the direct peer is not trusted
+- [x] Parse trusted proxy chains from right to left
+- [x] Select the first untrusted address as the effective client
+- [x] Normalize IPv4 and IPv6 literals without DNS resolution
+- [x] Reject or safely fall back on malformed and obfuscated identifiers
 
 ### Increment 3 — Login-protection integration
 
-- [ ] Replace direct `HttpServletRequest#getRemoteAddr` coupling
-- [ ] Feed the resolved effective client into the existing rate-limit port
-- [ ] Preserve identity-counter and client-counter semantics
-- [ ] Preserve generic `401`, stable `429`, and fail-closed `503` contracts
-- [ ] Add bounded decision metrics for source and fallback outcome
-- [ ] Keep raw client addresses out of metric labels and logs
+- [x] Replace direct `HttpServletRequest#getRemoteAddr` coupling
+- [x] Feed the resolved effective client into the existing rate-limit port
+- [x] Preserve identity-counter and client-counter semantics
+- [x] Preserve generic `401`, stable `429`, and fail-closed `503` contracts
+- [x] Add bounded decision metrics for source and fallback outcome
+- [x] Keep raw client addresses out of metric labels and logs
 
 ### Increment 4 — Verification
 
-- [ ] Verify spoofed forwarding headers are ignored from untrusted peers
-- [ ] Verify a single trusted proxy
-- [ ] Verify multi-hop trusted and untrusted proxy chains
-- [ ] Verify IPv4, IPv6, and mixed-address chains
-- [ ] Verify malformed, oversized, and excessive-hop inputs
-- [ ] Verify direct-peer fallback
-- [ ] Verify login rate limiting groups requests by effective client
-- [ ] Run the complete Maven verification suite
+- [x] Verify spoofed forwarding headers are ignored from untrusted peers
+- [x] Verify a single trusted proxy
+- [x] Verify multi-hop trusted and untrusted proxy chains
+- [x] Verify IPv4, IPv6, and mixed-address chains
+- [x] Verify malformed, oversized, and excessive-hop inputs
+- [x] Verify direct-peer fallback
+- [x] Verify login rate limiting groups requests by effective client
+- [x] Run the complete Maven verification suite
 
 ### Increment 5 — Public and operational contracts
 
-- [ ] Add an ADR for the proxy trust model
-- [ ] Update deployment and login-protection documentation
-- [ ] Add reverse-proxy configuration examples
-- [ ] Update architecture diagrams where the trust boundary is shown
+- [x] Add an ADR for the proxy trust model
+- [x] Update deployment and login-protection documentation
+- [x] Add reverse-proxy configuration examples
+- [x] Update architecture diagrams where the trust boundary is shown
 - [ ] Pass protected-branch CI and review checks
 - [ ] Publish v0.10.0 release notes and artifacts
 
@@ -154,15 +154,15 @@ silently added to trusted client-context resolution.
 
 The release is ready only when:
 
-- [ ] only configured proxy networks may influence effective client identity
-- [ ] spoofed forwarding headers from untrusted peers are ignored
-- [ ] trusted chains resolve deterministically for IPv4 and IPv6
-- [ ] malformed or excessive forwarding input fails safely
-- [ ] login rate limiting uses the effective client without changing public error contracts
-- [ ] raw client addresses remain excluded from metric labels and logs
-- [ ] focused unit, integration, and acceptance tests pass
-- [ ] the complete Maven suite passes
-- [ ] OpenAPI and operations documentation match the implementation
+- [x] only configured proxy networks may influence effective client identity
+- [x] spoofed forwarding headers from untrusted peers are ignored
+- [x] trusted chains resolve deterministically for IPv4 and IPv6
+- [x] malformed or excessive forwarding input fails safely
+- [x] login rate limiting uses the effective client without changing public error contracts
+- [x] raw client addresses remain excluded from metric labels and logs
+- [x] focused unit, integration, and acceptance tests pass
+- [x] the complete Maven suite passes
+- [x] OpenAPI and operations documentation match the implementation
 - [ ] protected-branch CI passes
 - [ ] v0.10.0 release assets and checksum are published
 

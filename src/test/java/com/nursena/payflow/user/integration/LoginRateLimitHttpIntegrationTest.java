@@ -51,6 +51,9 @@ import org.testcontainers.utility.DockerImageName;
         "payflow.security.login-rate-limit.window=30s",
         "payflow.security.login-rate-limit.identity-limit=2",
         "payflow.security.login-rate-limit.client-limit=3",
+        "payflow.security.client-context.trusted-proxy-cidrs[0]=10.0.0.0/8",
+        "payflow.security.client-context.max-forwarded-header-length=4096",
+        "payflow.security.client-context.max-forwarded-hops=8",
         "payflow.security.refresh-session.refresh-token-ttl=7d",
         "payflow.security.refresh-session.family-ttl=30d"
     }
@@ -311,6 +314,123 @@ class LoginRateLimitHttpIntegrationTest {
     }
 
     @Test
+    void shouldGroupTrustedProxyRequestsByEffectiveClient()
+        throws Exception {
+
+        String directProxy =
+            "10.0.0.9";
+
+        String effectiveClient =
+            "198.51.100.44";
+
+        for (
+            int attempt = 1;
+            attempt <= 3;
+            attempt++
+        ) {
+            performForwardedLogin(
+                uniqueEmail(
+                    "trusted-client-" + attempt
+                ),
+                "WrongPassword123!",
+                directProxy,
+                effectiveClient
+            )
+                .andExpect(
+                    status().isUnauthorized()
+                );
+        }
+
+        performForwardedLogin(
+            uniqueEmail(
+                "trusted-client-blocked"
+            ),
+            "WrongPassword123!",
+            directProxy,
+            effectiveClient
+        )
+            .andExpect(
+                status().isTooManyRequests()
+            )
+            .andExpect(
+                jsonPath("$.code")
+                    .value(
+                        "LOGIN_RATE_LIMIT_EXCEEDED"
+                    )
+            );
+
+        assertThat(
+            redisTemplate.opsForValue()
+                .get(
+                    clientKey(
+                        effectiveClient
+                    )
+                )
+        )
+            .isEqualTo("4");
+
+        assertThat(
+            redisTemplate.hasKey(
+                clientKey(
+                    directProxy
+                )
+            )
+        )
+            .isFalse();
+    }
+
+    @Test
+    void shouldIgnoreSpoofedHeaderFromUntrustedPeers()
+        throws Exception {
+
+        String spoofedClient =
+            "198.51.100.55";
+
+        for (
+            int attempt = 1;
+            attempt <= 4;
+            attempt++
+        ) {
+            String directPeer =
+                "203.0.113."
+                    + (
+                        40 + attempt
+                    );
+
+            performForwardedLogin(
+                uniqueEmail(
+                    "spoofed-client-" + attempt
+                ),
+                "WrongPassword123!",
+                directPeer,
+                spoofedClient
+            )
+                .andExpect(
+                    status().isUnauthorized()
+                );
+
+            assertThat(
+                redisTemplate.opsForValue()
+                    .get(
+                        clientKey(
+                            directPeer
+                        )
+                    )
+            )
+                .isEqualTo("1");
+        }
+
+        assertThat(
+            redisTemplate.hasKey(
+                clientKey(
+                    spoofedClient
+                )
+            )
+        )
+            .isFalse();
+    }
+
+    @Test
     void shouldResetIdentityAfterSuccessfulLoginOnly()
         throws Exception {
 
@@ -398,6 +518,38 @@ class LoginRateLimitHttpIntegrationTest {
                     remoteAddress(
                         clientAddress
                     )
+                )
+                .contentType(
+                    MediaType.APPLICATION_JSON
+                )
+                .content(
+                    objectMapper
+                        .writeValueAsString(
+                            new LoginRequest(
+                                email,
+                                password
+                            )
+                        )
+                )
+        );
+    }
+
+    private ResultActions performForwardedLogin(
+        String email,
+        String password,
+        String directPeer,
+        String effectiveClient
+    ) throws Exception {
+        return mockMvc.perform(
+            post(LOGIN_PATH)
+                .with(
+                    remoteAddress(
+                        directPeer
+                    )
+                )
+                .header(
+                    "Forwarded",
+                    "for=" + effectiveClient
                 )
                 .contentType(
                     MediaType.APPLICATION_JSON

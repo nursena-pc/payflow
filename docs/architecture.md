@@ -48,6 +48,10 @@ com.nursena.payflow
 │   │   └── port.out
 │   └── adapter
 │       └── out.persistence
+├── clientcontext
+│   ├── domain
+│   └── adapter
+│       └── in.web
 ├── notification
 ├── audit
 ├── common
@@ -57,6 +61,20 @@ com.nursena.payflow
 Packages that represent future capabilities may remain empty until a concrete use case requires them. Infrastructure is not added only to demonstrate a technology.
 
 ## Module responsibilities
+
+### Client-context module
+
+The client-context module owns:
+
+- literal-only IPv4 and IPv6 normalization
+- trusted-proxy CIDR validation and containment
+- deterministic forwarding-chain resolution
+- direct-peer fallback decisions
+- bounded, address-free resolution metrics
+
+Servlet request access, forwarding-header parsing, and Micrometer wiring remain
+inside the inbound web adapter. The user module consumes only the normalized
+effective address through `ClientAddressResolver`.
 
 ### User module
 
@@ -274,6 +292,23 @@ Clients cannot supply the source user or source wallet identifier for:
 This prevents a client from accessing or changing another user's data by supplying a different user or wallet identifier in request input.
 
 Spring Security uses a deny-by-default policy. New routes remain inaccessible until they are explicitly classified as public or authenticated.
+
+### Trusted client-address boundary
+
+Client-scoped login protection does not trust forwarding headers merely because
+they are present. The servlet transport peer is parsed first. If that address is
+not inside an explicitly configured trusted-proxy CIDR, `Forwarded` and
+`X-Forwarded-For` are ignored and the direct peer remains the effective client.
+
+For a trusted direct peer, the inbound adapter selects `Forwarded` before
+`X-Forwarded-For`, validates bounded literal-only chain data, and walks the chain
+from right to left until it finds the first untrusted address. Malformed,
+obfuscated, oversized, or excessive-hop input falls back to the direct peer.
+
+The resolved address crosses into the user login adapter only as a normalized
+value. Redis stores only its SHA-256 digest. Micrometer receives only bounded
+`source` and `outcome` enums; raw client addresses and forwarding values do not
+enter metric labels or logs.
 
 ## API conventions
 

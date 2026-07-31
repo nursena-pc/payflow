@@ -81,6 +81,10 @@ payflow:
       window: ${LOGIN_RATE_LIMIT_WINDOW:15m}
       identity-limit: ${LOGIN_RATE_LIMIT_IDENTITY_LIMIT:5}
       client-limit: ${LOGIN_RATE_LIMIT_CLIENT_LIMIT:20}
+    client-context:
+      trusted-proxy-cidrs: ${TRUSTED_PROXY_CIDRS:}
+      max-forwarded-header-length: ${FORWARDED_HEADER_MAX_LENGTH:4096}
+      max-forwarded-hops: ${FORWARDED_MAX_HOPS:16}
   outbox:
     kafka:
       send-timeout: ${OUTBOX_KAFKA_SEND_TIMEOUT:10s}

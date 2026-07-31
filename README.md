@@ -56,7 +56,10 @@ Completed capabilities include:
 - user registration with normalized email addresses
 - BCrypt password hashing
 - user login with RSA-signed JWT access tokens and opaque refresh credentials
-- Redis-backed fixed-window login limits by normalized identity and direct client peer
+- Redis-backed fixed-window login limits by normalized identity and spoofing-resistant effective client address
+- explicit trusted reverse-proxy CIDR validation with literal-only IPv4 and IPv6 parsing
+- deterministic `Forwarded` / `X-Forwarded-For` resolution with safe direct-peer fallback
+- bounded client-context decision metrics without raw address labels or logs
 - atomic Lua counter updates with explicit TTL, `429 Retry-After`, and fail-closed `503`
 - low-cardinality login-protection metrics and credential-free security events
 - refresh-session architecture and threat model with explicit rotation and reuse-detection boundaries
@@ -101,7 +104,7 @@ Completed capabilities include:
 - operator-only, paginated command-audit queries and chronological command timelines
 - Prometheus metrics, Grafana dashboards, and alert rules for Kafka consumer failures
 
-OpenAPI documentation and executable Postman workflows cover the implemented API. PayFlow v0.9.0 is the latest published release. The v0.10.0 development line focuses on spoofing-resistant client-address resolution behind explicitly trusted reverse proxies. See the [v0.9.0 release notes](docs/releases/v0.9.0.md) and the [roadmap](docs/roadmap.md).
+OpenAPI documentation and executable Postman workflows cover the implemented API. PayFlow v0.9.0 is the latest published release. The v0.10.0 development line now implements spoofing-resistant effective client-address resolution behind explicitly trusted reverse proxies, including safe fallback behavior and bounded observability. See the [trusted client-context ADR](docs/adr/0011-trusted-client-context.md), the [v0.9.0 release notes](docs/releases/v0.9.0.md), and the [roadmap](docs/roadmap.md).
 
 ## Implemented API
 
@@ -128,8 +131,11 @@ OpenAPI documentation and executable Postman workflows cover the implemented API
 
 ### Redis-backed login protection
 
-`POST /api/v1/auth/login` evaluates normalized-identity and direct-client counters
-in one Redis Lua script before user lookup or password verification. The default
+`POST /api/v1/auth/login` evaluates normalized-identity and effective-client
+counters in one Redis Lua script before user lookup or password verification.
+The effective address is the direct servlet peer unless that peer belongs to an
+explicitly configured trusted-proxy network. Only then may validated
+`Forwarded` or `X-Forwarded-For` data influence the client identity. The default
 policy allows five attempts per identity and twenty attempts per client in a
 fixed fifteen-minute window.
 

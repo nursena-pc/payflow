@@ -5,6 +5,10 @@ import static org.springframework.http.MediaType
     .APPLICATION_JSON_VALUE;
 
 import java.util.Objects;
+import com.nursena.payflow.clientcontext.adapter.in.web
+    .ClientAddressResolver;
+import com.nursena.payflow.clientcontext.domain
+    .ResolvedClientAddress;
 
 import com.nursena.payflow.common.api.ApiError;
 import com.nursena.payflow.configuration.OpenApiExamples;
@@ -52,13 +56,24 @@ public class AuthenticateUserController {
     private final AuthenticateUserUseCase
         authenticateUserUseCase;
 
+    private final ClientAddressResolver
+        clientAddressResolver;
+
     public AuthenticateUserController(
-        AuthenticateUserUseCase authenticateUserUseCase
+        AuthenticateUserUseCase authenticateUserUseCase,
+        ClientAddressResolver clientAddressResolver
     ) {
         this.authenticateUserUseCase =
             Objects.requireNonNull(
                 authenticateUserUseCase,
                 "authenticateUserUseCase "
+                    + "must not be null"
+            );
+
+        this.clientAddressResolver =
+            Objects.requireNonNull(
+                clientAddressResolver,
+                "clientAddressResolver "
                     + "must not be null"
             );
     }
@@ -187,11 +202,16 @@ public class AuthenticateUserController {
         @Parameter(hidden = true)
         HttpServletRequest servletRequest
     ) {
+        ResolvedClientAddress clientAddress =
+            clientAddressResolver.resolve(
+                servletRequest
+            );
+
         AuthenticateUserCommand command =
             new AuthenticateUserCommand(
                 request.email(),
                 request.password(),
-                servletRequest.getRemoteAddr()
+                clientAddress.address().value()
             );
 
         AuthenticateUserResult result =

@@ -22,7 +22,7 @@ Two counters are evaluated atomically for every login attempt:
 | Dimension | Default threshold | Key input |
 |---|---:|---|
 | Identity | 5 attempts per 15 minutes | Normalized email address |
-| Client | 20 attempts per 15 minutes | Direct servlet peer address |
+| Client | 20 attempts per 15 minutes | Normalized effective client address |
 
 The first five attempts for one identity are evaluated normally. The sixth
 attempt in the same window is blocked. The first twenty attempts for one client
@@ -113,6 +113,9 @@ state safely.
 | `LOGIN_RATE_LIMIT_WINDOW` | `15m` | Fixed-window duration |
 | `LOGIN_RATE_LIMIT_IDENTITY_LIMIT` | `5` | Allowed attempts per identity |
 | `LOGIN_RATE_LIMIT_CLIENT_LIMIT` | `20` | Allowed attempts per client |
+| `TRUSTED_PROXY_CIDRS` | empty | Comma-separated IPv4 or IPv6 CIDRs allowed to supply forwarding metadata |
+| `FORWARDED_HEADER_MAX_LENGTH` | `4096` | Maximum combined selected forwarding-header length |
+| `FORWARDED_MAX_HOPS` | `16` | Maximum accepted forwarding-chain elements |
 | `REDIS_HOST` | `localhost` | Redis host |
 | `REDIS_PORT` | `6379` | Redis port |
 
@@ -121,14 +124,59 @@ Avoid values that create an easy denial-of-service path for shared networks.
 
 ## Client-address trust boundary
 
-The controller currently uses the direct servlet peer address and does not
-parse arbitrary `X-Forwarded-For` values. This avoids trusting attacker-supplied
-forwarding headers.
+The direct servlet peer is the authority that decides whether forwarding
+metadata may be considered. An empty `TRUSTED_PROXY_CIDRS` value is the secure
+default: every request uses the direct peer and all forwarding headers are
+ignored.
 
-When PayFlow is deployed behind a reverse proxy, the platform must establish a
-trusted forwarding boundary before client-based thresholds are treated as
-end-user IP limits. Without that boundary, requests may be grouped by the proxy
-address. Do not enable unrestricted forwarded-header trust.
+When the direct peer belongs to a configured trusted-proxy CIDR, PayFlow applies
+this deterministic policy:
+
+1. use `Forwarded` when it is present
+2. otherwise use `X-Forwarded-For`
+3. never fall back to `X-Forwarded-For` after a present `Forwarded` value fails validation
+4. parse the chain from right to left
+5. skip configured trusted proxy hops
+6. select the first untrusted address as the effective client
+7. when every supplied hop is trusted, select the leftmost address
+
+Only literal IPv4 and IPv6 values are accepted. Hostnames are never resolved.
+`unknown`, obfuscated identifiers, malformed quoting, invalid ports, oversized
+headers, and excessive hop counts fail safely to the direct peer. The resolver
+also falls back to the direct peer when no supported forwarding header is
+present.
+
+The accepted configuration rejects host-bit CIDRs, duplicates, unrestricted
+`/0` networks, more than 64 trusted networks, header limits outside
+`256..16384`, and hop limits outside `1..64`.
+
+### Reverse-proxy example
+
+For a Docker network where only the reverse-proxy subnet is trusted:
+
+```text
+TRUSTED_PROXY_CIDRS=172.20.0.0/16
+FORWARDED_HEADER_MAX_LENGTH=4096
+FORWARDED_MAX_HOPS=16
+```
+
+A minimal Nginx location can supply one supported header format:
+
+```nginx
+location / {
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_pass http://payflow:8080;
+}
+```
+
+The trusted CIDR must identify the actual network peer that connects to
+PayFlow, not the public client network. Do not configure public internet ranges,
+`0.0.0.0/0`, or `::/0`. If an upstream already supplies `Forwarded`, remember
+that it takes precedence over `X-Forwarded-For`.
+
+Forwarding headers are deployment metadata rather than a new public API input,
+so the login request body and OpenAPI schema remain unchanged. See
+[ADR 0011](adr/0011-trusted-client-context.md) for the complete trust decision.
 
 ## Metrics and logs
 
@@ -139,10 +187,17 @@ Prometheus metrics:
   - `dimension=none|identity|client|both`
 - `payflow.auth.login.rate_limit.redis.failures`
   - `operation=evaluate|reset`
+- `payflow.security.client_context.decisions`
+  - `source=direct_peer|forwarded|x_forwarded_for`
+  - `outcome=direct|resolved|untrusted_peer|missing_header|malformed_header|oversized_header|excessive_hops`
+
+The client-context metric has a fixed matrix of 21 source/outcome series.
+The observer API receives only enum dimensions; it cannot receive a client
+address or servlet request.
 
 Security log events identify only the event type, blocked dimension, and request
-path. They must not include raw identity values, passwords, tokens, or client
-addresses.
+path. They must not include raw identity values, passwords, tokens, client
+addresses, address digests, or forwarding-header contents.
 
 ## Local verification
 
@@ -165,7 +220,7 @@ consumes login attempts.
 Automated verification:
 
 ```powershell
-.\mvnw.cmd -Dtest=RedisLoginRateLimitAdapterIntegrationTest,LoginRateLimitHttpIntegrationTest,LoginRateLimitUnavailableHttpIntegrationTest test
+.\mvnw.cmd -Dtest=RedisLoginRateLimitAdapterIntegrationTest,LoginRateLimitHttpIntegrationTest,LoginRateLimitUnavailableHttpIntegrationTest,ServletClientAddressResolverTest,ClientAddressResolutionMetricsTest test
 ```
 
 The full project gate remains:
