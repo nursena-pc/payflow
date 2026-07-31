@@ -22,7 +22,7 @@ class RoadmapContractTest {
         Path.of("docs", "roadmap.md");
 
     @Test
-    void shouldAlignRoadmapWithReleaseVersion()
+    void shouldAlignRoadmapWithNextDevelopmentVersion()
         throws Exception {
 
         String projectVersion =
@@ -32,23 +32,23 @@ class RoadmapContractTest {
             Files.readString(ROADMAP_PATH);
 
         assertThat(projectVersion)
-            .isEqualTo("0.9.0");
+            .isEqualTo("0.10.0-SNAPSHOT");
 
         assertThat(roadmap)
             .contains(
-                "Maven version `" + projectVersion + "`",
-                "## v0.9.0 — Redis-Backed Login Protection",
-                "- [x] Verify identity and client thresholds with real Redis",
-                "- [x] Verify HTTP `429` and `Retry-After`",
-                "- [x] Verify Redis outage produces fail-closed HTTP `503`",
-                "- [x] Open the pull request linked to issue #98",
-                "- [x] Merge through the protected pull-request workflow",
-                "- [x] Prepare v0.9.0 release notes",
-                "- [ ] Tag the verified release commit as `v0.9.0`",
-                "- [ ] the GitHub Release is published"
+                "PayFlow v0.9.0 is the latest tagged release",
+                "`" + projectVersion + "`",
+                "## v0.9.0 — Released",
+                "## v0.10.0 — Trusted Client Context",
+                "- [ ] Define trusted-proxy CIDR configuration",
+                "- [ ] Ignore forwarding headers when the direct peer is not trusted",
+                "- [ ] Parse trusted proxy chains from right to left",
+                "- [ ] Verify spoofed forwarding headers are ignored from untrusted peers",
+                "- [ ] only configured proxy networks may influence effective client identity"
             )
             .doesNotContain(
                 "0.9.0-SNAPSHOT",
+                "The v0.9.0 release candidate",
                 "## v0.7.0 — Identity and Session Security"
             );
     }
