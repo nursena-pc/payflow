@@ -2,13 +2,16 @@
 
 ## Current delivery focus
 
-PayFlow v0.8.0 is the latest tagged baseline. The v0.9.0 release candidate uses
-the Maven version `0.9.0`.
+PayFlow v0.9.0 is the latest tagged release. The active development line uses
+`0.10.0-SNAPSHOT`.
 
-The v0.9.0 increment delivers distributed Redis-backed login protection and
-completes the refresh-session security lifecycle. PayFlow remains a modular
-monolith. PostgreSQL is the system of record; Redis is used only for bounded,
-explicitly expiring abuse-control state.
+The v0.10.0 increment focuses on trusted client-address resolution behind
+explicitly configured reverse proxies. The goal is to make client-scoped
+security controls deployment-aware without trusting attacker-supplied
+forwarding headers.
+
+PayFlow remains a modular monolith. PostgreSQL is the system of record; Redis is
+used only for bounded, explicitly expiring abuse-control state.
 
 ## Delivered platform baseline
 
@@ -21,7 +24,7 @@ explicitly expiring abuse-control state.
 - [x] Flyway-managed database schema
 - [x] CI, Dependabot, pull-request, and issue templates
 - [x] Conventional Commits and protected pull-request workflow
-- [x] Tagged releases with executable JAR and SHA-256 assets
+- [x] Tag-triggered GitHub Releases with executable JAR and SHA-256 assets
 
 ### Identity, authorization, and sessions
 
@@ -38,6 +41,17 @@ explicitly expiring abuse-control state.
 - [x] Stable authentication and authorization error contracts
 - [x] ADMIN-derived `PAYFLOW_OPERATIONS` authorization boundary
 
+### Login protection
+
+- [x] Distributed identity and direct-peer fixed-window counters
+- [x] SHA-256-hashed Redis key material
+- [x] Atomic Lua counter updates
+- [x] Stable `429` response with positive `Retry-After`
+- [x] Fail-closed `503` when Redis cannot make a safe decision
+- [x] Real Redis threshold, expiration, reset, and concurrency verification
+- [x] Low-cardinality metrics and credential-free security events
+- [x] Dedicated operations guide and Postman verification workflow
+
 ### Wallets, transfers, ledger, and events
 
 - [x] One wallet per authenticated user
@@ -53,117 +67,111 @@ explicitly expiring abuse-control state.
 - [x] Durable dead-letter intake, replay, and discard lifecycle
 - [x] Append-only operator command auditing
 
-### Documentation and observability
+## v0.9.0 — Released
 
-- [x] OpenAPI contracts and examples
-- [x] Executable standard Postman workflow
-- [x] Dedicated login rate-limit Postman workflow
-- [x] Prometheus metrics, Grafana dashboards, and alert rules
-- [x] Architecture and ER diagram sources
-- [x] Security and operations documentation
+- [x] Merge Redis-backed login protection through PR #99
+- [x] Pass protected-branch CI
+- [x] Merge release preparation through PR #100
+- [x] Publish versioned release notes
+- [x] Tag the verified merge commit as `v0.9.0`
+- [x] Publish `payflow-0.9.0.jar`
+- [x] Publish and verify `payflow-0.9.0.jar.sha256`
+- [x] Publish the GitHub Release
 
-## v0.9.0 — Redis-Backed Login Protection
+## v0.10.0 — Trusted Client Context
 
 ### Product outcome
 
-Login attempts are evaluated consistently across application instances without
-revealing whether an account exists. The implementation uses bounded fixed
-windows, hashed Redis keys, atomic Lua updates, low-cardinality metrics, and
-fail-closed behavior when Redis cannot make a safe decision.
+Security controls can identify the effective client address when PayFlow is
+deployed behind known reverse proxies, while untrusted peers cannot influence
+that identity by supplying forwarding headers.
 
-### Increment 1 — Redis foundation
+### Increment 1 — Threat model and configuration
 
-- [x] Define identity and client rate-limit ports and domain contracts
-- [x] Add validated configuration properties with secure defaults
-- [x] Hash normalized identity and client values before key construction
-- [x] Implement atomic Redis Lua evaluation
-- [x] Apply expiration only when a fixed-window key is created
-- [x] Add bounded metric tags and credential-free security events
+- [ ] Open the v0.10.0 implementation issue
+- [ ] Define trusted-proxy CIDR configuration
+- [ ] Validate IPv4 and IPv6 network ranges at startup
+- [ ] Define forwarding-header precedence explicitly
+- [ ] Bound accepted header length and proxy-hop count
+- [ ] Document direct-peer fallback and failure behavior
 
-### Increment 2 — Authentication integration
+### Increment 2 — Client-address resolver
 
-- [x] Apply the limiter before user lookup and password verification
-- [x] Preserve generic invalid-credential responses below the threshold
-- [x] Return stable `429 LOGIN_RATE_LIMIT_EXCEEDED`
-- [x] Derive a positive `Retry-After` value from Redis TTL
-- [x] Reset only the identity counter after successful login
-- [x] Preserve the client counter until its original expiration
-- [x] Return fail-closed `503 LOGIN_RATE_LIMIT_UNAVAILABLE`
-- [x] Keep direct servlet peer addressing as the explicit trust boundary
+- [ ] Introduce an application-facing client-context abstraction
+- [ ] Keep servlet and header parsing inside the inbound adapter
+- [ ] Ignore forwarding headers when the direct peer is not trusted
+- [ ] Parse trusted proxy chains from right to left
+- [ ] Select the first untrusted address as the effective client
+- [ ] Normalize IPv4 and IPv6 literals without DNS resolution
+- [ ] Reject or safely fall back on malformed and obfuscated identifiers
 
-### Increment 3 — Verification
+### Increment 3 — Login-protection integration
 
-- [x] Unit-test configuration, hashing, decisions, metrics, and error mapping
-- [x] Verify identity and client thresholds with real Redis
-- [x] Verify fixed-window expiration is not refreshed
-- [x] Verify identity-only reset after successful authentication
-- [x] Verify atomic Lua behavior under concurrent requests
-- [x] Verify HTTP `429` and `Retry-After`
-- [x] Verify Redis outage produces fail-closed HTTP `503`
-- [x] Run the complete Maven verification suite
+- [ ] Replace direct `HttpServletRequest#getRemoteAddr` coupling
+- [ ] Feed the resolved effective client into the existing rate-limit port
+- [ ] Preserve identity-counter and client-counter semantics
+- [ ] Preserve generic `401`, stable `429`, and fail-closed `503` contracts
+- [ ] Add bounded decision metrics for source and fallback outcome
+- [ ] Keep raw client addresses out of metric labels and logs
 
-### Increment 4 — Public and operational contracts
+### Increment 4 — Verification
 
-- [x] Update OpenAPI authentication responses
-- [x] Add a dedicated, credential-free Postman verification collection
-- [x] Add Postman collection contract tests
-- [x] Document thresholds, TTL, metrics, logs, and outage behavior
-- [x] Document reverse-proxy and forwarded-address trust boundaries
-- [x] Update the root project documentation
+- [ ] Verify spoofed forwarding headers are ignored from untrusted peers
+- [ ] Verify a single trusted proxy
+- [ ] Verify multi-hop trusted and untrusted proxy chains
+- [ ] Verify IPv4, IPv6, and mixed-address chains
+- [ ] Verify malformed, oversized, and excessive-hop inputs
+- [ ] Verify direct-peer fallback
+- [ ] Verify login rate limiting groups requests by effective client
+- [ ] Run the complete Maven verification suite
 
-### Increment 5 — Pull request and release readiness
+### Increment 5 — Public and operational contracts
 
-- [x] Synchronize the feature branch with the latest `origin/main`
-- [x] Open the pull request linked to issue #98
-- [x] Pass protected-branch CI and review checks
-- [x] Merge through the protected pull-request workflow
-- [x] Prepare v0.9.0 release notes
-- [x] Add a tag-triggered release workflow
-- [ ] Publish the executable JAR and SHA-256 checksum
-- [ ] Tag the verified release commit as `v0.9.0`
+- [ ] Add an ADR for the proxy trust model
+- [ ] Update deployment and login-protection documentation
+- [ ] Add reverse-proxy configuration examples
+- [ ] Update architecture diagrams where the trust boundary is shown
+- [ ] Pass protected-branch CI and review checks
+- [ ] Publish v0.10.0 release notes and artifacts
 
-## Explicit v0.9.0 non-goals
+## Explicit v0.10.0 non-goals
 
-- external OAuth or OpenID Connect identity providers
-- social login
-- multi-factor authentication
-- password-reset and email-verification workflows
+- unrestricted trust of `Forwarded` or `X-Forwarded-For`
+- DNS-based proxy trust
+- GeoIP or location inference
 - device fingerprinting
 - generalized API-wide rate limiting
-- production KMS or HSM integration
-- unrestricted trust of forwarded client-address headers
+- request-correlation or distributed-tracing implementation
+- external OAuth or OpenID Connect providers
+- multi-factor authentication
+- password recovery and email verification
 - microservice extraction
-- wallet-summary caching
-- unrelated dependency modernization
 
-These items require separate issues, milestones, and threat models rather than
-being silently added to the login-protection increment.
+These concerns require separate issues and threat models rather than being
+silently added to trusted client-context resolution.
 
-## v0.9.0 release exit criteria
+## v0.10.0 release exit criteria
 
 The release is ready only when:
 
-- [x] refresh-token rotation is atomic under concurrent requests
-- [x] confirmed token reuse revokes the complete family
-- [x] current-session and all-session logout behavior is verified
-- [x] login rate limiting is verified against real Redis
-- [x] plaintext refresh tokens and authentication credentials are excluded from persistence and logs
-- [x] OpenAPI and Postman contracts match the implementation
-- [x] all local automated tests pass
-- [x] the feature pull request is merged
-- [x] protected-branch CI passes on the merge candidate
-- [x] release notes are prepared
-- [ ] the v0.9.0 tag is published
-- [ ] the executable JAR and SHA-256 checksum are published
-- [ ] the GitHub Release is published
+- [ ] only configured proxy networks may influence effective client identity
+- [ ] spoofed forwarding headers from untrusted peers are ignored
+- [ ] trusted chains resolve deterministically for IPv4 and IPv6
+- [ ] malformed or excessive forwarding input fails safely
+- [ ] login rate limiting uses the effective client without changing public error contracts
+- [ ] raw client addresses remain excluded from metric labels and logs
+- [ ] focused unit, integration, and acceptance tests pass
+- [ ] the complete Maven suite passes
+- [ ] OpenAPI and operations documentation match the implementation
+- [ ] protected-branch CI passes
+- [ ] v0.10.0 release assets and checksum are published
 
 ## Future candidates
 
-Potential increments after v0.9.0 include:
+Potential increments after v0.10.0 include:
 
-- signing-key rotation and external key-management integration
-- trusted reverse-proxy client-address resolution
 - structured JSON logging and request correlation
+- signing-key rotation and external key-management integration
 - load and performance verification
 - password recovery and verified-email workflows
 - multi-factor authentication
