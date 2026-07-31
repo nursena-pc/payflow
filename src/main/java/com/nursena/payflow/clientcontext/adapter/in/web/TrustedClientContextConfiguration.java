@@ -1,6 +1,7 @@
 package com.nursena.payflow.clientcontext.adapter.in.web;
 
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration(proxyBeanMethods = false)
@@ -8,4 +9,13 @@ import org.springframework.context.annotation.Configuration;
     TrustedProxyProperties.class
 )
 class TrustedClientContextConfiguration {
+
+    @Bean
+    ServletClientAddressResolver servletClientAddressResolver(
+        TrustedProxyProperties properties
+    ) {
+        return new ServletClientAddressResolver(
+            properties
+        );
+    }
 }

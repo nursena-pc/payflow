@@ -91,19 +91,19 @@ that identity by supplying forwarding headers.
 - [x] Open the v0.10.0 implementation issue
 - [x] Define trusted-proxy CIDR configuration
 - [x] Validate IPv4 and IPv6 network ranges at startup
-- [ ] Define forwarding-header precedence explicitly
+- [x] Define forwarding-header precedence explicitly
 - [x] Bound accepted header length and proxy-hop count
-- [ ] Document direct-peer fallback and failure behavior
+- [x] Document direct-peer fallback and failure behavior
 
 ### Increment 2 — Client-address resolver
 
 - [ ] Introduce an application-facing client-context abstraction
-- [ ] Keep servlet and header parsing inside the inbound adapter
-- [ ] Ignore forwarding headers when the direct peer is not trusted
-- [ ] Parse trusted proxy chains from right to left
-- [ ] Select the first untrusted address as the effective client
-- [ ] Normalize IPv4 and IPv6 literals without DNS resolution
-- [ ] Reject or safely fall back on malformed and obfuscated identifiers
+- [x] Keep servlet and header parsing inside the inbound adapter
+- [x] Ignore forwarding headers when the direct peer is not trusted
+- [x] Parse trusted proxy chains from right to left
+- [x] Select the first untrusted address as the effective client
+- [x] Normalize IPv4 and IPv6 literals without DNS resolution
+- [x] Reject or safely fall back on malformed and obfuscated identifiers
 
 ### Increment 3 — Login-protection integration
 
@@ -116,12 +116,12 @@ that identity by supplying forwarding headers.
 
 ### Increment 4 — Verification
 
-- [ ] Verify spoofed forwarding headers are ignored from untrusted peers
-- [ ] Verify a single trusted proxy
-- [ ] Verify multi-hop trusted and untrusted proxy chains
-- [ ] Verify IPv4, IPv6, and mixed-address chains
-- [ ] Verify malformed, oversized, and excessive-hop inputs
-- [ ] Verify direct-peer fallback
+- [x] Verify spoofed forwarding headers are ignored from untrusted peers
+- [x] Verify a single trusted proxy
+- [x] Verify multi-hop trusted and untrusted proxy chains
+- [x] Verify IPv4, IPv6, and mixed-address chains
+- [x] Verify malformed, oversized, and excessive-hop inputs
+- [x] Verify direct-peer fallback
 - [ ] Verify login rate limiting groups requests by effective client
 - [ ] Run the complete Maven verification suite
 

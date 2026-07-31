@@ -28,6 +28,9 @@ class TrustedClientContextConfigurationTest {
                     .hasNotFailed()
                     .hasSingleBean(
                         TrustedProxyProperties.class
+                    )
+                    .hasSingleBean(
+                        ServletClientAddressResolver.class
                     );
 
                 TrustedProxyProperties properties =

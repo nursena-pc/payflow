@@ -44,9 +44,20 @@ class RoadmapContractTest {
                 "- [x] Define trusted-proxy CIDR configuration",
                 "- [x] Validate IPv4 and IPv6 network ranges at startup",
                 "- [x] Bound accepted header length and proxy-hop count",
-                "- [ ] Ignore forwarding headers when the direct peer is not trusted",
-                "- [ ] Parse trusted proxy chains from right to left",
-                "- [ ] Verify spoofed forwarding headers are ignored from untrusted peers",
+                "- [x] Define forwarding-header precedence explicitly",
+                "- [x] Document direct-peer fallback and failure behavior",
+                "- [x] Keep servlet and header parsing inside the inbound adapter",
+                "- [x] Ignore forwarding headers when the direct peer is not trusted",
+                "- [x] Parse trusted proxy chains from right to left",
+                "- [x] Select the first untrusted address as the effective client",
+                "- [x] Normalize IPv4 and IPv6 literals without DNS resolution",
+                "- [x] Reject or safely fall back on malformed and obfuscated identifiers",
+                "- [x] Verify spoofed forwarding headers are ignored from untrusted peers",
+                "- [x] Verify a single trusted proxy",
+                "- [x] Verify multi-hop trusted and untrusted proxy chains",
+                "- [x] Verify IPv4, IPv6, and mixed-address chains",
+                "- [x] Verify malformed, oversized, and excessive-hop inputs",
+                "- [x] Verify direct-peer fallback",
                 "- [ ] only configured proxy networks may influence effective client identity"
             )
             .doesNotContain(
