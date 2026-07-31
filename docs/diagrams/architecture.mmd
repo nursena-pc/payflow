@@ -1,6 +1,12 @@
 flowchart LR
-    Client --> API[REST API / Spring MVC]
-    API --> Security[Spring Security]
+    Client[Client] --> Peer[Direct Peer / Reverse Proxy]
+    Peer --> API[REST API / Spring MVC]
+    API --> Trust{Direct peer in trusted CIDR?}
+    Trust -->|No: ignore forwarding headers| Direct[Use direct peer]
+    Trust -->|Yes: validate bounded chain| Chain[Resolve first untrusted hop from right]
+    Direct --> Effective[Normalized effective client]
+    Chain --> Effective
+    Effective --> Security[Spring Security / Login Protection]
     Security --> UseCases[Application Use Cases]
     UseCases --> Domain[Domain Model]
     UseCases --> Ports[Output Ports]
@@ -9,3 +15,4 @@ flowchart LR
     Ports --> Kafka[(Kafka)]
     Kafka --> Consumers[Notification / Audit Consumers]
     API --> Observability[Actuator / Prometheus]
+    Effective -. source + outcome only .-> Observability

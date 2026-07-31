@@ -66,7 +66,24 @@ class RoadmapContractTest {
                 "- [x] Add bounded decision metrics for source and fallback outcome",
                 "- [x] Keep raw client addresses out of metric labels and logs",
                 "- [x] Verify login rate limiting groups requests by effective client",
-                "- [ ] only configured proxy networks may influence effective client identity"
+                "- [x] Run the complete Maven verification suite",
+                "- [x] Add an ADR for the proxy trust model",
+                "- [x] Update deployment and login-protection documentation",
+                "- [x] Add reverse-proxy configuration examples",
+                "- [x] Update architecture diagrams where the trust boundary is shown",
+                "- [x] only configured proxy networks may influence effective client identity",
+                "- [x] spoofed forwarding headers from untrusted peers are ignored",
+                "- [x] trusted chains resolve deterministically for IPv4 and IPv6",
+                "- [x] malformed or excessive forwarding input fails safely",
+                "- [x] login rate limiting uses the effective client without changing public error contracts",
+                "- [x] raw client addresses remain excluded from metric labels and logs",
+                "- [x] focused unit, integration, and acceptance tests pass",
+                "- [x] the complete Maven suite passes",
+                "- [x] OpenAPI and operations documentation match the implementation",
+                "- [ ] Pass protected-branch CI and review checks",
+                "- [ ] Publish v0.10.0 release notes and artifacts",
+                "- [ ] protected-branch CI passes",
+                "- [ ] v0.10.0 release assets and checksum are published"
             )
             .doesNotContain(
                 "0.9.0-SNAPSHOT",
