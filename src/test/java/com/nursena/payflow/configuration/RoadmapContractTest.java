@@ -22,7 +22,7 @@ class RoadmapContractTest {
         Path.of("docs", "roadmap.md");
 
     @Test
-    void shouldAlignRoadmapWithReleaseCandidateVersion()
+    void shouldAlignRoadmapWithPublishedReleaseAndNextDevelopmentVersion()
         throws Exception {
 
         String projectVersion =
@@ -32,14 +32,14 @@ class RoadmapContractTest {
             Files.readString(ROADMAP_PATH);
 
         assertThat(projectVersion)
-            .isEqualTo("0.10.0");
+            .isEqualTo("0.11.0-SNAPSHOT");
 
         assertThat(roadmap)
             .contains(
-                "PayFlow v0.9.0 is the latest tagged release",
+                "PayFlow v0.10.0 is the latest tagged release",
                 "`" + projectVersion + "`",
                 "## v0.9.0 — Released",
-                "## v0.10.0 — Trusted Client Context",
+                "## v0.10.0 — Released: Trusted Client Context",
                 "- [x] Open the v0.10.0 implementation issue",
                 "- [x] Define trusted-proxy CIDR configuration",
                 "- [x] Validate IPv4 and IPv6 network ranges at startup",
@@ -82,22 +82,25 @@ class RoadmapContractTest {
                 "- [x] OpenAPI and operations documentation match the implementation",
                 "- [x] Pass protected-branch CI and review checks",
                 "- [x] Prepare v0.10.0 release notes",
-                "- [ ] Merge v0.10.0 release preparation through a protected pull request",
-                "- [ ] Tag the verified release commit as `v0.10.0`",
-                "- [ ] Publish `payflow-0.10.0.jar`",
-                "- [ ] Publish and verify `payflow-0.10.0.jar.sha256`",
-                "- [ ] Publish the GitHub Release",
+                "- [x] Merge v0.10.0 release preparation through protected PR #104",
+                "- [x] Tag merge commit `9dad6bdf0b8d1e166ba6454a6d791561cc30b671` as `v0.10.0`",
+                "- [x] Publish `payflow-0.10.0.jar`",
+                "- [x] Publish and verify `payflow-0.10.0.jar.sha256`",
+                "- [x] Publish the GitHub Release",
                 "- [x] protected-branch CI passes for the feature merge",
                 "- [x] v0.10.0 release notes are prepared",
-                "- [ ] the release-preparation pull request is merged",
-                "- [ ] the v0.10.0 tag is published",
-                "- [ ] the executable JAR and SHA-256 checksum are published",
-                "- [ ] the GitHub Release is published"
+                "- [x] the release-preparation pull request is merged",
+                "- [x] the v0.10.0 tag is published",
+                "- [x] the executable JAR and SHA-256 checksum are published",
+                "- [x] the GitHub Release is published",
+                "release workflow run: `30675532483`",
+                "verified SHA-256: `174D7F51D27F19B0A45B281869FF86BD9DC52F59B41B20B479827B92102D957B`"
             )
             .doesNotContain(
                 "0.9.0-SNAPSHOT",
                 "0.10.0-SNAPSHOT",
                 "The v0.9.0 release candidate",
+                "The v0.10.0 release candidate",
                 "## v0.7.0 — Identity and Session Security"
             );
     }

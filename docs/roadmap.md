@@ -2,13 +2,13 @@
 
 ## Current delivery focus
 
-PayFlow v0.9.0 is the latest tagged release. The v0.10.0 release candidate uses
-the Maven version `0.10.0`.
+PayFlow v0.10.0 is the latest tagged release. The active development line uses
+`0.11.0-SNAPSHOT`.
 
-The v0.10.0 increment focuses on trusted client-address resolution behind
-explicitly configured reverse proxies. The goal is to make client-scoped
-security controls deployment-aware without trusting attacker-supplied
-forwarding headers.
+The v0.10.0 trusted client-context increment is released and independently
+verified. The current focus is post-release stabilization and selection of the
+next v0.11.0 increment through a dedicated issue with explicit scope, threat
+model, acceptance criteria, and rollback boundaries.
 
 PayFlow remains a modular monolith. PostgreSQL is the system of record; Redis is
 used only for bounded, explicitly expiring abuse-control state.
@@ -78,7 +78,7 @@ used only for bounded, explicitly expiring abuse-control state.
 - [x] Publish and verify `payflow-0.9.0.jar.sha256`
 - [x] Publish the GitHub Release
 
-## v0.10.0 — Trusted Client Context
+## v0.10.0 — Released: Trusted Client Context
 
 ### Product outcome
 
@@ -133,11 +133,17 @@ that identity by supplying forwarding headers.
 - [x] Update architecture diagrams where the trust boundary is shown
 - [x] Pass protected-branch CI and review checks
 - [x] Prepare v0.10.0 release notes
-- [ ] Merge v0.10.0 release preparation through a protected pull request
-- [ ] Tag the verified release commit as `v0.10.0`
-- [ ] Publish `payflow-0.10.0.jar`
-- [ ] Publish and verify `payflow-0.10.0.jar.sha256`
-- [ ] Publish the GitHub Release
+- [x] Merge v0.10.0 release preparation through protected PR #104
+- [x] Tag merge commit `9dad6bdf0b8d1e166ba6454a6d791561cc30b671` as `v0.10.0`
+- [x] Publish `payflow-0.10.0.jar`
+- [x] Publish and verify `payflow-0.10.0.jar.sha256`
+- [x] Publish the GitHub Release
+
+### Publication record
+
+- release workflow run: `30675532483`
+- executable JAR size: `98,655,970` bytes
+- verified SHA-256: `174D7F51D27F19B0A45B281869FF86BD9DC52F59B41B20B479827B92102D957B`
 
 ## Explicit v0.10.0 non-goals
 
@@ -170,14 +176,14 @@ The release is ready only when:
 - [x] OpenAPI and operations documentation match the implementation
 - [x] protected-branch CI passes for the feature merge
 - [x] v0.10.0 release notes are prepared
-- [ ] the release-preparation pull request is merged
-- [ ] the v0.10.0 tag is published
-- [ ] the executable JAR and SHA-256 checksum are published
-- [ ] the GitHub Release is published
+- [x] the release-preparation pull request is merged
+- [x] the v0.10.0 tag is published
+- [x] the executable JAR and SHA-256 checksum are published
+- [x] the GitHub Release is published
 
 ## Future candidates
 
-Potential increments after v0.10.0 include:
+Potential v0.11.0 increments include:
 
 - structured JSON logging and request correlation
 - signing-key rotation and external key-management integration

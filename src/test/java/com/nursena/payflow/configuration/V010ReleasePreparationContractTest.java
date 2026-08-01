@@ -44,17 +44,18 @@ class V010ReleasePreparationContractTest {
         );
 
     @Test
-    void shouldUseReleaseCandidateVersion()
+    void shouldUseNextDevelopmentVersionAfterPublishedRelease()
         throws Exception {
 
         assertThat(readProjectVersion())
-            .isEqualTo("0.10.0");
+            .isEqualTo("0.11.0-SNAPSHOT");
 
         assertThat(
             Files.readString(README_PATH)
         )
             .contains(
-                "v0.10.0 release candidate",
+                "v0.10.0 is the latest published release",
+                "v0.11.0 development line",
                 "docs/releases/v0.10.0.md"
             );
 
@@ -62,12 +63,12 @@ class V010ReleasePreparationContractTest {
             Files.readString(ROADMAP_PATH)
         )
             .contains(
-                "The v0.10.0 release candidate uses",
-                "the Maven version `0.10.0`",
-                "- [x] Prepare v0.10.0 release notes"
+                "PayFlow v0.10.0 is the latest tagged release",
+                "`0.11.0-SNAPSHOT`",
+                "## v0.10.0 — Released: Trusted Client Context"
             )
             .doesNotContain(
-                "0.10.0-SNAPSHOT"
+                "The v0.10.0 release candidate uses"
             );
     }
 
@@ -93,22 +94,34 @@ class V010ReleasePreparationContractTest {
     }
 
     @Test
-    void shouldKeepPublicationCriteriaOpen()
+    void shouldRecordCompletedPublicationCriteria()
         throws IOException {
 
-        assertThat(
-            Files.readString(ROADMAP_PATH)
-        )
+        String roadmap =
+            Files.readString(ROADMAP_PATH);
+
+        String releaseNotes =
+            Files.readString(RELEASE_NOTES_PATH);
+
+        assertThat(roadmap)
             .contains(
-                "- [ ] Merge v0.10.0 release preparation through a protected pull request",
-                "- [ ] Tag the verified release commit as `v0.10.0`",
-                "- [ ] Publish `payflow-0.10.0.jar`",
-                "- [ ] Publish and verify `payflow-0.10.0.jar.sha256`",
-                "- [ ] Publish the GitHub Release",
-                "- [ ] the release-preparation pull request is merged",
-                "- [ ] the v0.10.0 tag is published",
-                "- [ ] the executable JAR and SHA-256 checksum are published",
-                "- [ ] the GitHub Release is published"
+                "- [x] Merge v0.10.0 release preparation through protected PR #104",
+                "- [x] Tag merge commit `9dad6bdf0b8d1e166ba6454a6d791561cc30b671` as `v0.10.0`",
+                "- [x] Publish `payflow-0.10.0.jar`",
+                "- [x] Publish and verify `payflow-0.10.0.jar.sha256`",
+                "- [x] Publish the GitHub Release",
+                "- [x] the release-preparation pull request is merged",
+                "- [x] the v0.10.0 tag is published",
+                "- [x] the executable JAR and SHA-256 checksum are published",
+                "- [x] the GitHub Release is published"
+            );
+
+        assertThat(releaseNotes)
+            .contains(
+                "## Publication verification",
+                "release-preparation PR: `#104`",
+                "release workflow run: `30675532483`",
+                "verified SHA-256: `174D7F51D27F19B0A45B281869FF86BD9DC52F59B41B20B479827B92102D957B`"
             );
     }
 
