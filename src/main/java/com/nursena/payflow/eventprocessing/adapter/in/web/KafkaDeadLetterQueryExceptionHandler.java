@@ -1,5 +1,7 @@
 package com.nursena.payflow.eventprocessing.adapter.in.web;
 
+import com.nursena.payflow.observability.adapter.in.web.RequestCorrelationContext;
+
 import java.time.Instant;
 import java.util.List;
 
@@ -66,6 +68,7 @@ public class KafkaDeadLetterQueryExceptionHandler {
                 code,
                 message,
                 request.getRequestURI(),
+                RequestCorrelationContext.require(request),
                 List.of()
             );
 

@@ -1,5 +1,7 @@
 package com.nursena.payflow.user.adapter.in.web;
 
+import com.nursena.payflow.observability.adapter.in.web.RequestCorrelationContext;
+
 import java.time.Instant;
 import java.util.List;
 
@@ -31,6 +33,7 @@ public class CurrentUserProfileExceptionHandler {
             exception.getCode(),
             exception.getMessage(),
             request.getRequestURI(),
+            RequestCorrelationContext.require(request),
             List.of()
         );
 

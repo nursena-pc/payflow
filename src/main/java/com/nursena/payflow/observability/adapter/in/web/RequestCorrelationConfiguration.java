@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 
 @Configuration(proxyBeanMethods = false)
-class RequestCorrelationConfiguration {
+public class RequestCorrelationConfiguration {
 
     @Bean
     CorrelationIdPolicy correlationIdPolicy() {

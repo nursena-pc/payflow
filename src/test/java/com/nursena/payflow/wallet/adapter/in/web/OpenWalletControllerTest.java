@@ -1,5 +1,6 @@
 package com.nursena.payflow.wallet.adapter.in.web;
 
+import com.nursena.payflow.observability.adapter.in.web.RequestCorrelationConfiguration;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -30,6 +31,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(OpenWalletController.class)
 @Import({
+    RequestCorrelationConfiguration.class,
     SecurityConfiguration.class,
     OpenWalletExceptionHandler.class
 })class OpenWalletControllerTest {
