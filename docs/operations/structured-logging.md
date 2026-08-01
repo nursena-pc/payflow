@@ -91,8 +91,34 @@ The JSON encoder also masks known credential fields and bearer/JWT values with `
 - Statuses from `500` through `599` are `SERVER_ERROR`.
 - An exception that escapes the request chain is always `SERVER_ERROR`; its effective status is logged as `500` when the response has not already selected a server-error status.
 
-## Verification
+## Correlation API contract
 
+Every API response advertises `X-Correlation-ID` through the generated OpenAPI document. The header is required in the response contract, has a maximum length of 64 characters, and follows the same allowlisted character policy enforced at runtime.
+
+The standard Postman collection verifies the header after every request, checks the 64-character upper bound, and stores the effective value in the active environment as `correlationId`.
+
+## Synchronous and asynchronous boundaries
+
+The servlet MDC contract is intentionally synchronous. It starts when `RequestCorrelationFilter` accepts or generates the effective identifier and ends in that filter's `finally` block.
+
+Thread pools, scheduled jobs, transactional outbox publication, Kafka consumers, retries, and dead-letter processing do not inherit servlet MDC implicitly. PayFlow does not treat a request correlation ID as a business identifier, authentication credential, transaction identifier, idempotency key, or Kafka partition key.
+
+A future asynchronous propagation design must be an explicit event-schema decision with bounded validation, compatibility rules, consumer cleanup, and dedicated tests. Until that work is delivered, asynchronous processing uses its existing bounded event, transaction, command, and audit identifiers.
+
+## Exception and stack-trace policy
+
+Stack traces are emitted only when application code explicitly logs a throwable. The request-completion event never includes a throwable and therefore does not duplicate centralized exception logging.
+
+Both structured production logs and local plain logs use the same application logging calls. In structured profiles, exception output is bounded by the configured shortened throwable converter:
+
+- maximum depth per throwable: 30
+- maximum encoded exception length: 8192 characters
+- root cause first
+- shortened class names
+
+No profile enables request bodies, response bodies, query strings, credentials, cookies, authorization headers, raw financial payloads, or unbounded exception data.
+
+## Verification
 Run the focused observability contracts:
 
 ```powershell
