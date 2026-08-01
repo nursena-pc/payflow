@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <springProperty
+        scope="context"
+        name="applicationName"
+        source="spring.application.name"
+        defaultValue="payflow"/>
+
+    <springProperty
+        scope="context"
+        name="rootLogLevel"
+        source="logging.level.root"
+        defaultValue="INFO"/>
+
+    <property
+        name="PLAIN_LOG_PATTERN"
+        value="%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level [%thread] %logger{40} correlationId=%X{correlationId:-none} - %msg%n%ex"/>
+
+    <appender
+        name="PLAIN_CONSOLE"
+        class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${PLAIN_LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <appender
+        name="JSON_CONSOLE"
+        class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <findAndRegisterJacksonModules>false</findAndRegisterJacksonModules>
+            <customFields>
+                {"service":"${applicationName}","schemaVersion":1}
+            </customFields>
+
+            <fieldNames>
+                <timestamp>timestamp</timestamp>
+                <version>[ignore]</version>
+                <message>message</message>
+                <logger>logger</logger>
+                <thread>thread</thread>
+                <level>level</level>
+                <levelValue>[ignore]</levelValue>
+                <stackTrace>exception</stackTrace>
+                <tags>[ignore]</tags>
+            </fieldNames>
+
+            <includeMdc>true</includeMdc>
+            <includeMdcKeyName>correlationId</includeMdcKeyName>
+            <includeContext>false</includeContext>
+            <includeKeyValuePairs>false</includeKeyValuePairs>
+            <includeStructuredArguments>false</includeStructuredArguments>
+            <includeNonStructuredArguments>false</includeNonStructuredArguments>
+            <lineSeparator>UNIX</lineSeparator>
+
+            <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+                <maxDepthPerThrowable>30</maxDepthPerThrowable>
+                <maxLength>8192</maxLength>
+                <shortenedClassNameLength>40</shortenedClassNameLength>
+                <rootCauseFirst>true</rootCauseFirst>
+            </throwableConverter>
+
+            <decorator class="net.logstash.logback.mask.MaskingJsonGeneratorDecorator">
+                <defaultMask>[REDACTED]</defaultMask>
+                <paths>
+                    password,
+                    passphrase,
+                    authorization,
+                    refreshToken,
+                    refresh_token,
+                    accessToken,
+                    access_token,
+                    clientSecret,
+                    client_secret,
+                    apiKey,
+                    api_key,
+                    privateKey,
+                    private_key,
+                    secret,
+                    token
+                </paths>
+                <valueMasker class="com.nursena.payflow.observability.logging.SensitiveLogValueMasker"/>
+            </decorator>
+        </encoder>
+    </appender>
+
+    <springProfile name="structured-logging | production">
+        <root level="${rootLogLevel}">
+            <appender-ref ref="JSON_CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="!structured-logging &amp; !production">
+        <root level="${rootLogLevel}">
+            <appender-ref ref="PLAIN_CONSOLE"/>
+        </root>
+    </springProfile>
+</configuration>
