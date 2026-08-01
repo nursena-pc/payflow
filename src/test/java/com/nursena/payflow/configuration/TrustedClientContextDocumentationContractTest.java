@@ -175,7 +175,7 @@ class TrustedClientContextDocumentationContractTest {
     }
 
     @Test
-    void shouldKeepCiAndReleaseWorkOpen()
+    void shouldTrackReleasePreparationAndPublicationGates()
         throws IOException {
 
         String roadmap =
@@ -186,10 +186,19 @@ class TrustedClientContextDocumentationContractTest {
                 "- [x] Add an ADR for the proxy trust model",
                 "- [x] Run the complete Maven verification suite",
                 "- [x] OpenAPI and operations documentation match the implementation",
-                "- [ ] Pass protected-branch CI and review checks",
-                "- [ ] Publish v0.10.0 release notes and artifacts",
-                "- [ ] protected-branch CI passes",
-                "- [ ] v0.10.0 release assets and checksum are published"
+                "- [x] Pass protected-branch CI and review checks",
+                "- [x] Prepare v0.10.0 release notes",
+                "- [ ] Merge v0.10.0 release preparation through a protected pull request",
+                "- [ ] Tag the verified release commit as `v0.10.0`",
+                "- [ ] Publish `payflow-0.10.0.jar`",
+                "- [ ] Publish and verify `payflow-0.10.0.jar.sha256`",
+                "- [ ] Publish the GitHub Release",
+                "- [x] protected-branch CI passes for the feature merge",
+                "- [x] v0.10.0 release notes are prepared",
+                "- [ ] the release-preparation pull request is merged",
+                "- [ ] the v0.10.0 tag is published",
+                "- [ ] the executable JAR and SHA-256 checksum are published",
+                "- [ ] the GitHub Release is published"
             );
     }
 }
