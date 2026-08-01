@@ -5,9 +5,10 @@ import java.util.EnumSet;
 import com.nursena.payflow.observability.adapter.out.uuid.UuidCorrelationIdGenerator;
 import com.nursena.payflow.observability.domain.CorrelationIdGenerator;
 import com.nursena.payflow.observability.domain.CorrelationIdPolicy;
+import com.nursena.payflow.observability.logging.RequestCompletionLogger;
+import com.nursena.payflow.observability.logging.Slf4jRequestCompletionLogger;
 
 import jakarta.servlet.DispatcherType;
-
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,15 +28,23 @@ public class RequestCorrelationConfiguration {
     }
 
     @Bean
+    RequestCompletionLogger requestCompletionLogger() {
+        return new Slf4jRequestCompletionLogger();
+    }
+
+    @Bean
     FilterRegistrationBean<RequestCorrelationFilter>
         requestCorrelationFilter(
             CorrelationIdPolicy policy,
-            CorrelationIdGenerator generator
+            CorrelationIdGenerator generator,
+            RequestCompletionLogger completionLogger
         ) {
         RequestCorrelationFilter filter =
             new RequestCorrelationFilter(
                 policy,
-                generator
+                generator,
+                System::nanoTime,
+                completionLogger
             );
 
         FilterRegistrationBean<RequestCorrelationFilter>

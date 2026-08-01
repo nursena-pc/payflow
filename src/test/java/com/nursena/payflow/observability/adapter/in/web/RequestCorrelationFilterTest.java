@@ -359,7 +359,10 @@ class RequestCorrelationFilterTest {
     ) {
         return new RequestCorrelationFilter(
             new CorrelationIdPolicy(),
-            () -> generatedValue
+            () -> generatedValue,
+            System::nanoTime,
+            completion -> {
+            }
         );
     }
 }

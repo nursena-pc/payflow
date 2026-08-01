@@ -106,8 +106,13 @@ Completed capabilities include:
 
 OpenAPI documentation and executable Postman workflows cover the implemented API. PayFlow v0.10.0 is the latest published release, including spoofing-resistant effective client-address resolution behind explicitly trusted reverse proxies, safe fallback behavior, bounded observability, and executable operational contracts. The v0.11.0 development line is open for the next explicitly scoped increment. See the [v0.10.0 release notes](docs/releases/v0.10.0.md), the [trusted client-context ADR](docs/adr/0011-trusted-client-context.md), and the [roadmap](docs/roadmap.md).
 
-## Implemented API
+## Structured logging
 
+PayFlow supports single-line JSON logs through the `structured-logging` and `production` Spring profiles. HTTP requests emit one bounded completion event containing the correlation ID, route template, method, status, duration, and outcome without logging bodies, query strings, authorization headers, cookies, raw URI paths, or financial/user data.
+
+See the [structured logging operations guide](docs/operations/structured-logging.md) for activation, field contracts, redaction boundaries, and verification commands.
+
+## Implemented API
 | Method | Endpoint | Authentication | Description |
 |---|---|---|---|
 | `POST` | `/api/v1/auth/register` | Public | Registers a new user and stores a BCrypt password hash. |

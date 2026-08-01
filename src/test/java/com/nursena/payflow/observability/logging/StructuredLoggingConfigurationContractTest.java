@@ -21,6 +21,16 @@ class StructuredLoggingConfigurationContractTest {
             "logback-spring.xml"
         );
 
+    private static final Path README =
+        Path.of("README.md");
+
+    private static final Path OPERATIONS_GUIDE =
+        Path.of(
+            "docs",
+            "operations",
+            "structured-logging.md"
+        );
+
     @Test
     void shouldPinJackson2CompatibleEncoderRelease()
         throws IOException {
@@ -141,5 +151,96 @@ class StructuredLoggingConfigurationContractTest {
             .contains(
                 "PLAIN_CONSOLE"
             );
+    }
+
+    @Test
+    void shouldWhitelistOnlyBoundedRequestCompletionFields()
+        throws IOException {
+        String configuration =
+            Files.readString(LOGBACK);
+
+        assertThat(configuration)
+            .contains(
+                mdcAllowlistEntry(
+                    Slf4jRequestCompletionLogger.EVENT_KEY
+                )
+            )
+            .contains(
+                mdcAllowlistEntry(
+                    Slf4jRequestCompletionLogger.METHOD_KEY
+                )
+            )
+            .contains(
+                mdcAllowlistEntry(
+                    Slf4jRequestCompletionLogger.ROUTE_KEY
+                )
+            )
+            .contains(
+                mdcAllowlistEntry(
+                    Slf4jRequestCompletionLogger.STATUS_CODE_KEY
+                )
+            )
+            .contains(
+                mdcAllowlistEntry(
+                    Slf4jRequestCompletionLogger.DURATION_KEY
+                )
+            )
+            .contains(
+                mdcAllowlistEntry(
+                    Slf4jRequestCompletionLogger.OUTCOME_KEY
+                )
+            )
+            .doesNotContain(
+                "<includeMdcKeyName>authorization</includeMdcKeyName>",
+                "<includeMdcKeyName>cookie</includeMdcKeyName>",
+                "<includeMdcKeyName>query</includeMdcKeyName>",
+                "<includeMdcKeyName>request.body</includeMdcKeyName>",
+                "<includeMdcKeyName>response.body</includeMdcKeyName>"
+            );
+    }
+
+    @Test
+    void shouldDocumentActivationFieldsAndSecurityBoundaries()
+        throws IOException {
+        String readme =
+            Files.readString(README);
+
+        String operationsGuide =
+            Files.readString(
+                OPERATIONS_GUIDE
+            );
+
+        assertThat(readme)
+            .contains(
+                "docs/operations/structured-logging.md"
+            );
+
+        assertThat(operationsGuide)
+            .contains(
+                "SPRING_PROFILES_ACTIVE"
+            )
+            .contains(
+                "`http.route`"
+            )
+            .contains(
+                "`UNMATCHED`"
+            )
+            .contains(
+                "Query strings are never logged."
+            )
+            .contains(
+                "Request and response bodies are never logged."
+            )
+            .contains(
+                "Authorization and cookie headers are never logged."
+            );
+    }
+
+    private static String mdcAllowlistEntry(
+        String key
+    ) {
+        return "<includeMdcKeyName>"
+            + key
+            + "</includeMdcKeyName>";
     }
 }

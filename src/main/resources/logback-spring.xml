@@ -50,6 +50,12 @@
 
             <includeMdc>true</includeMdc>
             <includeMdcKeyName>correlationId</includeMdcKeyName>
+            <includeMdcKeyName>event</includeMdcKeyName>
+            <includeMdcKeyName>http.method</includeMdcKeyName>
+            <includeMdcKeyName>http.route</includeMdcKeyName>
+            <includeMdcKeyName>http.status_code</includeMdcKeyName>
+            <includeMdcKeyName>duration_ms</includeMdcKeyName>
+            <includeMdcKeyName>outcome</includeMdcKeyName>
             <includeContext>false</includeContext>
             <includeKeyValuePairs>false</includeKeyValuePairs>
             <includeStructuredArguments>false</includeStructuredArguments>

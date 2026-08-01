@@ -42,7 +42,10 @@ class RequestCorrelationHttpIntegrationTest {
         RequestCorrelationFilter filter =
             new RequestCorrelationFilter(
                 new CorrelationIdPolicy(),
-                () -> GENERATED_ID
+                () -> GENERATED_ID,
+                System::nanoTime,
+                completion -> {
+                }
             );
 
         mockMvc =
