@@ -1,5 +1,6 @@
 package com.nursena.payflow.user.adapter.in.web;
 
+import com.nursena.payflow.observability.adapter.in.web.RequestCorrelationConfiguration;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -30,6 +31,7 @@ import org.springframework.test.web.servlet.MockMvc;
     RotateRefreshCredentialsController.class
 )
 @Import({
+    RequestCorrelationConfiguration.class,
     SecurityConfiguration.class,
     UserAuthenticationExceptionHandler.class
 })

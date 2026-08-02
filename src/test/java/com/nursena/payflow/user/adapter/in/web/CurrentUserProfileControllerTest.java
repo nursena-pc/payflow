@@ -1,5 +1,6 @@
 package com.nursena.payflow.user.adapter.in.web;
 
+import com.nursena.payflow.observability.adapter.in.web.RequestCorrelationConfiguration;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -27,6 +28,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(CurrentUserProfileController.class)
 @Import({
+    RequestCorrelationConfiguration.class,
     SecurityConfiguration.class,
     CurrentUserProfileExceptionHandler.class
 })

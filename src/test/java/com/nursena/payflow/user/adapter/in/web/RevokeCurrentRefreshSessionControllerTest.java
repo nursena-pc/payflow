@@ -6,10 +6,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.nursena.payflow.configuration.SecurityConfiguration;
+import com.nursena.payflow.observability.adapter.in.web.RequestCorrelationConfiguration;
+import com.nursena.payflow.observability.adapter.in.web.RequestCorrelationFilter;
 import com.nursena.payflow.user.application.port.in.RevokeCurrentRefreshSessionUseCase;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +26,10 @@ import org.springframework.test.web.servlet.MockMvc;
 @WebMvcTest(
     RevokeCurrentRefreshSessionController.class
 )
-@Import(SecurityConfiguration.class)
+@Import({
+    RequestCorrelationConfiguration.class,
+    SecurityConfiguration.class
+})
 class RevokeCurrentRefreshSessionControllerTest {
 
     private static final String CURRENT_TOKEN =
@@ -118,6 +124,17 @@ class RevokeCurrentRefreshSessionControllerTest {
             )
             .andExpect(
                 status().isBadRequest()
+            )
+            .andExpect(
+                header().exists(
+                    RequestCorrelationFilter
+                        .HEADER_NAME
+                )
+            )
+            .andExpect(
+                jsonPath(
+                    "$.correlationId"
+                ).isNotEmpty()
             )
             .andExpect(
                 jsonPath(

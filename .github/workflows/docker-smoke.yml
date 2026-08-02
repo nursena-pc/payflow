@@ -1,0 +1,110 @@
+name: Docker Smoke
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  docker-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      GRAFANA_ADMIN_PASSWORD: payflow-smoke-local-only
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Validate Docker Compose
+        run: docker compose config --quiet
+
+      - name: Start production-profile stack
+        shell: bash
+        run: |
+          cat > /tmp/payflow-smoke.override.yml <<'YAML'
+          services:
+            app:
+              environment:
+                SPRING_PROFILES_ACTIVE: production
+          YAML
+
+          docker compose \
+            -f compose.yml \
+            -f /tmp/payflow-smoke.override.yml \
+            --profile app \
+            up -d --build postgres redis kafka app
+
+      - name: Verify health, correlation, and JSON completion log
+        shell: bash
+        run: |
+          healthy=false
+
+          for attempt in $(seq 1 75); do
+            if curl \
+              --fail \
+              --silent \
+              --show-error \
+              --dump-header /tmp/payflow-headers.txt \
+              --output /tmp/payflow-health.json \
+              http://localhost:8080/api/v1/system/health; then
+              healthy=true
+              break
+            fi
+
+            sleep 2
+          done
+
+          test "$healthy" = "true"
+          test -s /tmp/payflow-health.json
+
+          correlation_id="$(
+            awk '
+              BEGIN { IGNORECASE = 1 }
+              /^X-Correlation-ID:/ {
+                sub(/\r$/, "", $2)
+                print $2
+              }
+            ' /tmp/payflow-headers.txt
+          )"
+
+          test -n "$correlation_id"
+          test "${#correlation_id}" -le 64
+
+          docker compose \
+            -f compose.yml \
+            -f /tmp/payflow-smoke.override.yml \
+            --profile app \
+            logs --no-color app \
+            > /tmp/payflow-app.log
+
+          grep -F '"event":"http.request.completed"' /tmp/payflow-app.log
+          grep -F "\"correlationId\":\"$correlation_id\"" /tmp/payflow-app.log
+          grep -F '"http.route":"/api/v1/system/health"' /tmp/payflow-app.log
+          grep -F '"outcome":"SUCCESS"' /tmp/payflow-app.log
+
+      - name: Print stack logs on failure
+        if: failure()
+        run: |
+          docker compose \
+            -f compose.yml \
+            -f /tmp/payflow-smoke.override.yml \
+            --profile app \
+            ps
+
+          docker compose \
+            -f compose.yml \
+            -f /tmp/payflow-smoke.override.yml \
+            --profile app \
+            logs --no-color
+
+      - name: Tear down
+        if: always()
+        run: |
+          docker compose \
+            -f compose.yml \
+            -f /tmp/payflow-smoke.override.yml \
+            --profile app \
+            down -v --remove-orphans

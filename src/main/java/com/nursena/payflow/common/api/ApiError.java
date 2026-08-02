@@ -10,7 +10,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
     description = "Stable error response returned by PayFlow."
 )
 public record ApiError(
-
     @Schema(
         description = "Time at which the error was generated.",
         example = "2026-07-17T12:00:00Z",
@@ -45,6 +44,14 @@ public record ApiError(
 
     @Schema(
         description =
+            "Effective request correlation identifier. "
+                + "Matches the X-Correlation-ID response header.",
+        example = "550e8400-e29b-41d4-a716-446655440000"
+    )
+    String correlationId,
+
+    @Schema(
+        description =
             "Field-level violations. Empty for "
                 + "non-validation errors."
     )
@@ -56,7 +63,6 @@ public record ApiError(
         description = "A request-field validation failure."
     )
     public record FieldViolation(
-
         @Schema(
             description = "Invalid request field.",
             example = "email"

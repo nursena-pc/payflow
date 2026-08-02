@@ -1,5 +1,6 @@
 package com.nursena.payflow.wallet.adapter.in.web;
 
+import com.nursena.payflow.observability.adapter.in.web.RequestCorrelationConfiguration;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -28,6 +29,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(GetCurrentWalletController.class)
 @Import({
+    RequestCorrelationConfiguration.class,
     SecurityConfiguration.class,
     GetCurrentWalletExceptionHandler.class
 })

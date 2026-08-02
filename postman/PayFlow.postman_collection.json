@@ -1,1394 +1,1433 @@
 {
-  "info": {
-    "_postman_id": "9c519cd7-2f77-464b-a5b6-308f7167afb1",
-    "name": "PayFlow API",
-    "description": "Executable local workflow for the PayFlow simulated digital-wallet API, including manually gated Kafka dead-letter operations. No real money is processed.",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-  },
-  "event": [
-    {
-      "listen": "prerequest",
-      "script": {
-        "type": "text/javascript",
-        "exec": [
-          "if (!pm.environment.get('baseUrl')) pm.environment.set('baseUrl', 'http://localhost:8080');",
-          "if (!pm.environment.get('topUpAmount')) pm.environment.set('topUpAmount', '300.00');",
-          "if (!pm.environment.get('transferAmount')) pm.environment.set('transferAmount', '125.50');"
-        ]
-      }
-    }
-  ],
-  "item": [
-    {
-      "name": "System",
-      "item": [
-        {
-          "name": "Health Check",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "auth": {
-              "type": "noauth"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/system/health",
-              "host": [
-                "{{baseUrl}}"
+    "info":  {
+                 "_postman_id":  "9c519cd7-2f77-464b-a5b6-308f7167afb1",
+                 "name":  "PayFlow API",
+                 "description":  "Executable local workflow for the PayFlow simulated digital-wallet API, including manually gated Kafka dead-letter operations. No real money is processed.",
+                 "schema":  "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+             },
+    "event":  [
+                  {
+                      "listen":  "prerequest",
+                      "script":  {
+                                     "type":  "text/javascript",
+                                     "exec":  [
+                                                  "if (!pm.environment.get(\u0027baseUrl\u0027)) pm.environment.set(\u0027baseUrl\u0027, \u0027http://localhost:8080\u0027);",
+                                                  "if (!pm.environment.get(\u0027topUpAmount\u0027)) pm.environment.set(\u0027topUpAmount\u0027, \u0027300.00\u0027);",
+                                                  "if (!pm.environment.get(\u0027transferAmount\u0027)) pm.environment.set(\u0027transferAmount\u0027, \u0027125.50\u0027);"
+                                              ]
+                                 }
+                  },
+                  {
+                      "listen":  "test",
+                      "script":  {
+                                     "type":  "text/javascript",
+                                     "exec":  [
+                                                  "pm.test(\u0027Response contains a bounded X-Correlation-ID\u0027, function () {",
+                                                  "    const correlationId = pm.response.headers.get(\u0027X-Correlation-ID\u0027);",
+                                                  "    pm.expect(correlationId).to.be.a(\u0027string\u0027).and.not.empty;",
+                                                  "    pm.expect(correlationId.length).to.be.at.most(64);",
+                                                  "    pm.expect(correlationId).to.match(/^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$/);",
+                                                  "});",
+                                                  "pm.environment.set(\u0027correlationId\u0027, pm.response.headers.get(\u0027X-Correlation-ID\u0027));"
+                                              ]
+                                 }
+                  }
               ],
-              "path": [
-                "api",
-                "v1",
-                "system",
-                "health"
-              ]
-            },
-            "description": "Returns the public PayFlow health response."
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Response is JSON', function () {",
-                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
-                  "});"
-                ]
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Authentication",
-      "item": [
-        {
-          "name": "Register Source User",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "auth": {
-              "type": "noauth"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/register",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "auth",
-                "register"
-              ]
-            },
-            "description": "Registers a unique source user and saves sourceUserId.",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{sourceEmail}}\",\n  \"password\": \"{{sourcePassword}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const suffix = `${Date.now()}-${Math.floor(Math.random() * 100000)}`;",
-                  "pm.environment.set('sourceEmail', `source-${suffix}@example.com`);"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code is 201', function () { pm.response.to.have.status(201); });",
-                  "pm.test('Response is JSON', function () {",
-                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
-                  "});",
-                  "const response = pm.response.json();",
-                  "pm.environment.set('sourceUserId', response.userId);"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Login Source User",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "auth": {
-              "type": "noauth"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "auth",
-                "login"
-              ]
-            },
-            "description": "Authenticates the source user and saves its JWT.",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{sourceEmail}}\",\n  \"password\": \"{{sourcePassword}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Response is JSON', function () {",
-                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
-                  "});",
-                  "const response = pm.response.json();",
-                  "pm.environment.set('sourceAccessToken', response.accessToken);",
-                  "pm.environment.set('accessToken', response.accessToken);"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Register Target User",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "auth": {
-              "type": "noauth"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/register",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "auth",
-                "register"
-              ]
-            },
-            "description": "Registers a unique target user and saves targetUserId.",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{targetEmail}}\",\n  \"password\": \"{{targetPassword}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const suffix = `${Date.now()}-${Math.floor(Math.random() * 100000)}`;",
-                  "pm.environment.set('targetEmail', `target-${suffix}@example.com`);"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code is 201', function () { pm.response.to.have.status(201); });",
-                  "pm.test('Response is JSON', function () {",
-                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
-                  "});",
-                  "const response = pm.response.json();",
-                  "pm.environment.set('targetUserId', response.userId);"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Login Target User",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "auth": {
-              "type": "noauth"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "auth",
-                "login"
-              ]
-            },
-            "description": "Authenticates the target user and saves its JWT.",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{targetEmail}}\",\n  \"password\": \"{{targetPassword}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Response is JSON', function () {",
-                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
-                  "});",
-                  "const response = pm.response.json();",
-                  "pm.environment.set('targetAccessToken', response.accessToken);"
-                ]
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Users",
-      "item": [
-        {
-          "name": "Get Source User Profile",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{sourceAccessToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/users/me",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "users",
-                "me"
-              ]
-            },
-            "description": "Returns the authenticated source user's profile."
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Response is JSON', function () {",
-                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
-                  "});"
-                ]
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Wallets",
-      "item": [
-        {
-          "name": "Open Source Wallet",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{sourceAccessToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/wallets",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "wallets"
-              ]
-            },
-            "description": "Creates the source wallet and saves sourceWalletId.",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"currency\": \"TRY\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code is 201', function () { pm.response.to.have.status(201); });",
-                  "pm.test('Response is JSON', function () {",
-                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
-                  "});",
-                  "pm.environment.set('sourceWalletId', pm.response.json().id);"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Open Target Wallet",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{targetAccessToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/wallets",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "wallets"
-              ]
-            },
-            "description": "Creates the target wallet and saves targetWalletId.",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"currency\": \"TRY\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code is 201', function () { pm.response.to.have.status(201); });",
-                  "pm.test('Response is JSON', function () {",
-                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
-                  "});",
-                  "pm.environment.set('targetWalletId', pm.response.json().id);"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Top Up Source Wallet",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{sourceAccessToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/wallets/me/top-ups",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "wallets",
-                "me",
-                "top-ups"
-              ]
-            },
-            "description": "Credits a simulated amount to the source wallet.",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"amount\": \"{{topUpAmount}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Response is JSON', function () {",
-                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Get Source Wallet",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{sourceAccessToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/wallets/me",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "wallets",
-                "me"
-              ]
-            },
-            "description": "Returns the source user's wallet."
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Response is JSON', function () {",
-                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
-                  "});",
-                  "pm.environment.set('sourceWalletId', pm.response.json().id);"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Get Target Wallet",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{targetAccessToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/wallets/me",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "wallets",
-                "me"
-              ]
-            },
-            "description": "Returns the target user's wallet."
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Response is JSON', function () {",
-                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
-                  "});",
-                  "pm.environment.set('targetWalletId', pm.response.json().id);"
-                ]
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Transfers",
-      "item": [
-        {
-          "name": "Create Transfer",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Idempotency-Key",
-                "value": "{{idempotencyKey}}",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{sourceAccessToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/transfers",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "transfers"
-              ]
-            },
-            "description": "Creates an idempotent source-to-target transfer with a fresh key.",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"targetWalletId\": \"{{targetWalletId}}\",\n  \"amount\": \"{{transferAmount}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.environment.set('idempotencyKey', `transfer-${Date.now()}-${Math.floor(Math.random() * 100000)}`);"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code is 201', function () { pm.response.to.have.status(201); });",
-                  "pm.test('Response is JSON', function () {",
-                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
-                  "});",
-                  "const response = pm.response.json();",
-                  "pm.expect(response.status).to.eql('COMPLETED');",
-                  "pm.environment.set('transactionId', response.transactionId);"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Replay Last Transfer",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Idempotency-Key",
-                "value": "{{idempotencyKey}}",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{sourceAccessToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/transfers",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "transfers"
-              ]
-            },
-            "description": "Replays the last request with the same key and payload.",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"targetWalletId\": \"{{targetWalletId}}\",\n  \"amount\": \"{{transferAmount}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code is 201', function () { pm.response.to.have.status(201); });",
-                  "pm.test('Response is JSON', function () {",
-                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
-                  "});",
-                  "pm.expect(pm.response.json().transactionId).to.eql(pm.environment.get('transactionId'));"
-                ]
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Transactions",
-      "item": [
-        {
-          "name": "Get Transaction History",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{sourceAccessToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/transactions/me?page={{historyPage}}&size={{historySize}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "transactions",
-                "me"
-              ],
-              "query": [
-                {
-                  "key": "page",
-                  "value": "{{historyPage}}"
-                },
-                {
-                  "key": "size",
-                  "value": "{{historySize}}"
-                }
-              ]
-            },
-            "description": "Returns the default transaction-history page."
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Response is JSON', function () {",
-                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
-                  "});",
-                  "pm.expect(pm.response.json().items).to.be.an('array');"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Get Filtered Outgoing Transactions",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{sourceAccessToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/transactions/me?page={{historyPage}}&size={{historySize}}&direction=OUTGOING&status=COMPLETED&from={{historyFrom}}&to={{historyTo}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "transactions",
-                "me"
-              ],
-              "query": [
-                {
-                  "key": "page",
-                  "value": "{{historyPage}}"
-                },
-                {
-                  "key": "size",
-                  "value": "{{historySize}}"
-                },
-                {
-                  "key": "direction",
-                  "value": "OUTGOING"
-                },
-                {
-                  "key": "status",
-                  "value": "COMPLETED"
-                },
-                {
-                  "key": "from",
-                  "value": "{{historyFrom}}"
-                },
-                {
-                  "key": "to",
-                  "value": "{{historyTo}}"
-                }
-              ]
-            },
-            "description": "Uses direction, status, inclusive from, and exclusive to filters."
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Response is JSON', function () {",
-                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
-                  "});",
-                  "pm.response.json().items.forEach(function (entry) {",
-                  "    pm.expect(entry.direction).to.eql('OUTGOING');",
-                  "    pm.expect(entry.status).to.eql('COMPLETED');",
-                  "});"
-                ]
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Operations",
-      "description": "Manual operator-only Kafka dead-letter workflow and read-only command-audit investigation. Configure operatorAccessToken with a valid role=ADMIN JWT. Select record and command identifiers deliberately before running requests.",
-      "item": [
-        {
-          "name": "List Kafka Dead-Letter Records",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{operatorAccessToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/operations/kafka/dead-letters?page=0&size=20",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "operations",
-                "kafka",
-                "dead-letters"
-              ],
-              "query": [
-                {
-                  "key": "page",
-                  "value": "0"
-                },
-                {
-                  "key": "size",
-                  "value": "20"
-                },
-                {
-                  "key": "status",
-                  "value": "REPLAY_FAILED",
-                  "description": "Optional status filter. Enable deliberately when needed.",
-                  "disabled": true
-                }
-              ]
-            },
-            "description": "Lists safe Kafka dead-letter operational metadata. The disabled status query can be enabled with RECEIVED, REPLAYING, REPLAYED, REPLAY_FAILED, or DISCARDED."
-          },
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const operatorAccessToken = String(pm.environment.get('operatorAccessToken') || '').trim();",
-                  "if (!operatorAccessToken) {",
-                  "    throw new Error('Set operatorAccessToken to a valid ADMIN JWT before running Operations requests.');",
-                  "}"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Response is JSON', function () {",
-                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
-                  "});",
-                  "const response = pm.response.json();",
-                  "pm.expect(response.items).to.be.an('array');",
-                  "pm.expect(response.page).to.be.a('number');",
-                  "pm.expect(response.size).to.be.a('number');",
-                  "pm.expect(response.totalElements).to.be.a('number');"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Get Kafka Dead-Letter Record",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{operatorAccessToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/operations/kafka/dead-letters/{{deadLetterRecordId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "operations",
-                "kafka",
-                "dead-letters",
-                "{{deadLetterRecordId}}"
-              ]
-            },
-            "description": "Returns authorized operational details for the deliberately selected dead-letter record."
-          },
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const operatorAccessToken = String(pm.environment.get('operatorAccessToken') || '').trim();",
-                  "if (!operatorAccessToken) {",
-                  "    throw new Error('Set operatorAccessToken to a valid ADMIN JWT before running Operations requests.');",
-                  "}",
-                  "const deadLetterRecordId = String(pm.environment.get('deadLetterRecordId') || '').trim();",
-                  "const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;",
-                  "if (!uuidPattern.test(deadLetterRecordId)) {",
-                  "    throw new Error('Set deadLetterRecordId to a valid Kafka dead-letter UUID before running this request.');",
-                  "}"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Response is JSON', function () {",
-                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
-                  "});",
-                  "const response = pm.response.json();",
-                  "const expectedId = String(pm.environment.get('deadLetterRecordId')).toLowerCase();",
-                  "pm.expect(String(response.id).toLowerCase()).to.eql(expectedId);",
-                  "pm.expect(response.status).to.be.a('string');",
-                  "pm.expect(response).to.not.have.property('payload');",
-                  "pm.expect(response).to.not.have.property('recordKey');"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Replay Kafka Dead-Letter Record",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{operatorAccessToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/operations/kafka/dead-letters/{{deadLetterRecordId}}/replay",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "operations",
-                "kafka",
-                "dead-letters",
-                "{{deadLetterRecordId}}",
-                "replay"
-              ]
-            },
-            "description": "Replays the deliberately selected claimable record. This mutates lifecycle state and publishes to the original Kafka topic."
-          },
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const operatorAccessToken = String(pm.environment.get('operatorAccessToken') || '').trim();",
-                  "if (!operatorAccessToken) {",
-                  "    throw new Error('Set operatorAccessToken to a valid ADMIN JWT before running Operations requests.');",
-                  "}",
-                  "const deadLetterRecordId = String(pm.environment.get('deadLetterRecordId') || '').trim();",
-                  "const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;",
-                  "if (!uuidPattern.test(deadLetterRecordId)) {",
-                  "    throw new Error('Set deadLetterRecordId to a valid Kafka dead-letter UUID before running this request.');",
-                  "}"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Response is JSON', function () {",
-                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
-                  "});",
-                  "const response = pm.response.json();",
-                  "const expectedId = String(pm.environment.get('deadLetterRecordId')).toLowerCase();",
-                  "pm.expect(String(response.recordId).toLowerCase()).to.eql(expectedId);",
-                  "pm.expect(response.status).to.eql('REPLAYED');"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Discard Kafka Dead-Letter Record",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{operatorAccessToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/operations/kafka/dead-letters/{{deadLetterRecordId}}/discard",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "operations",
-                "kafka",
-                "dead-letters",
-                "{{deadLetterRecordId}}",
-                "discard"
-              ]
-            },
-            "description": "Idempotently discards the deliberately selected eligible record. This mutates lifecycle state and prevents later replay."
-          },
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const operatorAccessToken = String(pm.environment.get('operatorAccessToken') || '').trim();",
-                  "if (!operatorAccessToken) {",
-                  "    throw new Error('Set operatorAccessToken to a valid ADMIN JWT before running Operations requests.');",
-                  "}",
-                  "const deadLetterRecordId = String(pm.environment.get('deadLetterRecordId') || '').trim();",
-                  "const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;",
-                  "if (!uuidPattern.test(deadLetterRecordId)) {",
-                  "    throw new Error('Set deadLetterRecordId to a valid Kafka dead-letter UUID before running this request.');",
-                  "}"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code is 204', function () { pm.response.to.have.status(204); });",
-                  "pm.test('Response body is empty', function () {",
-                  "    pm.expect(pm.response.text()).to.eql('');",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "List Kafka Dead-Letter Command Audits",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{operatorAccessToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/operations/kafka/dead-letter-command-audits?page={{auditPage}}&size={{auditSize}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "operations",
-                "kafka",
-                "dead-letter-command-audits"
-              ],
-              "query": [
-                {
-                  "key": "page",
-                  "value": "{{auditPage}}"
-                },
-                {
-                  "key": "size",
-                  "value": "{{auditSize}}"
-                },
-                {
-                  "key": "commandId",
-                  "value": "{{auditCommandId}}",
-                  "description": "Optional command UUID filter. Enable deliberately when configured.",
-                  "disabled": true
-                },
-                {
-                  "key": "operatorId",
-                  "value": "{{auditOperatorId}}",
-                  "description": "Optional operator UUID filter. Enable deliberately when configured.",
-                  "disabled": true
-                },
-                {
-                  "key": "deadLetterRecordId",
-                  "value": "{{deadLetterRecordId}}",
-                  "description": "Optional dead-letter record UUID filter. Enable deliberately when configured.",
-                  "disabled": true
-                },
-                {
-                  "key": "commandType",
-                  "value": "REPLAY",
-                  "description": "Optional REPLAY or DISCARD filter.",
-                  "disabled": true
-                },
-                {
-                  "key": "stage",
-                  "value": "COMPLETED",
-                  "description": "Optional ATTEMPTED or COMPLETED filter.",
-                  "disabled": true
-                },
-                {
-                  "key": "outcome",
-                  "value": "REPLAYED",
-                  "description": "Optional allowlisted command outcome filter.",
-                  "disabled": true
-                }
-              ]
-            },
-            "description": "Lists safe command-audit entries in occurredAt DESC, id DESC order. Optional filters are disabled by default and must be enabled deliberately."
-          },
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const operatorAccessToken = String(pm.environment.get('operatorAccessToken') || '').trim();",
-                  "if (!operatorAccessToken) {",
-                  "    throw new Error('Set operatorAccessToken to a valid ADMIN JWT before running Operations requests.');",
-                  "}",
-                  "const auditPage = Number(pm.environment.get('auditPage'));",
-                  "const auditSize = Number(pm.environment.get('auditSize'));",
-                  "if (!Number.isInteger(auditPage) || auditPage < 0) {",
-                  "    throw new Error('Set auditPage to a zero-based non-negative integer.');",
-                  "}",
-                  "if (!Number.isInteger(auditSize) || auditSize < 1 || auditSize > 100) {",
-                  "    throw new Error('Set auditSize to an integer between 1 and 100.');",
-                  "}"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Response is JSON', function () {",
-                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
-                  "});",
-                  "const response = pm.response.json();",
-                  "pm.expect(response.items).to.be.an('array');",
-                  "pm.expect(response.page).to.be.a('number');",
-                  "pm.expect(response.size).to.be.a('number');",
-                  "pm.expect(response.totalElements).to.be.a('number');",
-                  "function assertSafeAuditEntry(entry) {",
-                  "    pm.expect(entry).to.not.have.property('payload');",
-                  "    pm.expect(entry).to.not.have.property('recordKey');",
-                  "    pm.expect(entry).to.not.have.property('operatorEmail');",
-                  "    pm.expect(entry).to.not.have.property('exceptionMessage');",
-                  "    pm.expect(entry).to.not.have.property('stackTrace');",
-                  "    pm.expect(entry).to.not.have.property('replayLeaseOwner');",
-                  "}",
-                  "response.items.forEach(assertSafeAuditEntry);"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Get Kafka Dead-Letter Command Audit Timeline",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{operatorAccessToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/operations/kafka/dead-letter-command-audits/{{auditCommandId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "operations",
-                "kafka",
-                "dead-letter-command-audits",
-                "{{auditCommandId}}"
-              ]
-            },
-            "description": "Returns the chronological ATTEMPTED and optional COMPLETED entries for the deliberately selected command UUID."
-          },
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const operatorAccessToken = String(pm.environment.get('operatorAccessToken') || '').trim();",
-                  "if (!operatorAccessToken) {",
-                  "    throw new Error('Set operatorAccessToken to a valid ADMIN JWT before running Operations requests.');",
-                  "}",
-                  "const auditCommandId = String(pm.environment.get('auditCommandId') || '').trim();",
-                  "const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;",
-                  "if (!uuidPattern.test(auditCommandId)) {",
-                  "    throw new Error('Set auditCommandId to a valid operator command UUID before running this request.');",
-                  "}"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Response is JSON', function () {",
-                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
-                  "});",
-                  "const response = pm.response.json();",
-                  "const expectedCommandId = String(pm.environment.get('auditCommandId')).toLowerCase();",
-                  "pm.expect(String(response.commandId).toLowerCase()).to.eql(expectedCommandId);",
-                  "pm.expect(response.complete).to.be.a('boolean');",
-                  "pm.expect(response.entries).to.be.an('array').that.is.not.empty;",
-                  "function assertSafeAuditEntry(entry) {",
-                  "    pm.expect(entry).to.not.have.property('payload');",
-                  "    pm.expect(entry).to.not.have.property('recordKey');",
-                  "    pm.expect(entry).to.not.have.property('operatorEmail');",
-                  "    pm.expect(entry).to.not.have.property('exceptionMessage');",
-                  "    pm.expect(entry).to.not.have.property('stackTrace');",
-                  "    pm.expect(entry).to.not.have.property('replayLeaseOwner');",
-                  "}",
-                  "response.entries.forEach(assertSafeAuditEntry);"
-                ]
-              }
-            }
-          ]
-        }
-      ]
-    }
-  ]
+    "item":  [
+                 {
+                     "name":  "System",
+                     "item":  [
+                                  {
+                                      "name":  "Health Check",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "header":  [
+
+                                                                 ],
+                                                      "auth":  {
+                                                                   "type":  "noauth"
+                                                               },
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/api/v1/system/health",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "api",
+                                                                               "v1",
+                                                                               "system",
+                                                                               "health"
+                                                                           ]
+                                                              },
+                                                      "description":  "Returns the public PayFlow health response."
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code is 200\u0027, function () { pm.response.to.have.status(200); });",
+                                                                                    "pm.test(\u0027Response is JSON\u0027, function () {",
+                                                                                    "    pm.expect(pm.response.headers.get(\u0027Content-Type\u0027)).to.include(\u0027application/json\u0027);",
+                                                                                    "});"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  }
+                              ]
+                 },
+                 {
+                     "name":  "Authentication",
+                     "item":  [
+                                  {
+                                      "name":  "Register Source User",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json",
+                                                                         "type":  "text"
+                                                                     }
+                                                                 ],
+                                                      "auth":  {
+                                                                   "type":  "noauth"
+                                                               },
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/api/v1/auth/register",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "api",
+                                                                               "v1",
+                                                                               "auth",
+                                                                               "register"
+                                                                           ]
+                                                              },
+                                                      "description":  "Registers a unique source user and saves sourceUserId.",
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"email\": \"{{sourceEmail}}\",\n  \"password\": \"{{sourcePassword}}\"\n}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               }
+                                                               }
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "prerequest",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "const suffix = `${Date.now()}-${Math.floor(Math.random() * 100000)}`;",
+                                                                                    "pm.environment.set(\u0027sourceEmail\u0027, `source-${suffix}@example.com`);"
+                                                                                ]
+                                                                   }
+                                                    },
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code is 201\u0027, function () { pm.response.to.have.status(201); });",
+                                                                                    "pm.test(\u0027Response is JSON\u0027, function () {",
+                                                                                    "    pm.expect(pm.response.headers.get(\u0027Content-Type\u0027)).to.include(\u0027application/json\u0027);",
+                                                                                    "});",
+                                                                                    "const response = pm.response.json();",
+                                                                                    "pm.environment.set(\u0027sourceUserId\u0027, response.userId);"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  },
+                                  {
+                                      "name":  "Login Source User",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json",
+                                                                         "type":  "text"
+                                                                     }
+                                                                 ],
+                                                      "auth":  {
+                                                                   "type":  "noauth"
+                                                               },
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/api/v1/auth/login",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "api",
+                                                                               "v1",
+                                                                               "auth",
+                                                                               "login"
+                                                                           ]
+                                                              },
+                                                      "description":  "Authenticates the source user and saves its JWT.",
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"email\": \"{{sourceEmail}}\",\n  \"password\": \"{{sourcePassword}}\"\n}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               }
+                                                               }
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code is 200\u0027, function () { pm.response.to.have.status(200); });",
+                                                                                    "pm.test(\u0027Response is JSON\u0027, function () {",
+                                                                                    "    pm.expect(pm.response.headers.get(\u0027Content-Type\u0027)).to.include(\u0027application/json\u0027);",
+                                                                                    "});",
+                                                                                    "const response = pm.response.json();",
+                                                                                    "pm.environment.set(\u0027sourceAccessToken\u0027, response.accessToken);",
+                                                                                    "pm.environment.set(\u0027accessToken\u0027, response.accessToken);"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  },
+                                  {
+                                      "name":  "Register Target User",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json",
+                                                                         "type":  "text"
+                                                                     }
+                                                                 ],
+                                                      "auth":  {
+                                                                   "type":  "noauth"
+                                                               },
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/api/v1/auth/register",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "api",
+                                                                               "v1",
+                                                                               "auth",
+                                                                               "register"
+                                                                           ]
+                                                              },
+                                                      "description":  "Registers a unique target user and saves targetUserId.",
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"email\": \"{{targetEmail}}\",\n  \"password\": \"{{targetPassword}}\"\n}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               }
+                                                               }
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "prerequest",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "const suffix = `${Date.now()}-${Math.floor(Math.random() * 100000)}`;",
+                                                                                    "pm.environment.set(\u0027targetEmail\u0027, `target-${suffix}@example.com`);"
+                                                                                ]
+                                                                   }
+                                                    },
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code is 201\u0027, function () { pm.response.to.have.status(201); });",
+                                                                                    "pm.test(\u0027Response is JSON\u0027, function () {",
+                                                                                    "    pm.expect(pm.response.headers.get(\u0027Content-Type\u0027)).to.include(\u0027application/json\u0027);",
+                                                                                    "});",
+                                                                                    "const response = pm.response.json();",
+                                                                                    "pm.environment.set(\u0027targetUserId\u0027, response.userId);"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  },
+                                  {
+                                      "name":  "Login Target User",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json",
+                                                                         "type":  "text"
+                                                                     }
+                                                                 ],
+                                                      "auth":  {
+                                                                   "type":  "noauth"
+                                                               },
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/api/v1/auth/login",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "api",
+                                                                               "v1",
+                                                                               "auth",
+                                                                               "login"
+                                                                           ]
+                                                              },
+                                                      "description":  "Authenticates the target user and saves its JWT.",
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"email\": \"{{targetEmail}}\",\n  \"password\": \"{{targetPassword}}\"\n}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               }
+                                                               }
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code is 200\u0027, function () { pm.response.to.have.status(200); });",
+                                                                                    "pm.test(\u0027Response is JSON\u0027, function () {",
+                                                                                    "    pm.expect(pm.response.headers.get(\u0027Content-Type\u0027)).to.include(\u0027application/json\u0027);",
+                                                                                    "});",
+                                                                                    "const response = pm.response.json();",
+                                                                                    "pm.environment.set(\u0027targetAccessToken\u0027, response.accessToken);"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  }
+                              ]
+                 },
+                 {
+                     "name":  "Users",
+                     "item":  [
+                                  {
+                                      "name":  "Get Source User Profile",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "header":  [
+
+                                                                 ],
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{sourceAccessToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/api/v1/users/me",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "api",
+                                                                               "v1",
+                                                                               "users",
+                                                                               "me"
+                                                                           ]
+                                                              },
+                                                      "description":  "Returns the authenticated source user\u0027s profile."
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code is 200\u0027, function () { pm.response.to.have.status(200); });",
+                                                                                    "pm.test(\u0027Response is JSON\u0027, function () {",
+                                                                                    "    pm.expect(pm.response.headers.get(\u0027Content-Type\u0027)).to.include(\u0027application/json\u0027);",
+                                                                                    "});"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  }
+                              ]
+                 },
+                 {
+                     "name":  "Wallets",
+                     "item":  [
+                                  {
+                                      "name":  "Open Source Wallet",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json",
+                                                                         "type":  "text"
+                                                                     }
+                                                                 ],
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{sourceAccessToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/api/v1/wallets",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "api",
+                                                                               "v1",
+                                                                               "wallets"
+                                                                           ]
+                                                              },
+                                                      "description":  "Creates the source wallet and saves sourceWalletId.",
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"currency\": \"TRY\"\n}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               }
+                                                               }
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code is 201\u0027, function () { pm.response.to.have.status(201); });",
+                                                                                    "pm.test(\u0027Response is JSON\u0027, function () {",
+                                                                                    "    pm.expect(pm.response.headers.get(\u0027Content-Type\u0027)).to.include(\u0027application/json\u0027);",
+                                                                                    "});",
+                                                                                    "pm.environment.set(\u0027sourceWalletId\u0027, pm.response.json().id);"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  },
+                                  {
+                                      "name":  "Open Target Wallet",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json",
+                                                                         "type":  "text"
+                                                                     }
+                                                                 ],
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{targetAccessToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/api/v1/wallets",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "api",
+                                                                               "v1",
+                                                                               "wallets"
+                                                                           ]
+                                                              },
+                                                      "description":  "Creates the target wallet and saves targetWalletId.",
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"currency\": \"TRY\"\n}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               }
+                                                               }
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code is 201\u0027, function () { pm.response.to.have.status(201); });",
+                                                                                    "pm.test(\u0027Response is JSON\u0027, function () {",
+                                                                                    "    pm.expect(pm.response.headers.get(\u0027Content-Type\u0027)).to.include(\u0027application/json\u0027);",
+                                                                                    "});",
+                                                                                    "pm.environment.set(\u0027targetWalletId\u0027, pm.response.json().id);"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  },
+                                  {
+                                      "name":  "Top Up Source Wallet",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json",
+                                                                         "type":  "text"
+                                                                     }
+                                                                 ],
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{sourceAccessToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/api/v1/wallets/me/top-ups",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "api",
+                                                                               "v1",
+                                                                               "wallets",
+                                                                               "me",
+                                                                               "top-ups"
+                                                                           ]
+                                                              },
+                                                      "description":  "Credits a simulated amount to the source wallet.",
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"amount\": \"{{topUpAmount}}\"\n}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               }
+                                                               }
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code is 200\u0027, function () { pm.response.to.have.status(200); });",
+                                                                                    "pm.test(\u0027Response is JSON\u0027, function () {",
+                                                                                    "    pm.expect(pm.response.headers.get(\u0027Content-Type\u0027)).to.include(\u0027application/json\u0027);",
+                                                                                    "});"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  },
+                                  {
+                                      "name":  "Get Source Wallet",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "header":  [
+
+                                                                 ],
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{sourceAccessToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/api/v1/wallets/me",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "api",
+                                                                               "v1",
+                                                                               "wallets",
+                                                                               "me"
+                                                                           ]
+                                                              },
+                                                      "description":  "Returns the source user\u0027s wallet."
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code is 200\u0027, function () { pm.response.to.have.status(200); });",
+                                                                                    "pm.test(\u0027Response is JSON\u0027, function () {",
+                                                                                    "    pm.expect(pm.response.headers.get(\u0027Content-Type\u0027)).to.include(\u0027application/json\u0027);",
+                                                                                    "});",
+                                                                                    "pm.environment.set(\u0027sourceWalletId\u0027, pm.response.json().id);"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  },
+                                  {
+                                      "name":  "Get Target Wallet",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "header":  [
+
+                                                                 ],
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{targetAccessToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/api/v1/wallets/me",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "api",
+                                                                               "v1",
+                                                                               "wallets",
+                                                                               "me"
+                                                                           ]
+                                                              },
+                                                      "description":  "Returns the target user\u0027s wallet."
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code is 200\u0027, function () { pm.response.to.have.status(200); });",
+                                                                                    "pm.test(\u0027Response is JSON\u0027, function () {",
+                                                                                    "    pm.expect(pm.response.headers.get(\u0027Content-Type\u0027)).to.include(\u0027application/json\u0027);",
+                                                                                    "});",
+                                                                                    "pm.environment.set(\u0027targetWalletId\u0027, pm.response.json().id);"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  }
+                              ]
+                 },
+                 {
+                     "name":  "Transfers",
+                     "item":  [
+                                  {
+                                      "name":  "Create Transfer",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Idempotency-Key",
+                                                                         "value":  "{{idempotencyKey}}",
+                                                                         "type":  "text"
+                                                                     },
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json",
+                                                                         "type":  "text"
+                                                                     }
+                                                                 ],
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{sourceAccessToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/api/v1/transfers",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "api",
+                                                                               "v1",
+                                                                               "transfers"
+                                                                           ]
+                                                              },
+                                                      "description":  "Creates an idempotent source-to-target transfer with a fresh key.",
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"targetWalletId\": \"{{targetWalletId}}\",\n  \"amount\": \"{{transferAmount}}\"\n}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               }
+                                                               }
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "prerequest",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.environment.set(\u0027idempotencyKey\u0027, `transfer-${Date.now()}-${Math.floor(Math.random() * 100000)}`);"
+                                                                                ]
+                                                                   }
+                                                    },
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code is 201\u0027, function () { pm.response.to.have.status(201); });",
+                                                                                    "pm.test(\u0027Response is JSON\u0027, function () {",
+                                                                                    "    pm.expect(pm.response.headers.get(\u0027Content-Type\u0027)).to.include(\u0027application/json\u0027);",
+                                                                                    "});",
+                                                                                    "const response = pm.response.json();",
+                                                                                    "pm.expect(response.status).to.eql(\u0027COMPLETED\u0027);",
+                                                                                    "pm.environment.set(\u0027transactionId\u0027, response.transactionId);"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  },
+                                  {
+                                      "name":  "Replay Last Transfer",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Idempotency-Key",
+                                                                         "value":  "{{idempotencyKey}}",
+                                                                         "type":  "text"
+                                                                     },
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json",
+                                                                         "type":  "text"
+                                                                     }
+                                                                 ],
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{sourceAccessToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/api/v1/transfers",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "api",
+                                                                               "v1",
+                                                                               "transfers"
+                                                                           ]
+                                                              },
+                                                      "description":  "Replays the last request with the same key and payload.",
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"targetWalletId\": \"{{targetWalletId}}\",\n  \"amount\": \"{{transferAmount}}\"\n}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               }
+                                                               }
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code is 201\u0027, function () { pm.response.to.have.status(201); });",
+                                                                                    "pm.test(\u0027Response is JSON\u0027, function () {",
+                                                                                    "    pm.expect(pm.response.headers.get(\u0027Content-Type\u0027)).to.include(\u0027application/json\u0027);",
+                                                                                    "});",
+                                                                                    "pm.expect(pm.response.json().transactionId).to.eql(pm.environment.get(\u0027transactionId\u0027));"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  }
+                              ]
+                 },
+                 {
+                     "name":  "Transactions",
+                     "item":  [
+                                  {
+                                      "name":  "Get Transaction History",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "header":  [
+
+                                                                 ],
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{sourceAccessToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/api/v1/transactions/me?page={{historyPage}}\u0026size={{historySize}}",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "api",
+                                                                               "v1",
+                                                                               "transactions",
+                                                                               "me"
+                                                                           ],
+                                                                  "query":  [
+                                                                                {
+                                                                                    "key":  "page",
+                                                                                    "value":  "{{historyPage}}"
+                                                                                },
+                                                                                {
+                                                                                    "key":  "size",
+                                                                                    "value":  "{{historySize}}"
+                                                                                }
+                                                                            ]
+                                                              },
+                                                      "description":  "Returns the default transaction-history page."
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code is 200\u0027, function () { pm.response.to.have.status(200); });",
+                                                                                    "pm.test(\u0027Response is JSON\u0027, function () {",
+                                                                                    "    pm.expect(pm.response.headers.get(\u0027Content-Type\u0027)).to.include(\u0027application/json\u0027);",
+                                                                                    "});",
+                                                                                    "pm.expect(pm.response.json().items).to.be.an(\u0027array\u0027);"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  },
+                                  {
+                                      "name":  "Get Filtered Outgoing Transactions",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "header":  [
+
+                                                                 ],
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{sourceAccessToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/api/v1/transactions/me?page={{historyPage}}\u0026size={{historySize}}\u0026direction=OUTGOING\u0026status=COMPLETED\u0026from={{historyFrom}}\u0026to={{historyTo}}",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "api",
+                                                                               "v1",
+                                                                               "transactions",
+                                                                               "me"
+                                                                           ],
+                                                                  "query":  [
+                                                                                {
+                                                                                    "key":  "page",
+                                                                                    "value":  "{{historyPage}}"
+                                                                                },
+                                                                                {
+                                                                                    "key":  "size",
+                                                                                    "value":  "{{historySize}}"
+                                                                                },
+                                                                                {
+                                                                                    "key":  "direction",
+                                                                                    "value":  "OUTGOING"
+                                                                                },
+                                                                                {
+                                                                                    "key":  "status",
+                                                                                    "value":  "COMPLETED"
+                                                                                },
+                                                                                {
+                                                                                    "key":  "from",
+                                                                                    "value":  "{{historyFrom}}"
+                                                                                },
+                                                                                {
+                                                                                    "key":  "to",
+                                                                                    "value":  "{{historyTo}}"
+                                                                                }
+                                                                            ]
+                                                              },
+                                                      "description":  "Uses direction, status, inclusive from, and exclusive to filters."
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code is 200\u0027, function () { pm.response.to.have.status(200); });",
+                                                                                    "pm.test(\u0027Response is JSON\u0027, function () {",
+                                                                                    "    pm.expect(pm.response.headers.get(\u0027Content-Type\u0027)).to.include(\u0027application/json\u0027);",
+                                                                                    "});",
+                                                                                    "pm.response.json().items.forEach(function (entry) {",
+                                                                                    "    pm.expect(entry.direction).to.eql(\u0027OUTGOING\u0027);",
+                                                                                    "    pm.expect(entry.status).to.eql(\u0027COMPLETED\u0027);",
+                                                                                    "});"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  }
+                              ]
+                 },
+                 {
+                     "name":  "Operations",
+                     "description":  "Manual operator-only Kafka dead-letter workflow and read-only command-audit investigation. Configure operatorAccessToken with a valid role=ADMIN JWT. Select record and command identifiers deliberately before running requests.",
+                     "item":  [
+                                  {
+                                      "name":  "List Kafka Dead-Letter Records",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "header":  [
+
+                                                                 ],
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{operatorAccessToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/api/v1/operations/kafka/dead-letters?page=0\u0026size=20",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "api",
+                                                                               "v1",
+                                                                               "operations",
+                                                                               "kafka",
+                                                                               "dead-letters"
+                                                                           ],
+                                                                  "query":  [
+                                                                                {
+                                                                                    "key":  "page",
+                                                                                    "value":  "0"
+                                                                                },
+                                                                                {
+                                                                                    "key":  "size",
+                                                                                    "value":  "20"
+                                                                                },
+                                                                                {
+                                                                                    "key":  "status",
+                                                                                    "value":  "REPLAY_FAILED",
+                                                                                    "description":  "Optional status filter. Enable deliberately when needed.",
+                                                                                    "disabled":  true
+                                                                                }
+                                                                            ]
+                                                              },
+                                                      "description":  "Lists safe Kafka dead-letter operational metadata. The disabled status query can be enabled with RECEIVED, REPLAYING, REPLAYED, REPLAY_FAILED, or DISCARDED."
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "prerequest",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "const operatorAccessToken = String(pm.environment.get(\u0027operatorAccessToken\u0027) || \u0027\u0027).trim();",
+                                                                                    "if (!operatorAccessToken) {",
+                                                                                    "    throw new Error(\u0027Set operatorAccessToken to a valid ADMIN JWT before running Operations requests.\u0027);",
+                                                                                    "}"
+                                                                                ]
+                                                                   }
+                                                    },
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code is 200\u0027, function () { pm.response.to.have.status(200); });",
+                                                                                    "pm.test(\u0027Response is JSON\u0027, function () {",
+                                                                                    "    pm.expect(pm.response.headers.get(\u0027Content-Type\u0027)).to.include(\u0027application/json\u0027);",
+                                                                                    "});",
+                                                                                    "const response = pm.response.json();",
+                                                                                    "pm.expect(response.items).to.be.an(\u0027array\u0027);",
+                                                                                    "pm.expect(response.page).to.be.a(\u0027number\u0027);",
+                                                                                    "pm.expect(response.size).to.be.a(\u0027number\u0027);",
+                                                                                    "pm.expect(response.totalElements).to.be.a(\u0027number\u0027);"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  },
+                                  {
+                                      "name":  "Get Kafka Dead-Letter Record",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "header":  [
+
+                                                                 ],
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{operatorAccessToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/api/v1/operations/kafka/dead-letters/{{deadLetterRecordId}}",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "api",
+                                                                               "v1",
+                                                                               "operations",
+                                                                               "kafka",
+                                                                               "dead-letters",
+                                                                               "{{deadLetterRecordId}}"
+                                                                           ]
+                                                              },
+                                                      "description":  "Returns authorized operational details for the deliberately selected dead-letter record."
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "prerequest",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "const operatorAccessToken = String(pm.environment.get(\u0027operatorAccessToken\u0027) || \u0027\u0027).trim();",
+                                                                                    "if (!operatorAccessToken) {",
+                                                                                    "    throw new Error(\u0027Set operatorAccessToken to a valid ADMIN JWT before running Operations requests.\u0027);",
+                                                                                    "}",
+                                                                                    "const deadLetterRecordId = String(pm.environment.get(\u0027deadLetterRecordId\u0027) || \u0027\u0027).trim();",
+                                                                                    "const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;",
+                                                                                    "if (!uuidPattern.test(deadLetterRecordId)) {",
+                                                                                    "    throw new Error(\u0027Set deadLetterRecordId to a valid Kafka dead-letter UUID before running this request.\u0027);",
+                                                                                    "}"
+                                                                                ]
+                                                                   }
+                                                    },
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code is 200\u0027, function () { pm.response.to.have.status(200); });",
+                                                                                    "pm.test(\u0027Response is JSON\u0027, function () {",
+                                                                                    "    pm.expect(pm.response.headers.get(\u0027Content-Type\u0027)).to.include(\u0027application/json\u0027);",
+                                                                                    "});",
+                                                                                    "const response = pm.response.json();",
+                                                                                    "const expectedId = String(pm.environment.get(\u0027deadLetterRecordId\u0027)).toLowerCase();",
+                                                                                    "pm.expect(String(response.id).toLowerCase()).to.eql(expectedId);",
+                                                                                    "pm.expect(response.status).to.be.a(\u0027string\u0027);",
+                                                                                    "pm.expect(response).to.not.have.property(\u0027payload\u0027);",
+                                                                                    "pm.expect(response).to.not.have.property(\u0027recordKey\u0027);"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  },
+                                  {
+                                      "name":  "Replay Kafka Dead-Letter Record",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+
+                                                                 ],
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{operatorAccessToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/api/v1/operations/kafka/dead-letters/{{deadLetterRecordId}}/replay",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "api",
+                                                                               "v1",
+                                                                               "operations",
+                                                                               "kafka",
+                                                                               "dead-letters",
+                                                                               "{{deadLetterRecordId}}",
+                                                                               "replay"
+                                                                           ]
+                                                              },
+                                                      "description":  "Replays the deliberately selected claimable record. This mutates lifecycle state and publishes to the original Kafka topic."
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "prerequest",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "const operatorAccessToken = String(pm.environment.get(\u0027operatorAccessToken\u0027) || \u0027\u0027).trim();",
+                                                                                    "if (!operatorAccessToken) {",
+                                                                                    "    throw new Error(\u0027Set operatorAccessToken to a valid ADMIN JWT before running Operations requests.\u0027);",
+                                                                                    "}",
+                                                                                    "const deadLetterRecordId = String(pm.environment.get(\u0027deadLetterRecordId\u0027) || \u0027\u0027).trim();",
+                                                                                    "const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;",
+                                                                                    "if (!uuidPattern.test(deadLetterRecordId)) {",
+                                                                                    "    throw new Error(\u0027Set deadLetterRecordId to a valid Kafka dead-letter UUID before running this request.\u0027);",
+                                                                                    "}"
+                                                                                ]
+                                                                   }
+                                                    },
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code is 200\u0027, function () { pm.response.to.have.status(200); });",
+                                                                                    "pm.test(\u0027Response is JSON\u0027, function () {",
+                                                                                    "    pm.expect(pm.response.headers.get(\u0027Content-Type\u0027)).to.include(\u0027application/json\u0027);",
+                                                                                    "});",
+                                                                                    "const response = pm.response.json();",
+                                                                                    "const expectedId = String(pm.environment.get(\u0027deadLetterRecordId\u0027)).toLowerCase();",
+                                                                                    "pm.expect(String(response.recordId).toLowerCase()).to.eql(expectedId);",
+                                                                                    "pm.expect(response.status).to.eql(\u0027REPLAYED\u0027);"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  },
+                                  {
+                                      "name":  "Discard Kafka Dead-Letter Record",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+
+                                                                 ],
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{operatorAccessToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/api/v1/operations/kafka/dead-letters/{{deadLetterRecordId}}/discard",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "api",
+                                                                               "v1",
+                                                                               "operations",
+                                                                               "kafka",
+                                                                               "dead-letters",
+                                                                               "{{deadLetterRecordId}}",
+                                                                               "discard"
+                                                                           ]
+                                                              },
+                                                      "description":  "Idempotently discards the deliberately selected eligible record. This mutates lifecycle state and prevents later replay."
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "prerequest",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "const operatorAccessToken = String(pm.environment.get(\u0027operatorAccessToken\u0027) || \u0027\u0027).trim();",
+                                                                                    "if (!operatorAccessToken) {",
+                                                                                    "    throw new Error(\u0027Set operatorAccessToken to a valid ADMIN JWT before running Operations requests.\u0027);",
+                                                                                    "}",
+                                                                                    "const deadLetterRecordId = String(pm.environment.get(\u0027deadLetterRecordId\u0027) || \u0027\u0027).trim();",
+                                                                                    "const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;",
+                                                                                    "if (!uuidPattern.test(deadLetterRecordId)) {",
+                                                                                    "    throw new Error(\u0027Set deadLetterRecordId to a valid Kafka dead-letter UUID before running this request.\u0027);",
+                                                                                    "}"
+                                                                                ]
+                                                                   }
+                                                    },
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code is 204\u0027, function () { pm.response.to.have.status(204); });",
+                                                                                    "pm.test(\u0027Response body is empty\u0027, function () {",
+                                                                                    "    pm.expect(pm.response.text()).to.eql(\u0027\u0027);",
+                                                                                    "});"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  },
+                                  {
+                                      "name":  "List Kafka Dead-Letter Command Audits",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "header":  [
+
+                                                                 ],
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{operatorAccessToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/api/v1/operations/kafka/dead-letter-command-audits?page={{auditPage}}\u0026size={{auditSize}}",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "api",
+                                                                               "v1",
+                                                                               "operations",
+                                                                               "kafka",
+                                                                               "dead-letter-command-audits"
+                                                                           ],
+                                                                  "query":  [
+                                                                                {
+                                                                                    "key":  "page",
+                                                                                    "value":  "{{auditPage}}"
+                                                                                },
+                                                                                {
+                                                                                    "key":  "size",
+                                                                                    "value":  "{{auditSize}}"
+                                                                                },
+                                                                                {
+                                                                                    "key":  "commandId",
+                                                                                    "value":  "{{auditCommandId}}",
+                                                                                    "description":  "Optional command UUID filter. Enable deliberately when configured.",
+                                                                                    "disabled":  true
+                                                                                },
+                                                                                {
+                                                                                    "key":  "operatorId",
+                                                                                    "value":  "{{auditOperatorId}}",
+                                                                                    "description":  "Optional operator UUID filter. Enable deliberately when configured.",
+                                                                                    "disabled":  true
+                                                                                },
+                                                                                {
+                                                                                    "key":  "deadLetterRecordId",
+                                                                                    "value":  "{{deadLetterRecordId}}",
+                                                                                    "description":  "Optional dead-letter record UUID filter. Enable deliberately when configured.",
+                                                                                    "disabled":  true
+                                                                                },
+                                                                                {
+                                                                                    "key":  "commandType",
+                                                                                    "value":  "REPLAY",
+                                                                                    "description":  "Optional REPLAY or DISCARD filter.",
+                                                                                    "disabled":  true
+                                                                                },
+                                                                                {
+                                                                                    "key":  "stage",
+                                                                                    "value":  "COMPLETED",
+                                                                                    "description":  "Optional ATTEMPTED or COMPLETED filter.",
+                                                                                    "disabled":  true
+                                                                                },
+                                                                                {
+                                                                                    "key":  "outcome",
+                                                                                    "value":  "REPLAYED",
+                                                                                    "description":  "Optional allowlisted command outcome filter.",
+                                                                                    "disabled":  true
+                                                                                }
+                                                                            ]
+                                                              },
+                                                      "description":  "Lists safe command-audit entries in occurredAt DESC, id DESC order. Optional filters are disabled by default and must be enabled deliberately."
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "prerequest",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "const operatorAccessToken = String(pm.environment.get(\u0027operatorAccessToken\u0027) || \u0027\u0027).trim();",
+                                                                                    "if (!operatorAccessToken) {",
+                                                                                    "    throw new Error(\u0027Set operatorAccessToken to a valid ADMIN JWT before running Operations requests.\u0027);",
+                                                                                    "}",
+                                                                                    "const auditPage = Number(pm.environment.get(\u0027auditPage\u0027));",
+                                                                                    "const auditSize = Number(pm.environment.get(\u0027auditSize\u0027));",
+                                                                                    "if (!Number.isInteger(auditPage) || auditPage \u003c 0) {",
+                                                                                    "    throw new Error(\u0027Set auditPage to a zero-based non-negative integer.\u0027);",
+                                                                                    "}",
+                                                                                    "if (!Number.isInteger(auditSize) || auditSize \u003c 1 || auditSize \u003e 100) {",
+                                                                                    "    throw new Error(\u0027Set auditSize to an integer between 1 and 100.\u0027);",
+                                                                                    "}"
+                                                                                ]
+                                                                   }
+                                                    },
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code is 200\u0027, function () { pm.response.to.have.status(200); });",
+                                                                                    "pm.test(\u0027Response is JSON\u0027, function () {",
+                                                                                    "    pm.expect(pm.response.headers.get(\u0027Content-Type\u0027)).to.include(\u0027application/json\u0027);",
+                                                                                    "});",
+                                                                                    "const response = pm.response.json();",
+                                                                                    "pm.expect(response.items).to.be.an(\u0027array\u0027);",
+                                                                                    "pm.expect(response.page).to.be.a(\u0027number\u0027);",
+                                                                                    "pm.expect(response.size).to.be.a(\u0027number\u0027);",
+                                                                                    "pm.expect(response.totalElements).to.be.a(\u0027number\u0027);",
+                                                                                    "function assertSafeAuditEntry(entry) {",
+                                                                                    "    pm.expect(entry).to.not.have.property(\u0027payload\u0027);",
+                                                                                    "    pm.expect(entry).to.not.have.property(\u0027recordKey\u0027);",
+                                                                                    "    pm.expect(entry).to.not.have.property(\u0027operatorEmail\u0027);",
+                                                                                    "    pm.expect(entry).to.not.have.property(\u0027exceptionMessage\u0027);",
+                                                                                    "    pm.expect(entry).to.not.have.property(\u0027stackTrace\u0027);",
+                                                                                    "    pm.expect(entry).to.not.have.property(\u0027replayLeaseOwner\u0027);",
+                                                                                    "}",
+                                                                                    "response.items.forEach(assertSafeAuditEntry);"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  },
+                                  {
+                                      "name":  "Get Kafka Dead-Letter Command Audit Timeline",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "header":  [
+
+                                                                 ],
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{operatorAccessToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/api/v1/operations/kafka/dead-letter-command-audits/{{auditCommandId}}",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "api",
+                                                                               "v1",
+                                                                               "operations",
+                                                                               "kafka",
+                                                                               "dead-letter-command-audits",
+                                                                               "{{auditCommandId}}"
+                                                                           ]
+                                                              },
+                                                      "description":  "Returns the chronological ATTEMPTED and optional COMPLETED entries for the deliberately selected command UUID."
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "prerequest",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "const operatorAccessToken = String(pm.environment.get(\u0027operatorAccessToken\u0027) || \u0027\u0027).trim();",
+                                                                                    "if (!operatorAccessToken) {",
+                                                                                    "    throw new Error(\u0027Set operatorAccessToken to a valid ADMIN JWT before running Operations requests.\u0027);",
+                                                                                    "}",
+                                                                                    "const auditCommandId = String(pm.environment.get(\u0027auditCommandId\u0027) || \u0027\u0027).trim();",
+                                                                                    "const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;",
+                                                                                    "if (!uuidPattern.test(auditCommandId)) {",
+                                                                                    "    throw new Error(\u0027Set auditCommandId to a valid operator command UUID before running this request.\u0027);",
+                                                                                    "}"
+                                                                                ]
+                                                                   }
+                                                    },
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code is 200\u0027, function () { pm.response.to.have.status(200); });",
+                                                                                    "pm.test(\u0027Response is JSON\u0027, function () {",
+                                                                                    "    pm.expect(pm.response.headers.get(\u0027Content-Type\u0027)).to.include(\u0027application/json\u0027);",
+                                                                                    "});",
+                                                                                    "const response = pm.response.json();",
+                                                                                    "const expectedCommandId = String(pm.environment.get(\u0027auditCommandId\u0027)).toLowerCase();",
+                                                                                    "pm.expect(String(response.commandId).toLowerCase()).to.eql(expectedCommandId);",
+                                                                                    "pm.expect(response.complete).to.be.a(\u0027boolean\u0027);",
+                                                                                    "pm.expect(response.entries).to.be.an(\u0027array\u0027).that.is.not.empty;",
+                                                                                    "function assertSafeAuditEntry(entry) {",
+                                                                                    "    pm.expect(entry).to.not.have.property(\u0027payload\u0027);",
+                                                                                    "    pm.expect(entry).to.not.have.property(\u0027recordKey\u0027);",
+                                                                                    "    pm.expect(entry).to.not.have.property(\u0027operatorEmail\u0027);",
+                                                                                    "    pm.expect(entry).to.not.have.property(\u0027exceptionMessage\u0027);",
+                                                                                    "    pm.expect(entry).to.not.have.property(\u0027stackTrace\u0027);",
+                                                                                    "    pm.expect(entry).to.not.have.property(\u0027replayLeaseOwner\u0027);",
+                                                                                    "}",
+                                                                                    "response.entries.forEach(assertSafeAuditEntry);"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  }
+                              ]
+                 }
+             ]
 }

@@ -1,5 +1,6 @@
 package com.nursena.payflow.user.adapter.in.web;
 
+import com.nursena.payflow.observability.adapter.in.web.RequestCorrelationConfiguration;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
@@ -24,6 +25,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 @WebMvcTest(RegisterUserController.class)
 @Import({
+    RequestCorrelationConfiguration.class,
     SecurityConfiguration.class,
     UserRegistrationExceptionHandler.class
 })

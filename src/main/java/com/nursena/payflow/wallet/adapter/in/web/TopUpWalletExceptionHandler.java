@@ -1,5 +1,6 @@
 package com.nursena.payflow.wallet.adapter.in.web;
 
+import com.nursena.payflow.observability.adapter.in.web.RequestCorrelationContext;
 import java.time.Instant;
 import java.util.List;
 
@@ -31,6 +32,7 @@ public class TopUpWalletExceptionHandler {
             exception.getCode(),
             exception.getMessage(),
             request.getRequestURI(),
+            RequestCorrelationContext.require(request),
             List.of()
         );
 
@@ -50,6 +52,7 @@ public class TopUpWalletExceptionHandler {
             exception.getCode(),
             exception.getMessage(),
             request.getRequestURI(),
+            RequestCorrelationContext.require(request),
             List.of()
         );
 
