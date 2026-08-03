@@ -36,9 +36,9 @@ jobs:
             -pubout \
             -out .runtime/jwt/active-public.pem
 
-          sudo chown -R 10001:10001 .runtime/jwt
           chmod 0400 .runtime/jwt/active-private.pem
           chmod 0444 .runtime/jwt/active-public.pem
+          sudo chown -R 10001:10001 .runtime/jwt
 
           export JWT_KEY_DIRECTORY="$GITHUB_WORKSPACE/.runtime/jwt"
           echo "JWT_KEY_DIRECTORY=$JWT_KEY_DIRECTORY" \
@@ -113,6 +113,11 @@ jobs:
       - name: Print stack logs on failure
         if: failure()
         run: |
+          if [[ ! -f /tmp/payflow-smoke.override.yml ]]; then
+            echo "Smoke override was not created; no stack logs are available."
+            exit 0
+          fi
+
           docker compose \
             -f compose.yml \
             -f /tmp/payflow-smoke.override.yml \
@@ -128,6 +133,11 @@ jobs:
       - name: Tear down
         if: always()
         run: |
+          if [[ ! -f /tmp/payflow-smoke.override.yml ]]; then
+            echo "Smoke override was not created; no stack teardown is required."
+            exit 0
+          fi
+
           docker compose \
             -f compose.yml \
             -f /tmp/payflow-smoke.override.yml \

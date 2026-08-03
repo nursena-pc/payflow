@@ -101,6 +101,35 @@ class V012DevelopmentContractTest {
                 "JWT_ACTIVE_PRIVATE_KEY_LOCATION: file:/run/secrets/payflow/jwt/active-private.pem",
                 ":/run/secrets/payflow/jwt:ro"
             );
+
+        String dockerSmoke = Files.readString(DOCKER_SMOKE);
+
+        assertThat(dockerSmoke)
+            .contains(
+                "chmod 0400 .runtime/jwt/active-private.pem",
+                "chmod 0444 .runtime/jwt/active-public.pem",
+                "sudo chown -R 10001:10001 .runtime/jwt",
+                "Smoke override was not created; no stack logs are available.",
+                "Smoke override was not created; no stack teardown is required."
+            );
+
+        int ownershipTransferIndex = dockerSmoke.indexOf(
+            "sudo chown -R 10001:10001 .runtime/jwt"
+        );
+
+        assertThat(
+            dockerSmoke.indexOf(
+                "chmod 0400 .runtime/jwt/active-private.pem"
+            )
+        )
+            .isLessThan(ownershipTransferIndex);
+
+        assertThat(
+            dockerSmoke.indexOf(
+                "chmod 0444 .runtime/jwt/active-public.pem"
+            )
+        )
+            .isLessThan(ownershipTransferIndex);
     }
 
     @Test
