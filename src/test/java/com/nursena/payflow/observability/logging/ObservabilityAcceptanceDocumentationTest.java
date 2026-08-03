@@ -129,7 +129,7 @@ class ObservabilityAcceptanceDocumentationTest {
                 "docs/releases/v0.11.0.md"
             )
             .contains(
-                "v0.11.0 is in protected release preparation"
+                "PayFlow v0.11.0 is the latest published release"
             );
     }
 

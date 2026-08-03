@@ -85,7 +85,15 @@ The user module owns:
 - password-hash persistence
 - authentication
 - RSA-signed JWT creation
+- adapter-local signing-key retrieval and startup validation
+- stable JWT key identifiers and active/previous verification overlap
 - authenticated current-user profile
+
+JWT key resources, PEM parsing, Nimbus selection, and deployment rotation stay
+inside the outbound security adapter. Application and domain code depend only
+on the existing access-token generation port. Production key rings contain one
+active signer and at most one verification-only previous key; verification is
+pinned to RS256 and requires a configured `kid`.
 
 ### Wallet module
 

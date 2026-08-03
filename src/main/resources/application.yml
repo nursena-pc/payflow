@@ -73,6 +73,13 @@ payflow:
     jwt:
       issuer: https://api.payflow.local
       access-token-ttl: 15m
+      key-set:
+        provider-mode: ${JWT_KEY_PROVIDER_MODE:ephemeral}
+        active-key-id: ${JWT_ACTIVE_KEY_ID:local-development}
+        active-private-key-location: ${JWT_ACTIVE_PRIVATE_KEY_LOCATION:}
+        active-public-key-location: ${JWT_ACTIVE_PUBLIC_KEY_LOCATION:}
+        previous-key-id: ${JWT_PREVIOUS_KEY_ID:}
+        previous-public-key-location: ${JWT_PREVIOUS_PUBLIC_KEY_LOCATION:}
     refresh-session:
       refresh-token-ttl: ${REFRESH_TOKEN_TTL:7d}
       family-ttl: ${REFRESH_TOKEN_FAMILY_TTL:30d}
@@ -120,3 +127,16 @@ payflow:
         lease-duration: ${TRANSFER_COMPLETED_DLT_REPLAY_LEASE_DURATION:30s}
         max-attempts: ${TRANSFER_COMPLETED_DLT_REPLAY_MAX_ATTEMPTS:3}
         send-timeout: ${TRANSFER_COMPLETED_DLT_REPLAY_SEND_TIMEOUT:10s}
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: production
+
+payflow:
+  security:
+    jwt:
+      key-set:
+        provider-mode: configured

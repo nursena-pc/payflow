@@ -22,7 +22,11 @@ class JwtConfigurationClockTest {
                 "payflow.security.jwt."
                     + "issuer=https://api.payflow.local",
                 "payflow.security.jwt."
-                    + "access-token-ttl=15m"
+                    + "access-token-ttl=15m",
+                "payflow.security.jwt.key-set."
+                    + "provider-mode=ephemeral",
+                "payflow.security.jwt.key-set."
+                    + "active-key-id=clock-test"
             );
 
     @Test

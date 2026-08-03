@@ -24,11 +24,36 @@ jobs:
       - name: Start production-profile stack
         shell: bash
         run: |
+          mkdir -p .runtime/jwt
+
+          openssl genpkey \
+            -algorithm RSA \
+            -pkeyopt rsa_keygen_bits:2048 \
+            -out .runtime/jwt/active-private.pem
+
+          openssl pkey \
+            -in .runtime/jwt/active-private.pem \
+            -pubout \
+            -out .runtime/jwt/active-public.pem
+
+          sudo chown -R 10001:10001 .runtime/jwt
+          chmod 0400 .runtime/jwt/active-private.pem
+          chmod 0444 .runtime/jwt/active-public.pem
+
+          export JWT_KEY_DIRECTORY="$GITHUB_WORKSPACE/.runtime/jwt"
+          echo "JWT_KEY_DIRECTORY=$JWT_KEY_DIRECTORY" \
+            >> "$GITHUB_ENV"
+
           cat > /tmp/payflow-smoke.override.yml <<'YAML'
           services:
             app:
               environment:
                 SPRING_PROFILES_ACTIVE: production
+                JWT_ACTIVE_KEY_ID: smoke-active-2026-08
+                JWT_ACTIVE_PRIVATE_KEY_LOCATION: file:/run/secrets/payflow/jwt/active-private.pem
+                JWT_ACTIVE_PUBLIC_KEY_LOCATION: file:/run/secrets/payflow/jwt/active-public.pem
+              volumes:
+                - ${JWT_KEY_DIRECTORY:?JWT_KEY_DIRECTORY must be set}:/run/secrets/payflow/jwt:ro
           YAML
 
           docker compose \
