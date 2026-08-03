@@ -22,7 +22,7 @@ class RoadmapContractTest {
         Path.of("docs", "roadmap.md");
 
     @Test
-    void shouldAlignRoadmapWithPublishedReleaseAndNextDevelopmentVersion()
+    void shouldAlignRoadmapWithReleaseCandidateVersion()
         throws Exception {
 
         String projectVersion =
@@ -32,7 +32,7 @@ class RoadmapContractTest {
             Files.readString(ROADMAP_PATH);
 
         assertThat(projectVersion)
-            .isEqualTo("0.11.0-SNAPSHOT");
+            .isEqualTo("0.11.0");
 
         assertThat(roadmap)
             .contains(
@@ -40,6 +40,7 @@ class RoadmapContractTest {
                 "`" + projectVersion + "`",
                 "## v0.9.0 — Released",
                 "## v0.10.0 — Released: Trusted Client Context",
+                "## v0.11.0 — Release Candidate: Structured Logging and Request Correlation",
                 "- [x] Open the v0.10.0 implementation issue",
                 "- [x] Define trusted-proxy CIDR configuration",
                 "- [x] Validate IPv4 and IPv6 network ranges at startup",
@@ -94,11 +95,20 @@ class RoadmapContractTest {
                 "- [x] the executable JAR and SHA-256 checksum are published",
                 "- [x] the GitHub Release is published",
                 "release workflow run: `30675532483`",
-                "verified SHA-256: `174D7F51D27F19B0A45B281869FF86BD9DC52F59B41B20B479827B92102D957B`"
+                "verified SHA-256: `174D7F51D27F19B0A45B281869FF86BD9DC52F59B41B20B479827B92102D957B`",
+                "- [x] Merge the observability increment through protected PR #108",
+                "- [x] Pass 1,017 complete Maven tests with zero failures and zero errors",
+                "- [x] Prepare v0.11.0 release notes",
+                "- [ ] Merge v0.11.0 release preparation through a protected pull request",
+                "- [ ] Tag the verified release merge commit as `v0.11.0`",
+                "- [ ] Publish `payflow-0.11.0.jar`",
+                "- [ ] Publish and independently verify `payflow-0.11.0.jar.sha256`",
+                "Potential v0.12.0 increments include:"
             )
             .doesNotContain(
                 "0.9.0-SNAPSHOT",
                 "0.10.0-SNAPSHOT",
+                "0.11.0-SNAPSHOT",
                 "The v0.9.0 release candidate",
                 "The v0.10.0 release candidate",
                 "## v0.7.0 — Identity and Session Security"

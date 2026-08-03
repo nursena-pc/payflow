@@ -98,7 +98,7 @@ class ObservabilityAcceptanceDocumentationTest {
     }
 
     @Test
-    void shouldPublishReleaseCandidateNotesAndReadmeLink()
+    void shouldPublishReleasePreparationNotesAndReadmeLink()
         throws IOException {
         String releaseNotes =
             Files.readString(
@@ -112,16 +112,16 @@ class ObservabilityAcceptanceDocumentationTest {
 
         assertThat(releaseNotes)
             .contains(
-                "# PayFlow v0.11.0 release candidate notes"
+                "# PayFlow v0.11.0"
             )
             .contains(
-                "v0.10.0 remains the latest published release"
+                "## Release assets"
             )
             .contains(
                 "No database migration is included."
             )
             .contains(
-                "Asynchronous request-correlation propagation is deliberately out of scope"
+                "Asynchronous request-correlation propagation remains deliberately out of scope"
             );
 
         assertThat(readme)
@@ -129,7 +129,7 @@ class ObservabilityAcceptanceDocumentationTest {
                 "docs/releases/v0.11.0.md"
             )
             .contains(
-                "submitted for protected pull-request review"
+                "v0.11.0 is in protected release preparation"
             );
     }
 

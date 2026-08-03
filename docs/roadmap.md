@@ -2,13 +2,13 @@
 
 ## Current delivery focus
 
-PayFlow v0.10.0 is the latest tagged release. The active development line uses
-`0.11.0-SNAPSHOT`.
+PayFlow v0.10.0 is the latest tagged release. The v0.11.0 release candidate uses
+the Maven version `0.11.0`.
 
-The v0.10.0 trusted client-context increment is released and independently
-verified. The current focus is post-release stabilization and selection of the
-next v0.11.0 increment through a dedicated issue with explicit scope, threat
-model, acceptance criteria, and rollback boundaries.
+The v0.11.0 observability increment was merged through protected PR #108. The
+current focus is release train #106: protected release review, full verification,
+tagging the verified merge commit, and independently validating the published
+JAR and SHA-256 checksum.
 
 PayFlow remains a modular monolith. PostgreSQL is the system of record; Redis is
 used only for bounded, explicitly expiring abuse-control state.
@@ -66,6 +66,9 @@ used only for bounded, explicitly expiring abuse-control state.
 - [x] Idempotent event consumption
 - [x] Durable dead-letter intake, replay, and discard lifecycle
 - [x] Append-only operator command auditing
+- [x] Trustworthy request correlation with strict inbound identifier validation
+- [x] Structured JSON logging with centralized sensitive-value masking
+- [x] One bounded request-completion event per synchronous HTTP request
 
 ## v0.9.0 — Released
 
@@ -181,14 +184,109 @@ The release is ready only when:
 - [x] the executable JAR and SHA-256 checksum are published
 - [x] the GitHub Release is published
 
+## v0.11.0 — Release Candidate: Structured Logging and Request Correlation
+
+### Product outcome
+
+Operators can follow a synchronous HTTP request through bounded application
+logs using one trustworthy correlation identifier without exposing credentials,
+personal data, financial data, raw request paths, or attacker-controlled log
+structure.
+
+### Increment 1 — Request correlation
+
+- [x] Define a bounded correlation-ID policy
+- [x] Replace absent, duplicated, malformed, oversized, and newline-bearing input
+- [x] Generate a server-controlled UUID when inbound input is unusable
+- [x] Return the effective identifier in every HTTP response
+- [x] Include the effective identifier in centralized API error responses
+- [x] Establish and clear request-lifetime MDC safely
+
+### Increment 2 — Structured logging and redaction
+
+- [x] Add single-line JSON logs for `structured-logging` and `production`
+- [x] Define stable service, schema, severity, logger, thread, message, and correlation fields
+- [x] Mask credentials, tokens, secrets, authorization values, API keys, private keys, and JWT-like values
+- [x] Disable uncontrolled structured and non-structured argument expansion
+- [x] Bound encoded exception length and throwable depth
+
+### Increment 3 — Bounded HTTP completion events
+
+- [x] Emit exactly one `http.request.completed` event per synchronous request
+- [x] Use the Spring MVC route template instead of the raw request URI
+- [x] Bound method, status, duration, and outcome fields
+- [x] Use stable `UNMATCHED` and `UNKNOWN` fallback values
+- [x] Exclude bodies, query strings, headers, identifiers, balances, and amounts
+- [x] Keep correlation IDs out of metric labels
+
+### Increment 4 — Public and operational contracts
+
+- [x] Document the global `X-Correlation-ID` response header in OpenAPI
+- [x] Add executable Postman response-correlation verification
+- [x] Document activation, field schema, redaction, and exception policy
+- [x] Document synchronous and asynchronous propagation boundaries
+- [x] Verify production-profile response correlation and JSON logs in Docker
+
+### Increment 5 — Verification and release preparation
+
+- [x] Merge the observability increment through protected PR #108
+- [x] Close implementation issue #107 after merge
+- [x] Pass 47 focused observability acceptance tests
+- [x] Pass 1,017 complete Maven tests with zero failures and zero errors
+- [x] Produce 215 Surefire XML reports
+- [x] Pass protected `build-and-test` CI
+- [x] Pass production-profile Docker smoke verification
+- [x] Prepare v0.11.0 release notes
+- [ ] Merge v0.11.0 release preparation through a protected pull request
+- [ ] Tag the verified release merge commit as `v0.11.0`
+- [ ] Publish `payflow-0.11.0.jar`
+- [ ] Publish and independently verify `payflow-0.11.0.jar.sha256`
+- [ ] Publish the GitHub Release
+
+## Explicit v0.11.0 non-goals
+
+- distributed tracing implementation
+- implicit servlet-MDC propagation to scheduled jobs, outbox publishers, Kafka consumers, retries, or dead-letter execution
+- request or response body logging
+- raw URI, query-string, cookie, authorization-header, or forwarding-header logging
+- user, wallet, transfer, balance, amount, or idempotency-key logging
+- correlation IDs as authentication, authorization, business, transaction, partition, or metric-label inputs
+- signing-key rotation or external key-management integration
+- password recovery, verified-email workflows, or multi-factor authentication
+- generalized API-wide abuse protection
+
+These concerns require separate issues, threat models, and versioned contracts
+rather than being silently added to the observability increment.
+
+## v0.11.0 release exit criteria
+
+The release is ready only when:
+
+- [x] invalid or attacker-controlled correlation input is replaced safely
+- [x] every synchronous response returns one effective correlation identifier
+- [x] centralized API errors expose the same effective identifier
+- [x] production-oriented logs are valid single-line JSON
+- [x] sensitive values are redacted and request-completion fields remain bounded
+- [x] focused unit, integration, acceptance, OpenAPI, Postman, and Docker checks pass
+- [x] the complete Maven suite passes
+- [x] protected CI passes for the feature merge
+- [x] v0.11.0 release notes are prepared
+- [ ] the release-preparation pull request is merged
+- [ ] the v0.11.0 tag is published
+- [ ] the executable JAR and SHA-256 checksum are published and independently verified
+- [ ] the GitHub Release is published
+
 ## Future candidates
 
-Potential v0.11.0 increments include:
+Potential v0.12.0 increments include:
 
-- structured JSON logging and request correlation
-- signing-key rotation and external key-management integration
-- load and performance verification
-- password recovery and verified-email workflows
-- multi-factor authentication
-- broader operational-security dashboards
-- generalized API abuse protection
+- signing-key rotation and external key-management boundary
+- JWT `kid` issuance and multi-key verification
+- active and previous key overlap with controlled rollback
+- local key-provider adapter and startup validation
+- key-material redaction and failure-mode acceptance tests
+
+Later v1.0 candidates include verified-email and password-recovery workflows,
+multi-factor authentication, generalized abuse protection, load/performance
+evidence, backup/restore rehearsal, API freeze, SBOM generation, and release
+stabilization.

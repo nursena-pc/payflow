@@ -104,7 +104,9 @@ Completed capabilities include:
 - operator-only, paginated command-audit queries and chronological command timelines
 - Prometheus metrics, Grafana dashboards, and alert rules for Kafka consumer failures
 
-OpenAPI documentation and executable Postman workflows cover the implemented API. PayFlow v0.10.0 is the latest published release, including spoofing-resistant effective client-address resolution behind explicitly trusted reverse proxies, safe fallback behavior, bounded observability, and executable operational contracts. The v0.11.0 development line is open for the next explicitly scoped increment. See the [v0.10.0 release notes](docs/releases/v0.10.0.md), the [trusted client-context ADR](docs/adr/0011-trusted-client-context.md), and the [roadmap](docs/roadmap.md).
+OpenAPI documentation and executable Postman workflows cover the implemented API. PayFlow v0.10.0 remains the latest published release while v0.11.0 is in protected release preparation. The v0.11.0 release commit freezes the observability contract and is eligible for tagging only after the release-preparation pull request passes protected review and CI.
+
+See the [v0.11.0 release notes](docs/releases/v0.11.0.md), the [structured logging operations guide](docs/operations/structured-logging.md), the [v0.10.0 release notes](docs/releases/v0.10.0.md), and the [roadmap](docs/roadmap.md).
 
 ## Structured logging
 
@@ -112,13 +114,17 @@ PayFlow supports single-line JSON logs through the `structured-logging` and `pro
 
 See the [structured logging operations guide](docs/operations/structured-logging.md) for activation, field contracts, redaction boundaries, and verification commands.
 
-## v0.11.0 release candidate
+## v0.11.0 release preparation
 
-PayFlow v0.10.0 remains the latest published release. The v0.11.0 observability increment is submitted for protected pull-request review with trustworthy request correlation, structured JSON logs, bounded completion events, centralized redaction, OpenAPI/Postman contracts, and Docker smoke verification.
+PayFlow v0.11.0 is prepared for protected release review. The release freezes trustworthy request correlation, structured JSON logging, bounded request-completion events, centralized redaction, OpenAPI/Postman contracts, operations guidance, and Docker smoke verification.
 
-See the [v0.11.0 release candidate notes](docs/releases/v0.11.0.md), the [structured logging operations guide](docs/operations/structured-logging.md), the [v0.10.0 release notes](docs/releases/v0.10.0.md), and the [roadmap](docs/roadmap.md).
+The `v0.11.0` tag must be created only from the verified merge commit of the release-preparation pull request. Tag publication triggers the independent release workflow that rebuilds and verifies the project before publishing the executable JAR, SHA-256 checksum, and GitHub Release.
 
-## Implemented API| Method | Endpoint | Authentication | Description |
+See the [v0.11.0 release notes](docs/releases/v0.11.0.md) and the [structured logging operations guide](docs/operations/structured-logging.md).
+
+## Implemented API
+
+| Method | Endpoint | Authentication | Description |
 |---|---|---|---|
 | `POST` | `/api/v1/auth/register` | Public | Registers a new user and stores a BCrypt password hash. |
 | `POST` | `/api/v1/auth/login` | Public | Applies Redis-backed login protection and returns access and refresh credentials. |
