@@ -13,9 +13,6 @@ import org.junit.jupiter.api.Test;
 
 class V010ReleasePreparationContractTest {
 
-    private static final Path README_PATH =
-        Path.of("README.md");
-
     private static final Path ROADMAP_PATH =
         Path.of(
             "docs",
@@ -39,19 +36,13 @@ class V010ReleasePreparationContractTest {
     void shouldRetainPublishedReleaseRecord()
         throws IOException {
 
-        assertThat(
-            Files.readString(README_PATH)
-        )
-            .contains(
-                "v0.10.0 remains the latest published release",
-                "docs/releases/v0.10.0.md"
-            );
+        assertThat(Files.exists(RELEASE_NOTES_PATH))
+            .isTrue();
 
         assertThat(
             Files.readString(ROADMAP_PATH)
         )
             .contains(
-                "PayFlow v0.10.0 is the latest tagged release",
                 "## v0.10.0 — Released: Trusted Client Context"
             )
             .doesNotContain(

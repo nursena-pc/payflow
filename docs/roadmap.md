@@ -2,13 +2,13 @@
 
 ## Current delivery focus
 
-PayFlow v0.10.0 is the latest tagged release. The v0.11.0 release candidate uses
-the Maven version `0.11.0`.
+PayFlow v0.11.0 is the latest tagged release. The active development line uses
+the Maven version `0.12.0-SNAPSHOT`.
 
-The v0.11.0 observability increment was merged through protected PR #108. The
-current focus is release train #106: protected release review, full verification,
-tagging the verified merge commit, and independently validating the published
-JAR and SHA-256 checksum.
+The v0.11.0 observability release was published from verified merge commit
+`00401d55546fb819fe7d96a8fad8e8c43e37649c`. The current focus is the v0.12.0
+JWT signing-key rotation increment: stable `kid` issuance, active and previous
+verification overlap, a key-provider boundary, and fail-fast local key loading.
 
 PayFlow remains a modular monolith. PostgreSQL is the system of record; Redis is
 used only for bounded, explicitly expiring abuse-control state.
@@ -40,6 +40,9 @@ used only for bounded, explicitly expiring abuse-control state.
 - [x] Durable all-session revocation across application restarts
 - [x] Stable authentication and authorization error contracts
 - [x] ADMIN-derived `PAYFLOW_OPERATIONS` authorization boundary
+- [x] Stable JWT `kid` issuance with RS256 algorithm pinning
+- [x] Active and previous signing-key verification overlap
+- [x] Production fail-fast validation for configured RSA key material
 
 ### Login protection
 
@@ -184,7 +187,7 @@ The release is ready only when:
 - [x] the executable JAR and SHA-256 checksum are published
 - [x] the GitHub Release is published
 
-## v0.11.0 — Release Candidate: Structured Logging and Request Correlation
+## v0.11.0 — Released: Structured Logging and Request Correlation
 
 ### Product outcome
 
@@ -237,11 +240,18 @@ structure.
 - [x] Pass protected `build-and-test` CI
 - [x] Pass production-profile Docker smoke verification
 - [x] Prepare v0.11.0 release notes
-- [ ] Merge v0.11.0 release preparation through a protected pull request
-- [ ] Tag the verified release merge commit as `v0.11.0`
-- [ ] Publish `payflow-0.11.0.jar`
-- [ ] Publish and independently verify `payflow-0.11.0.jar.sha256`
-- [ ] Publish the GitHub Release
+- [x] Merge v0.11.0 release preparation through protected PR #111
+- [x] Pass 1,022 complete release-candidate tests with zero failures and zero errors
+- [x] Tag merge commit `00401d55546fb819fe7d96a8fad8e8c43e37649c` as `v0.11.0`
+- [x] Publish `payflow-0.11.0.jar`
+- [x] Publish and independently verify `payflow-0.11.0.jar.sha256`
+- [x] Publish the GitHub Release
+
+### Publication record
+
+- release workflow run: `30816366250`
+- executable JAR size: `99,121,200` bytes
+- verified SHA-256: `AFA7836636F034BEA0CF8281851C1619E183B2AAEAC4F3C14D3FA39F40F7ABD0`
 
 ## Explicit v0.11.0 non-goals
 
@@ -271,20 +281,93 @@ The release is ready only when:
 - [x] the complete Maven suite passes
 - [x] protected CI passes for the feature merge
 - [x] v0.11.0 release notes are prepared
-- [ ] the release-preparation pull request is merged
-- [ ] the v0.11.0 tag is published
-- [ ] the executable JAR and SHA-256 checksum are published and independently verified
-- [ ] the GitHub Release is published
+- [x] the release-preparation pull request is merged
+- [x] the v0.11.0 tag is published
+- [x] the executable JAR and SHA-256 checksum are published and independently verified
+- [x] the GitHub Release is published
 
-## Future candidates
+## v0.12.0 — Active Development: JWT Signing-Key Rotation
 
-Potential v0.12.0 increments include:
+### Product outcome
 
-- signing-key rotation and external key-management boundary
-- JWT `kid` issuance and multi-key verification
-- active and previous key overlap with controlled rollback
-- local key-provider adapter and startup validation
-- key-material redaction and failure-mode acceptance tests
+PayFlow can rotate RSA signing keys without invalidating every unexpired access
+token at deployment time. Newly issued tokens identify the active key with a
+bounded `kid`; verification accepts only the configured active and previous
+keys and only RS256 signatures.
+
+### Increment 1 — Threat model and provider boundary
+
+- [x] Open the dedicated v0.12.0 implementation issue #112
+- [x] Introduce a JWT key-provider boundary outside the application and domain layers
+- [x] Separate the active signing key from verification-only previous keys
+- [x] Bound key IDs to a strict 64-character alphabet
+- [x] Reject duplicate key IDs and aliased RSA key material
+
+### Increment 2 — Issuance and verification
+
+- [x] Issue every access token with the active stable `kid`
+- [x] Pin signing and verification to RS256
+- [x] Verify tokens signed by the active or previous configured key
+- [x] Reject missing, unknown, duplicated, or untrusted key identifiers
+- [x] Preserve issuer, lifetime, subject, email, and role claim contracts
+
+### Increment 3 — Local configured-key adapter
+
+- [x] Load PKCS#8 private keys and X.509 public keys from Spring resources
+- [x] Require RSA keys of at least 2,048 bits
+- [x] Prove the active public and private keys form one key pair
+- [x] Fail application startup when production key configuration is incomplete or invalid
+- [x] Keep ephemeral key generation limited to explicit non-production development mode
+- [x] Keep private-key material out of the repository, logs, metrics, and error messages
+
+### Increment 4 — Verification and operations
+
+- [x] Add focused active, previous, missing-`kid`, unknown-`kid`, weak-key, and mismatch tests
+- [x] Generate temporary production-profile keys during Docker smoke verification
+- [ ] Pass the complete Maven verification suite
+- [ ] Pass protected `build-and-test` and Docker smoke CI
+- [x] Document staged rotation, rollback, key retirement, and emergency recovery
+
+### Increment 5 — Public contracts and release
+
+- [x] Add an ADR for the signing-key provider and overlap model
+- [x] Update README, configuration examples, and architecture documentation
+- [ ] Prepare v0.12.0 release notes after the implementation PR is merged
+- [ ] Merge v0.12.0 release preparation through a protected pull request
+- [ ] Tag the verified release merge commit as `v0.12.0`
+- [ ] Publish the executable JAR, SHA-256 checksum, and GitHub Release
+
+## Explicit v0.12.0 non-goals
+
+- remote KMS, HSM, Vault, or cloud-provider integration
+- dynamic hot reload, polling, or push-based key refresh
+- a public JWKS endpoint or remote JWKS consumption
+- accepting more than the active and immediately previous verification key
+- JWT encryption, symmetric signing, or algorithm negotiation
+- access-token revocation before the existing short expiry
+- refresh-token format or rotation changes
+- password recovery, verified-email workflows, or multi-factor authentication
+
+These concerns require separate issues and threat models. The v0.12.0 provider
+boundary permits a future external adapter without placing Nimbus, Spring, file,
+or KMS types in PayFlow application or domain code.
+
+## v0.12.0 release exit criteria
+
+The release is ready only when:
+
+- [x] new access tokens carry the configured active `kid`
+- [x] active and previous keys verify during the bounded overlap window
+- [x] tokens with missing or unknown key IDs fail authentication
+- [x] only RS256 signatures are accepted
+- [x] production startup fails closed on missing, malformed, weak, or mismatched keys
+- [x] private-key material remains outside source control and observable output
+- [ ] focused and complete Maven verification pass
+- [ ] production-profile Docker smoke and protected CI pass
+- [ ] OpenAPI, operations documentation, ADRs, and implementation agree
+- [ ] v0.12.0 release preparation and publication gates complete
+
+## Later v1.0 candidates
 
 Later v1.0 candidates include verified-email and password-recovery workflows,
 multi-factor authentication, generalized abuse protection, load/performance

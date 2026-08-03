@@ -15,103 +15,54 @@ import org.w3c.dom.NodeList;
 
 class RoadmapContractTest {
 
-    private static final Path POM_PATH =
+    private static final Path POM =
         Path.of("pom.xml");
 
-    private static final Path ROADMAP_PATH =
+    private static final Path ROADMAP =
         Path.of("docs", "roadmap.md");
 
     @Test
-    void shouldAlignRoadmapWithReleaseCandidateVersion()
+    void shouldAlignRoadmapWithActiveSnapshot()
         throws Exception {
 
-        String projectVersion =
-            readProjectVersion();
-
-        String roadmap =
-            Files.readString(ROADMAP_PATH);
+        String projectVersion = readProjectVersion();
+        String roadmap = Files.readString(ROADMAP);
 
         assertThat(projectVersion)
-            .isEqualTo("0.11.0");
+            .isEqualTo("0.12.0-SNAPSHOT");
 
         assertThat(roadmap)
             .contains(
-                "PayFlow v0.10.0 is the latest tagged release",
-                "`" + projectVersion + "`",
-                "## v0.9.0 — Released",
+                "PayFlow v0.11.0 is the latest tagged release",
+                "the Maven version `" + projectVersion + "`",
                 "## v0.10.0 — Released: Trusted Client Context",
-                "## v0.11.0 — Release Candidate: Structured Logging and Request Correlation",
-                "- [x] Open the v0.10.0 implementation issue",
-                "- [x] Define trusted-proxy CIDR configuration",
-                "- [x] Validate IPv4 and IPv6 network ranges at startup",
-                "- [x] Bound accepted header length and proxy-hop count",
-                "- [x] Define forwarding-header precedence explicitly",
-                "- [x] Document direct-peer fallback and failure behavior",
-                "- [x] Keep servlet and header parsing inside the inbound adapter",
-                "- [x] Ignore forwarding headers when the direct peer is not trusted",
-                "- [x] Parse trusted proxy chains from right to left",
-                "- [x] Select the first untrusted address as the effective client",
-                "- [x] Normalize IPv4 and IPv6 literals without DNS resolution",
-                "- [x] Reject or safely fall back on malformed and obfuscated identifiers",
-                "- [x] Verify spoofed forwarding headers are ignored from untrusted peers",
-                "- [x] Verify a single trusted proxy",
-                "- [x] Verify multi-hop trusted and untrusted proxy chains",
-                "- [x] Verify IPv4, IPv6, and mixed-address chains",
-                "- [x] Verify malformed, oversized, and excessive-hop inputs",
-                "- [x] Verify direct-peer fallback",
-                "- [x] Introduce an application-facing client-context abstraction",
-                "- [x] Replace direct `HttpServletRequest#getRemoteAddr` coupling",
-                "- [x] Feed the resolved effective client into the existing rate-limit port",
-                "- [x] Preserve identity-counter and client-counter semantics",
-                "- [x] Preserve generic `401`, stable `429`, and fail-closed `503` contracts",
-                "- [x] Add bounded decision metrics for source and fallback outcome",
-                "- [x] Keep raw client addresses out of metric labels and logs",
-                "- [x] Verify login rate limiting groups requests by effective client",
-                "- [x] Run the complete Maven verification suite",
-                "- [x] Add an ADR for the proxy trust model",
-                "- [x] Update deployment and login-protection documentation",
-                "- [x] Add reverse-proxy configuration examples",
-                "- [x] Update architecture diagrams where the trust boundary is shown",
-                "- [x] only configured proxy networks may influence effective client identity",
-                "- [x] spoofed forwarding headers from untrusted peers are ignored",
-                "- [x] trusted chains resolve deterministically for IPv4 and IPv6",
-                "- [x] malformed or excessive forwarding input fails safely",
-                "- [x] login rate limiting uses the effective client without changing public error contracts",
-                "- [x] raw client addresses remain excluded from metric labels and logs",
-                "- [x] focused unit, integration, and acceptance tests pass",
-                "- [x] the complete Maven suite passes",
-                "- [x] OpenAPI and operations documentation match the implementation",
-                "- [x] Pass protected-branch CI and review checks",
-                "- [x] Prepare v0.10.0 release notes",
-                "- [x] Merge v0.10.0 release preparation through protected PR #104",
-                "- [x] Tag merge commit `9dad6bdf0b8d1e166ba6454a6d791561cc30b671` as `v0.10.0`",
-                "- [x] Publish `payflow-0.10.0.jar`",
-                "- [x] Publish and verify `payflow-0.10.0.jar.sha256`",
-                "- [x] Publish the GitHub Release",
-                "- [x] protected-branch CI passes for the feature merge",
-                "- [x] v0.10.0 release notes are prepared",
-                "- [x] the release-preparation pull request is merged",
-                "- [x] the v0.10.0 tag is published",
-                "- [x] the executable JAR and SHA-256 checksum are published",
-                "- [x] the GitHub Release is published",
-                "release workflow run: `30675532483`",
-                "verified SHA-256: `174D7F51D27F19B0A45B281869FF86BD9DC52F59B41B20B479827B92102D957B`",
-                "- [x] Merge the observability increment through protected PR #108",
-                "- [x] Pass 1,017 complete Maven tests with zero failures and zero errors",
-                "- [x] Prepare v0.11.0 release notes",
-                "- [ ] Merge v0.11.0 release preparation through a protected pull request",
-                "- [ ] Tag the verified release merge commit as `v0.11.0`",
-                "- [ ] Publish `payflow-0.11.0.jar`",
-                "- [ ] Publish and independently verify `payflow-0.11.0.jar.sha256`",
-                "Potential v0.12.0 increments include:"
+                "## v0.11.0 — Released: Structured Logging and Request Correlation",
+                "## v0.12.0 — Active Development: JWT Signing-Key Rotation",
+                "JWT signing-key rotation increment",
+                "stable `kid` issuance",
+                "active and previous",
+                "key-provider boundary",
+                "fail-fast local key loading"
             )
             .doesNotContain(
-                "0.9.0-SNAPSHOT",
-                "0.10.0-SNAPSHOT",
-                "0.11.0-SNAPSHOT",
-                "The v0.9.0 release candidate",
-                "The v0.10.0 release candidate",
-                "## v0.7.0 — Identity and Session Security"
+                "The v0.11.0 release candidate uses",
+                "v0.11.0 is in protected release preparation"
+            );
+    }
+
+    @Test
+    void shouldKeepV012ReleaseGatesOpen()
+        throws IOException {
+
+        assertThat(Files.readString(ROADMAP))
+            .contains(
+                "- [x] Open the dedicated v0.12.0 implementation issue #112",
+                "- [ ] Pass the complete Maven verification suite",
+                "- [ ] Pass protected `build-and-test` and Docker smoke CI",
+                "- [ ] Prepare v0.12.0 release notes after the implementation PR is merged",
+                "- [ ] Tag the verified release merge commit as `v0.12.0`",
+                "- [ ] focused and complete Maven verification pass",
+                "- [ ] v0.12.0 release preparation and publication gates complete"
             );
     }
 
@@ -126,24 +77,20 @@ class RoadmapContractTest {
             true
         );
 
-        try (InputStream input =
-            Files.newInputStream(POM_PATH)) {
+        try (InputStream input = Files.newInputStream(POM)) {
+            Element project = factory
+                .newDocumentBuilder()
+                .parse(input)
+                .getDocumentElement();
 
-            Element project =
-                factory
-                    .newDocumentBuilder()
-                    .parse(input)
-                    .getDocumentElement();
+            NodeList children = project.getChildNodes();
 
-            NodeList children =
-                project.getChildNodes();
-
-            for (int index = 0;
+            for (
+                int index = 0;
                 index < children.getLength();
-                index++) {
-
-                Node child =
-                    children.item(index);
+                index++
+            ) {
+                Node child = children.item(index);
 
                 if (
                     child.getNodeType()

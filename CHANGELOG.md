@@ -6,6 +6,91 @@ All notable PayFlow changes are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Stable JWT `kid` issuance for the active RSA signing key.
+- RS256-only verification with active and previous public-key overlap.
+- Adapter-local key-provider boundary for future external KMS or HSM adapters.
+- Configured PKCS#8 private-key and X.509 public-key resource loading.
+- Fail-fast production validation for missing, malformed, weak, duplicated, or mismatched key material.
+- Rotation, rollback, retirement, and emergency-recovery operations guide.
+
+### Security
+
+- Tokens with missing or unknown key identifiers fail authentication.
+- The previous key is verification-only and cannot issue new tokens.
+- Production never falls back to process-local ephemeral key material.
+- Runtime key directories and PEM files remain outside source control and container images.
+
+## [0.11.0] - 2026-08-03
+
+### Added
+
+- Trustworthy request correlation with strict inbound identifier validation.
+- Global `X-Correlation-ID` response and centralized API-error correlation.
+- Single-line structured JSON logging for operational profiles.
+- Centralized masking for credentials, tokens, secrets, and JWT-like values.
+- One bounded request-completion event per synchronous HTTP request.
+
+### Security
+
+- Raw paths, query strings, bodies, headers, financial values, and user identifiers remain outside request-completion events.
+- Attacker-controlled correlation input cannot inject log structure.
+- Correlation identifiers are excluded from authentication, authorization, business rules, and metric labels.
+
+### Completed milestone work
+
+- [#107](https://github.com/nursena-pc/payflow/issues/107) feat(observability): add structured logging and request correlation
+- [#108](https://github.com/nursena-pc/payflow/pull/108) feat(observability): add structured logging and request correlation
+- [#111](https://github.com/nursena-pc/payflow/pull/111) chore(release): prepare v0.11.0
+
+## [0.10.0] - 2026-08-01
+
+### Added
+
+- Explicit trusted-proxy CIDR configuration with startup validation.
+- Literal-only IPv4 and IPv6 forwarding-chain parsing without DNS resolution.
+- Deterministic effective-client selection across trusted proxy hops.
+- Spoofing-resistant integration with Redis-backed login protection.
+- Bounded source and fallback metrics without raw client-address labels.
+
+### Security
+
+- Forwarding headers from untrusted direct peers are ignored.
+- Malformed, obfuscated, oversized, or excessive-hop input fails safely to the direct peer.
+- Raw forwarding data and client addresses stay out of logs and metric labels.
+
+### Completed milestone work
+
+- [#101](https://github.com/nursena-pc/payflow/issues/101) feat(security): add trusted reverse-proxy client context
+- [#102](https://github.com/nursena-pc/payflow/pull/102) chore(project): start v0.10.0 development
+- [#103](https://github.com/nursena-pc/payflow/pull/103) feat(security): add trusted reverse-proxy client context
+- [#104](https://github.com/nursena-pc/payflow/pull/104) chore(release): prepare v0.10.0
+
+## [0.9.0] - 2026-07-30
+
+### Added
+
+- Redis-backed fixed-window login protection by normalized identity and effective client.
+- Atomic Lua counter updates with explicit expiration.
+- Stable `429 LOGIN_RATE_LIMIT_EXCEEDED` responses with positive `Retry-After`.
+- Fail-closed `503 LOGIN_RATE_LIMIT_UNAVAILABLE` behavior for unsafe Redis failures.
+- Low-cardinality security metrics and credential-free operational events.
+
+### Security
+
+- Redis keys contain SHA-256 digests rather than raw identities or addresses.
+- Login responses preserve generic authentication failure semantics.
+- Parallel requests cannot bypass the configured identity or client threshold.
+
+### Completed milestone work
+
+- [#98](https://github.com/nursena-pc/payflow/issues/98) feat(auth): add Redis-backed login rate limiting
+- [#99](https://github.com/nursena-pc/payflow/pull/99) feat(auth): add Redis-backed login rate limiting
+- [#100](https://github.com/nursena-pc/payflow/pull/100) chore(release): prepare v0.9.0
+
 ## [0.8.0] - 2026-07-29
 
 ### Added
@@ -42,3 +127,7 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - [#90](https://github.com/nursena-pc/payflow/issues/90) feat(auth): revoke current refresh-token session on logout
 
 [0.8.0]: https://github.com/nursena-pc/payflow/compare/v0.7.0...v0.8.0
+[0.9.0]: https://github.com/nursena-pc/payflow/compare/v0.8.0...v0.9.0
+[0.10.0]: https://github.com/nursena-pc/payflow/compare/v0.9.0...v0.10.0
+[0.11.0]: https://github.com/nursena-pc/payflow/compare/v0.10.0...v0.11.0
+[Unreleased]: https://github.com/nursena-pc/payflow/compare/v0.11.0...HEAD
