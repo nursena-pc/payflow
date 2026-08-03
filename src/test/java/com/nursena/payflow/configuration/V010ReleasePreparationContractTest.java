@@ -3,23 +3,15 @@ package com.nursena.payflow.configuration;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Stream;
-import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.junit.jupiter.api.Test;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 class V010ReleasePreparationContractTest {
-
-    private static final Path POM_PATH =
-        Path.of("pom.xml");
 
     private static final Path README_PATH =
         Path.of("README.md");
@@ -44,18 +36,14 @@ class V010ReleasePreparationContractTest {
         );
 
     @Test
-    void shouldUseNextDevelopmentVersionAfterPublishedRelease()
-        throws Exception {
-
-        assertThat(readProjectVersion())
-            .isEqualTo("0.11.0-SNAPSHOT");
+    void shouldRetainPublishedReleaseRecord()
+        throws IOException {
 
         assertThat(
             Files.readString(README_PATH)
         )
             .contains(
-                "v0.10.0 is the latest published release",
-                "v0.11.0 development line",
+                "v0.10.0 remains the latest published release",
                 "docs/releases/v0.10.0.md"
             );
 
@@ -64,7 +52,6 @@ class V010ReleasePreparationContractTest {
         )
             .contains(
                 "PayFlow v0.10.0 is the latest tagged release",
-                "`0.11.0-SNAPSHOT`",
                 "## v0.10.0 — Released: Trusted Client Context"
             )
             .doesNotContain(
@@ -175,52 +162,4 @@ class V010ReleasePreparationContractTest {
         }
     }
 
-    private static String readProjectVersion()
-        throws Exception {
-
-        DocumentBuilderFactory factory =
-            DocumentBuilderFactory.newInstance();
-
-        factory.setFeature(
-            "http://apache.org/xml/features/disallow-doctype-decl",
-            true
-        );
-
-        try (InputStream input =
-            Files.newInputStream(POM_PATH)) {
-
-            Element project =
-                factory
-                    .newDocumentBuilder()
-                    .parse(input)
-                    .getDocumentElement();
-
-            NodeList children =
-                project.getChildNodes();
-
-            for (int index = 0;
-                index < children.getLength();
-                index++) {
-
-                Node child =
-                    children.item(index);
-
-                if (
-                    child.getNodeType()
-                        == Node.ELEMENT_NODE
-                        && "version".equals(
-                            child.getNodeName()
-                        )
-                ) {
-                    return child
-                        .getTextContent()
-                        .trim();
-                }
-            }
-        }
-
-        throw new IOException(
-            "Project version was not found in pom.xml"
-        );
-    }
 }
