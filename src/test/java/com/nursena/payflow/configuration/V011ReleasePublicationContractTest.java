@@ -36,7 +36,7 @@ class V011ReleasePublicationContractTest {
 
         assertThat(Files.readString(README))
             .contains(
-                "PayFlow v0.11.0 is the latest published release",
+                "## v0.11.0 release",
                 "docs/releases/v0.11.0.md",
                 "00401d55546fb819fe7d96a8fad8e8c43e37649c"
             )
@@ -46,8 +46,8 @@ class V011ReleasePublicationContractTest {
 
         assertThat(Files.readString(ROADMAP))
             .contains(
-                "PayFlow v0.11.0 is the latest tagged release",
                 "## v0.11.0 — Released: Structured Logging and Request Correlation",
+                "00401d55546fb819fe7d96a8fad8e8c43e37649c",
                 "protected PR #111",
                 "release workflow run: `30816366250`",
                 "executable JAR size: `99,121,200` bytes",

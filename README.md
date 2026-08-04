@@ -107,7 +107,7 @@ Completed capabilities include:
 - operator-only, paginated command-audit queries and chronological command timelines
 - Prometheus metrics, Grafana dashboards, and alert rules for Kafka consumer failures
 
-OpenAPI documentation and executable Postman workflows cover the implemented API. PayFlow v0.11.0 is the latest published release; v0.12.0 is in protected release preparation. The v0.12.0 release commit freezes a bounded JWT signing-key provider, stable key identifiers, and active/previous verification overlap without changing public API payloads.
+OpenAPI documentation and executable Postman workflows cover the implemented API. PayFlow v0.12.0 is the latest published release; the active `0.13.0-SNAPSHOT` line is reserved for verified-email and password-recovery workflows. The v0.12.0 release freezes a bounded JWT signing-key provider, stable key identifiers, and active/previous verification overlap without changing public API payloads.
 
 See the [v0.12.0 release notes](docs/releases/v0.12.0.md), the [JWT key-rotation operations guide](docs/operations/jwt-key-rotation.md), the [v0.11.0 release notes](docs/releases/v0.11.0.md), and the [roadmap](docs/roadmap.md).
 
@@ -125,15 +125,21 @@ The tag-triggered release workflow rebuilt and verified the project before publi
 
 See the [v0.11.0 release notes](docs/releases/v0.11.0.md) and the [structured logging operations guide](docs/operations/structured-logging.md).
 
-## v0.12.0 release preparation
+## v0.12.0 release
 
-PayFlow v0.12.0 is prepared for protected release review. The release separates JWT key retrieval from token issuance and verification. New tokens carry the configured active `kid`. The resource server accepts only RS256 tokens whose key identifier selects the active or immediately previous public key.
+PayFlow v0.12.0 was published from merge commit `fb0f97d076864cf3e45aabe0e3c25c81520ee101`. The release separates JWT key retrieval from token issuance and verification. New tokens carry the configured active `kid`. The resource server accepts only RS256 tokens whose key identifier selects the active or immediately previous public key.
 
 Local development uses one process-local ephemeral RSA key by default. The `production` profile requires configured PKCS#8 private and X.509 public key resources and fails startup when locations, identifiers, key strength, or the active key pair are invalid. Private keys and runtime key directories must never be committed.
 
-The `v0.12.0` tag must be created only from the verified merge commit of the release-preparation pull request. Tag publication triggers the independent release workflow that rebuilds and verifies the project before publishing the executable JAR, SHA-256 checksum, and GitHub Release.
+The protected release-preparation PR #114 produced the verified `v0.12.0` tag target. Release workflow run `30921514114` rebuilt and verified the project before publishing the executable JAR, SHA-256 checksum, and GitHub Release.
 
 See the [v0.12.0 release notes](docs/releases/v0.12.0.md) and the [JWT key-rotation operations guide](docs/operations/jwt-key-rotation.md). The provider decision is recorded in [ADR 0012](docs/adr/0012-jwt-signing-key-rotation.md).
+
+## v0.13.0 active development
+
+The active `0.13.0-SNAPSHOT` line introduces email-ownership verification and secure password recovery without weakening the existing session, token, or anti-enumeration boundaries. Account-action credentials will be opaque, single-use, time-limited, and persisted only as digests. Password recovery will revoke every active refresh-token family after a successful password change.
+
+The development plan keeps email-verification state separate from account status, preserves existing users through an explicit migration policy, applies bounded Redis-backed request limits, and keeps plaintext tokens out of persistence and observable output. Public endpoint contracts, delivery behavior, concurrency guarantees, and test evidence are defined in the [roadmap](docs/roadmap.md) before implementation begins.
 
 ## Implemented API
 
