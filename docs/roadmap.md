@@ -2,13 +2,14 @@
 
 ## Current delivery focus
 
-PayFlow v0.11.0 is the latest tagged release. The active development line uses
-the Maven version `0.12.0-SNAPSHOT`.
+PayFlow v0.11.0 is the latest tagged release. The v0.12.0 release candidate uses
+the Maven version `0.12.0`.
 
 The v0.11.0 observability release was published from verified merge commit
-`00401d55546fb819fe7d96a8fad8e8c43e37649c`. The current focus is the v0.12.0
-JWT signing-key rotation increment: stable `kid` issuance, active and previous
-verification overlap, a key-provider boundary, and fail-fast local key loading.
+`00401d55546fb819fe7d96a8fad8e8c43e37649c`. The v0.12.0 JWT signing-key
+rotation increment was merged through protected PR #113. The current focus is
+protected release review, then replacement of the invalid pre-release tag only
+after the verified release-preparation merge commit is known.
 
 PayFlow remains a modular monolith. PostgreSQL is the system of record; Redis is
 used only for bounded, explicitly expiring abuse-control state.
@@ -286,7 +287,7 @@ The release is ready only when:
 - [x] the executable JAR and SHA-256 checksum are published and independently verified
 - [x] the GitHub Release is published
 
-## v0.12.0 — Active Development: JWT Signing-Key Rotation
+## v0.12.0 — Release Candidate: JWT Signing-Key Rotation
 
 ### Product outcome
 
@@ -324,15 +325,17 @@ keys and only RS256 signatures.
 
 - [x] Add focused active, previous, missing-`kid`, unknown-`kid`, weak-key, and mismatch tests
 - [x] Generate temporary production-profile keys during Docker smoke verification
-- [ ] Pass the complete Maven verification suite
-- [ ] Pass protected `build-and-test` and Docker smoke CI
+- [x] Pass the complete Maven verification suite through protected CI
+- [x] Pass protected `build-and-test` and Docker smoke CI for PR #113
 - [x] Document staged rotation, rollback, key retirement, and emergency recovery
 
 ### Increment 5 — Public contracts and release
 
+- [x] Merge the JWT signing-key rotation increment through protected PR #113
+- [x] Close implementation issue #112 after merge
 - [x] Add an ADR for the signing-key provider and overlap model
 - [x] Update README, configuration examples, and architecture documentation
-- [ ] Prepare v0.12.0 release notes after the implementation PR is merged
+- [x] Prepare v0.12.0 release notes after the implementation PR is merged
 - [ ] Merge v0.12.0 release preparation through a protected pull request
 - [ ] Tag the verified release merge commit as `v0.12.0`
 - [ ] Publish the executable JAR, SHA-256 checksum, and GitHub Release
@@ -362,9 +365,9 @@ The release is ready only when:
 - [x] only RS256 signatures are accepted
 - [x] production startup fails closed on missing, malformed, weak, or mismatched keys
 - [x] private-key material remains outside source control and observable output
-- [ ] focused and complete Maven verification pass
-- [ ] production-profile Docker smoke and protected CI pass
-- [ ] OpenAPI, operations documentation, ADRs, and implementation agree
+- [x] focused and complete Maven verification pass through protected CI
+- [x] production-profile Docker smoke and protected CI pass
+- [x] OpenAPI, operations documentation, ADRs, and implementation agree
 - [ ] v0.12.0 release preparation and publication gates complete
 
 ## Later v1.0 candidates

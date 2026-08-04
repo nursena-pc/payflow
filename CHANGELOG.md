@@ -8,6 +8,8 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-08-04
+
 ### Added
 
 - Stable JWT `kid` issuance for the active RSA signing key.
@@ -23,6 +25,11 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - The previous key is verification-only and cannot issue new tokens.
 - Production never falls back to process-local ephemeral key material.
 - Runtime key directories and PEM files remain outside source control and container images.
+
+### Completed milestone work
+
+- [#112](https://github.com/nursena-pc/payflow/issues/112) feat(security): add JWT signing-key rotation
+- [#113](https://github.com/nursena-pc/payflow/pull/113) feat(security): add JWT signing-key rotation
 
 ## [0.11.0] - 2026-08-03
 
@@ -130,4 +137,5 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 [0.9.0]: https://github.com/nursena-pc/payflow/compare/v0.8.0...v0.9.0
 [0.10.0]: https://github.com/nursena-pc/payflow/compare/v0.9.0...v0.10.0
 [0.11.0]: https://github.com/nursena-pc/payflow/compare/v0.10.0...v0.11.0
-[Unreleased]: https://github.com/nursena-pc/payflow/compare/v0.11.0...HEAD
+[0.12.0]: https://github.com/nursena-pc/payflow/compare/v0.11.0...v0.12.0
+[Unreleased]: https://github.com/nursena-pc/payflow/compare/v0.12.0...HEAD
