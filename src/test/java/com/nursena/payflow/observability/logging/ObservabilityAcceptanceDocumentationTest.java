@@ -98,7 +98,7 @@ class ObservabilityAcceptanceDocumentationTest {
     }
 
     @Test
-    void shouldPublishReleasePreparationNotesAndReadmeLink()
+    void shouldRetainPublishedReleaseNotesAndReadmeLink()
         throws IOException {
         String releaseNotes =
             Files.readString(
@@ -126,10 +126,8 @@ class ObservabilityAcceptanceDocumentationTest {
 
         assertThat(readme)
             .contains(
-                "docs/releases/v0.11.0.md"
-            )
-            .contains(
-                "PayFlow v0.11.0 is the latest published release"
+                "docs/releases/v0.11.0.md",
+                "## v0.11.0 release"
             );
     }
 

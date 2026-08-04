@@ -2,14 +2,14 @@
 
 ## Current delivery focus
 
-PayFlow v0.11.0 is the latest tagged release. The v0.12.0 release candidate uses
-the Maven version `0.12.0`.
+PayFlow v0.12.0 is the latest tagged release. The active development line uses
+the Maven version `0.13.0-SNAPSHOT`.
 
-The v0.11.0 observability release was published from verified merge commit
-`00401d55546fb819fe7d96a8fad8e8c43e37649c`. The v0.12.0 JWT signing-key
-rotation increment was merged through protected PR #113. The current focus is
-protected release review, then replacement of the invalid pre-release tag only
-after the verified release-preparation merge commit is known.
+The v0.12.0 JWT signing-key rotation release was published from verified merge
+commit `fb0f97d076864cf3e45aabe0e3c25c81520ee101`. The v0.13.0 increment
+focuses on email-ownership verification and secure password recovery while
+preserving the existing anti-enumeration, refresh-session, and logging
+boundaries.
 
 PayFlow remains a modular monolith. PostgreSQL is the system of record; Redis is
 used only for bounded, explicitly expiring abuse-control state.
@@ -287,7 +287,7 @@ The release is ready only when:
 - [x] the executable JAR and SHA-256 checksum are published and independently verified
 - [x] the GitHub Release is published
 
-## v0.12.0 — Release Candidate: JWT Signing-Key Rotation
+## v0.12.0 — Released: JWT Signing-Key Rotation
 
 ### Product outcome
 
@@ -336,9 +336,11 @@ keys and only RS256 signatures.
 - [x] Add an ADR for the signing-key provider and overlap model
 - [x] Update README, configuration examples, and architecture documentation
 - [x] Prepare v0.12.0 release notes after the implementation PR is merged
-- [ ] Merge v0.12.0 release preparation through a protected pull request
-- [ ] Tag the verified release merge commit as `v0.12.0`
-- [ ] Publish the executable JAR, SHA-256 checksum, and GitHub Release
+- [x] Merge v0.12.0 release preparation through protected PR #114
+- [x] Tag merge commit `fb0f97d076864cf3e45aabe0e3c25c81520ee101` as `v0.12.0`
+- [x] Publish `payflow-0.12.0.jar`
+- [x] Publish and independently verify `payflow-0.12.0.jar.sha256`
+- [x] Publish the GitHub Release
 
 ## Explicit v0.12.0 non-goals
 
@@ -368,11 +370,127 @@ The release is ready only when:
 - [x] focused and complete Maven verification pass through protected CI
 - [x] production-profile Docker smoke and protected CI pass
 - [x] OpenAPI, operations documentation, ADRs, and implementation agree
-- [ ] v0.12.0 release preparation and publication gates complete
+- [x] v0.12.0 release preparation and publication gates complete
+
+### Publication record
+
+- release workflow run: `30921514114`
+- executable JAR size: `99,140,599` bytes
+- verified SHA-256: `BA0BF76D07B3426E9C8DDE5E128A0C7B957807F71AA982EDC5927077980AB391`
+
+## v0.13.0 — Active Development: Email Verification & Password Recovery
+
+### Product outcome
+
+PayFlow users can prove ownership of their normalized email address and recover
+access after forgetting a password without exposing whether an account exists.
+Every account-action credential is opaque, single-use, time-limited, and stored
+only as a digest. A successful password recovery changes the BCrypt hash and
+revokes every active refresh-token family atomically.
+
+### Increment 1 — Domain model and migration policy
+
+- [x] Open the dedicated v0.13.0 implementation issue under release train #106
+- [ ] Add nullable `email_verified_at` as an invariant separate from `UserStatus`
+- [ ] Backfill every pre-v0.13.0 user as verified to prevent migration lockout
+- [ ] Register new users without a verified-email timestamp
+- [ ] Add explicit `verifyEmail` and `changePassword` domain behavior
+- [ ] Keep password mutation unavailable outside the recovery use case
+- [ ] Add Flyway V15 with constrained account-action token persistence
+
+### Increment 2 — Opaque account-action credentials
+
+- [ ] Generate at least 256 bits of cryptographically secure randomness
+- [ ] Use strict canonical unpadded Base64 URL encoding
+- [ ] Persist only fixed-length SHA-256 digests, never plaintext credentials
+- [ ] Separate `EMAIL_VERIFICATION` and `PASSWORD_RECOVERY` purposes
+- [ ] Enforce purpose-specific expiration and one successful consumption
+- [ ] Invalidate prior active credentials for the same user and purpose
+- [ ] Lock credential consumption so concurrent confirmation has one winner
+- [ ] Exclude credentials and digests from logs, metrics, traces, errors, and APIs
+
+### Increment 3 — Email-verification workflow
+
+- [ ] Issue a verification credential after successful registration
+- [ ] Add generic `POST /api/v1/auth/email-verification/requests`
+- [ ] Add token-confirmation `POST /api/v1/auth/email-verification/confirm`
+- [ ] Build links only from validated configuration, never request host headers
+- [ ] Mark email ownership exactly once in the confirmation transaction
+- [ ] Reject login for unverified new users only after credentials match
+- [ ] Preserve generic behavior for unknown, closed, or already-verified accounts
+
+### Increment 4 — Password-recovery workflow
+
+- [ ] Add generic `POST /api/v1/auth/password-recovery/requests`
+- [ ] Add token-confirmation `POST /api/v1/auth/password-recovery/confirm`
+- [ ] Reuse the registration password-strength and BCrypt policy
+- [ ] Consume the recovery credential and replace the password hash atomically
+- [ ] Revoke all active refresh-token families with `PASSWORD_RECOVERY`
+- [ ] Preserve the existing short access-token residual-validity boundary
+- [ ] Keep invalid, expired, consumed, and superseded token errors indistinguishable
+
+### Increment 5 — Delivery and abuse protection
+
+- [ ] Introduce an application-facing email-delivery port and SMTP adapter
+- [ ] Keep SMTP, templates, and link construction outside domain code
+- [ ] Return the same accepted response for eligible and ineligible identities
+- [ ] Apply identical limiter work before account eligibility is evaluated
+- [ ] Limit each normalized identity and purpose to 3 requests per hour
+- [ ] Limit each effective client and purpose to 20 requests per hour
+- [ ] Store only hashed limiter dimensions with explicit Redis expiration
+- [ ] Fail closed when Redis cannot make a safe abuse-control decision
+- [ ] Record only bounded, low-cardinality delivery and security outcomes
+
+### Increment 6 — Verification and public contracts
+
+- [ ] Unit-test domain state, credential shape, digesting, and lifetime policy
+- [ ] Verify Flyway V14-to-V15 upgrade and clean installation with PostgreSQL
+- [ ] Verify concurrent confirmation and transactional rollback with PostgreSQL
+- [ ] Verify identity/client thresholds, expiration, and outage behavior with Redis
+- [ ] Verify mail delivery without exposing credentials in captured diagnostics
+- [ ] Add MockMvc, real endpoint-to-database, OpenAPI, and Postman contracts
+- [ ] Add an ADR and operations guide for account-action credentials and delivery
+- [ ] Run the complete Maven verification suite and production Docker smoke
+- [ ] Pass protected `build-and-test` and `docker-smoke` checks before merge
+
+## Explicit v0.13.0 non-goals
+
+- email-address change or multiple email addresses per user
+- multi-factor authentication, recovery codes, or step-up authentication
+- external OAuth, OpenID Connect, or social-login providers
+- access-token denylisting or immediate revocation of already-issued JWTs
+- browser cookies, CSRF policy, frontend pages, mobile deep links, or UI branding
+- durable storage of plaintext credentials or provider-ready reset URLs
+- encrypted email outbox or guaranteed asynchronous email delivery
+- email marketing, localization, attachments, or provider migration tooling
+- generalized API-wide rate limiting or device fingerprinting
+- remote KMS, HSM, Vault, Kubernetes, or microservice extraction
+
+These concerns require separate threat models and versioned contracts. The
+v0.13.0 increment is limited to ownership verification, password recovery,
+bounded email delivery, and the security evidence needed to trust them.
+
+## v0.13.0 release exit criteria
+
+The release is ready only when:
+
+- [ ] pre-v0.13.0 users remain able to authenticate after migration
+- [ ] newly registered users cannot authenticate before email verification
+- [ ] account-action plaintext and digests never enter observable output
+- [ ] request responses do not disclose account existence or eligibility
+- [ ] expired, consumed, superseded, and malformed credentials fail safely
+- [ ] concurrent confirmation permits at most one successful state transition
+- [ ] password recovery changes the hash and revokes all refresh families atomically
+- [ ] abuse limits use normalized hashed dimensions and bounded expiration
+- [ ] SMTP failures do not weaken token or account-state correctness
+- [ ] focused unit, PostgreSQL, Redis, HTTP, OpenAPI, and Postman tests pass
+- [ ] the complete Maven suite and production Docker smoke pass
+- [ ] ADR, operations guide, configuration, and implementation agree
+- [ ] protected feature and release-preparation pull requests are merged
+- [ ] the v0.13.0 tag, JAR, checksum, and GitHub Release are published
 
 ## Later v1.0 candidates
 
-Later v1.0 candidates include verified-email and password-recovery workflows,
-multi-factor authentication, generalized abuse protection, load/performance
-evidence, backup/restore rehearsal, API freeze, SBOM generation, and release
-stabilization.
+Later v1.0 candidates include multi-factor authentication, generalized abuse
+protection, load/performance evidence, backup/restore rehearsal, API freeze,
+SBOM generation, and release stabilization.

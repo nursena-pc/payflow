@@ -3,20 +3,12 @@ package com.nursena.payflow.configuration;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.junit.jupiter.api.Test;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
-class V012ReleasePreparationContractTest {
-
-    private static final Path POM =
-        Path.of("pom.xml");
+class V012ReleasePublicationContractTest {
 
     private static final Path README =
         Path.of("README.md");
@@ -71,33 +63,34 @@ class V012ReleasePreparationContractTest {
         );
 
     @Test
-    void shouldUseFinalReleaseCandidateVersion()
-        throws Exception {
-
-        assertThat(readProjectVersion())
-            .isEqualTo("0.12.0");
+    void shouldRetainPublishedReleaseRecord()
+        throws IOException {
 
         assertThat(Files.readString(README))
             .contains(
-                "v0.12.0 is in protected release preparation",
+                "PayFlow v0.12.0 is the latest published release",
                 "docs/releases/v0.12.0.md",
-                "v0.12.0 release preparation",
-                "verified merge commit of the release-preparation pull request"
+                "## v0.12.0 release",
+                "fb0f97d076864cf3e45aabe0e3c25c81520ee101",
+                "protected release-preparation PR #114",
+                "Release workflow run `30921514114`"
             )
             .doesNotContain(
                 "The active `0.12.0-SNAPSHOT` line",
-                "The active v0.12.0 development line"
+                "v0.12.0 is in protected release preparation",
+                "## v0.12.0 release preparation"
             );
 
         assertThat(Files.readString(ROADMAP))
             .contains(
-                "The v0.12.0 release candidate uses",
-                "the Maven version `0.12.0`",
-                "## v0.12.0 — Release Candidate: JWT Signing-Key Rotation"
+                "PayFlow v0.12.0 is the latest tagged release",
+                "## v0.12.0 — Released: JWT Signing-Key Rotation",
+                "release workflow run: `30921514114`",
+                "executable JAR size: `99,140,599` bytes",
+                "BA0BF76D07B3426E9C8DDE5E128A0C7B957807F71AA982EDC5927077980AB391"
             )
             .doesNotContain(
-                "0.12.0-SNAPSHOT",
-                "## v0.12.0 — Active Development: JWT Signing-Key Rotation"
+                "## v0.12.0 — Release Candidate: JWT Signing-Key Rotation"
             );
     }
 
@@ -229,17 +222,19 @@ class V012ReleasePreparationContractTest {
     }
 
     @Test
-    void shouldKeepPublicationCriteriaOpenUntilProtectedReleaseCompletes()
+    void shouldRecordCompletedPublicationCriteria()
         throws IOException {
 
         assertThat(Files.readString(ROADMAP))
             .contains(
                 "- [x] Pass protected `build-and-test` and Docker smoke CI for PR #113",
                 "- [x] Prepare v0.12.0 release notes after the implementation PR is merged",
-                "- [ ] Merge v0.12.0 release preparation through a protected pull request",
-                "- [ ] Tag the verified release merge commit as `v0.12.0`",
-                "- [ ] Publish the executable JAR, SHA-256 checksum, and GitHub Release",
-                "- [ ] v0.12.0 release preparation and publication gates complete"
+                "- [x] Merge v0.12.0 release preparation through protected PR #114",
+                "- [x] Tag merge commit `fb0f97d076864cf3e45aabe0e3c25c81520ee101` as `v0.12.0`",
+                "- [x] Publish `payflow-0.12.0.jar`",
+                "- [x] Publish and independently verify `payflow-0.12.0.jar.sha256`",
+                "- [x] Publish the GitHub Release",
+                "- [x] v0.12.0 release preparation and publication gates complete"
             );
     }
 
@@ -259,48 +254,4 @@ class V012ReleasePreparationContractTest {
             );
     }
 
-    private static String readProjectVersion()
-        throws Exception {
-
-        DocumentBuilderFactory factory =
-            DocumentBuilderFactory.newInstance();
-
-        factory.setFeature(
-            "http://apache.org/xml/features/disallow-doctype-decl",
-            true
-        );
-
-        try (InputStream input = Files.newInputStream(POM)) {
-            Element project = factory
-                .newDocumentBuilder()
-                .parse(input)
-                .getDocumentElement();
-
-            NodeList children = project.getChildNodes();
-
-            for (
-                int index = 0;
-                index < children.getLength();
-                index++
-            ) {
-                Node child = children.item(index);
-
-                if (
-                    child.getNodeType()
-                        == Node.ELEMENT_NODE
-                        && "version".equals(
-                            child.getNodeName()
-                        )
-                ) {
-                    return child
-                        .getTextContent()
-                        .trim();
-                }
-            }
-        }
-
-        throw new IOException(
-            "Project version was not found in pom.xml"
-        );
-    }
 }

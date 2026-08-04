@@ -22,33 +22,34 @@ class RoadmapContractTest {
         Path.of("docs", "roadmap.md");
 
     @Test
-    void shouldAlignRoadmapWithReleaseCandidate()
+    void shouldAlignRoadmapWithActiveDevelopmentVersion()
         throws Exception {
 
         String projectVersion = readProjectVersion();
         String roadmap = Files.readString(ROADMAP);
 
         assertThat(projectVersion)
-            .isEqualTo("0.12.0");
+            .isEqualTo("0.13.0-SNAPSHOT");
 
         assertThat(roadmap)
             .contains(
-                "PayFlow v0.11.0 is the latest tagged release",
+                "PayFlow v0.12.0 is the latest tagged release",
                 "the Maven version `" + projectVersion + "`",
                 "## v0.10.0 — Released: Trusted Client Context",
                 "## v0.11.0 — Released: Structured Logging and Request Correlation",
-                "## v0.12.0 — Release Candidate: JWT Signing-Key Rotation",
-                "merged through protected PR #113",
-                "protected release review"
+                "## v0.12.0 — Released: JWT Signing-Key Rotation",
+                "## v0.13.0 — Active Development: Email Verification & Password Recovery",
+                "fb0f97d076864cf3e45aabe0e3c25c81520ee101",
+                "email-ownership verification and secure password recovery"
             )
             .doesNotContain(
-                "The v0.11.0 release candidate uses",
-                "v0.11.0 is in protected release preparation"
+                "The v0.12.0 release candidate uses",
+                "## v0.12.0 — Release Candidate: JWT Signing-Key Rotation"
             );
     }
 
     @Test
-    void shouldKeepOnlyV012PublicationGatesOpen()
+    void shouldCloseV012PublicationAndOpenV013DeliveryGates()
         throws IOException {
 
         assertThat(Files.readString(ROADMAP))
@@ -59,10 +60,14 @@ class RoadmapContractTest {
                 "- [x] Merge the JWT signing-key rotation increment through protected PR #113",
                 "- [x] Close implementation issue #112 after merge",
                 "- [x] Prepare v0.12.0 release notes after the implementation PR is merged",
-                "- [ ] Merge v0.12.0 release preparation through a protected pull request",
-                "- [ ] Tag the verified release merge commit as `v0.12.0`",
+                "- [x] Merge v0.12.0 release preparation through protected PR #114",
+                "- [x] v0.12.0 release preparation and publication gates complete",
                 "- [x] focused and complete Maven verification pass through protected CI",
-                "- [ ] v0.12.0 release preparation and publication gates complete"
+                "- [x] Open the dedicated v0.13.0 implementation issue under release train #106",
+                "- [ ] Add nullable `email_verified_at` as an invariant separate from `UserStatus`",
+                "- [ ] Persist only fixed-length SHA-256 digests, never plaintext credentials",
+                "- [ ] Revoke all active refresh-token families with `PASSWORD_RECOVERY`",
+                "- [ ] request responses do not disclose account existence or eligibility"
             );
     }
 
