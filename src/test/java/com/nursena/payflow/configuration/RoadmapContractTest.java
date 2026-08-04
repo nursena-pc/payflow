@@ -22,14 +22,14 @@ class RoadmapContractTest {
         Path.of("docs", "roadmap.md");
 
     @Test
-    void shouldAlignRoadmapWithActiveSnapshot()
+    void shouldAlignRoadmapWithReleaseCandidate()
         throws Exception {
 
         String projectVersion = readProjectVersion();
         String roadmap = Files.readString(ROADMAP);
 
         assertThat(projectVersion)
-            .isEqualTo("0.12.0-SNAPSHOT");
+            .isEqualTo("0.12.0");
 
         assertThat(roadmap)
             .contains(
@@ -37,12 +37,9 @@ class RoadmapContractTest {
                 "the Maven version `" + projectVersion + "`",
                 "## v0.10.0 — Released: Trusted Client Context",
                 "## v0.11.0 — Released: Structured Logging and Request Correlation",
-                "## v0.12.0 — Active Development: JWT Signing-Key Rotation",
-                "JWT signing-key rotation increment",
-                "stable `kid` issuance",
-                "active and previous",
-                "key-provider boundary",
-                "fail-fast local key loading"
+                "## v0.12.0 — Release Candidate: JWT Signing-Key Rotation",
+                "merged through protected PR #113",
+                "protected release review"
             )
             .doesNotContain(
                 "The v0.11.0 release candidate uses",
@@ -51,17 +48,20 @@ class RoadmapContractTest {
     }
 
     @Test
-    void shouldKeepV012ReleaseGatesOpen()
+    void shouldKeepOnlyV012PublicationGatesOpen()
         throws IOException {
 
         assertThat(Files.readString(ROADMAP))
             .contains(
                 "- [x] Open the dedicated v0.12.0 implementation issue #112",
-                "- [ ] Pass the complete Maven verification suite",
-                "- [ ] Pass protected `build-and-test` and Docker smoke CI",
-                "- [ ] Prepare v0.12.0 release notes after the implementation PR is merged",
+                "- [x] Pass the complete Maven verification suite through protected CI",
+                "- [x] Pass protected `build-and-test` and Docker smoke CI for PR #113",
+                "- [x] Merge the JWT signing-key rotation increment through protected PR #113",
+                "- [x] Close implementation issue #112 after merge",
+                "- [x] Prepare v0.12.0 release notes after the implementation PR is merged",
+                "- [ ] Merge v0.12.0 release preparation through a protected pull request",
                 "- [ ] Tag the verified release merge commit as `v0.12.0`",
-                "- [ ] focused and complete Maven verification pass",
+                "- [x] focused and complete Maven verification pass through protected CI",
                 "- [ ] v0.12.0 release preparation and publication gates complete"
             );
     }

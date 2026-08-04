@@ -107,9 +107,9 @@ Completed capabilities include:
 - operator-only, paginated command-audit queries and chronological command timelines
 - Prometheus metrics, Grafana dashboards, and alert rules for Kafka consumer failures
 
-OpenAPI documentation and executable Postman workflows cover the implemented API. PayFlow v0.11.0 is the latest published release. The active `0.12.0-SNAPSHOT` line adds a bounded JWT signing-key provider, stable key identifiers, and active/previous verification overlap without changing public API payloads.
+OpenAPI documentation and executable Postman workflows cover the implemented API. PayFlow v0.11.0 is the latest published release; v0.12.0 is in protected release preparation. The v0.12.0 release commit freezes a bounded JWT signing-key provider, stable key identifiers, and active/previous verification overlap without changing public API payloads.
 
-See the [v0.11.0 release notes](docs/releases/v0.11.0.md), the [JWT key-rotation operations guide](docs/operations/jwt-key-rotation.md), the [structured logging operations guide](docs/operations/structured-logging.md), and the [roadmap](docs/roadmap.md).
+See the [v0.12.0 release notes](docs/releases/v0.12.0.md), the [JWT key-rotation operations guide](docs/operations/jwt-key-rotation.md), the [v0.11.0 release notes](docs/releases/v0.11.0.md), and the [roadmap](docs/roadmap.md).
 
 ## Structured logging
 
@@ -125,13 +125,15 @@ The tag-triggered release workflow rebuilt and verified the project before publi
 
 See the [v0.11.0 release notes](docs/releases/v0.11.0.md) and the [structured logging operations guide](docs/operations/structured-logging.md).
 
-## JWT signing-key rotation
+## v0.12.0 release preparation
 
-The active v0.12.0 development line separates JWT key retrieval from token issuance and verification. New tokens carry the configured active `kid`. The resource server accepts only RS256 tokens whose key identifier selects the active or immediately previous public key.
+PayFlow v0.12.0 is prepared for protected release review. The release separates JWT key retrieval from token issuance and verification. New tokens carry the configured active `kid`. The resource server accepts only RS256 tokens whose key identifier selects the active or immediately previous public key.
 
 Local development uses one process-local ephemeral RSA key by default. The `production` profile requires configured PKCS#8 private and X.509 public key resources and fails startup when locations, identifiers, key strength, or the active key pair are invalid. Private keys and runtime key directories must never be committed.
 
-See the [JWT key-rotation operations guide](docs/operations/jwt-key-rotation.md) for key generation, configuration, staged deployment, rollback, retirement, and emergency recovery procedures. The provider decision is recorded in [ADR 0012](docs/adr/0012-jwt-signing-key-rotation.md).
+The `v0.12.0` tag must be created only from the verified merge commit of the release-preparation pull request. Tag publication triggers the independent release workflow that rebuilds and verifies the project before publishing the executable JAR, SHA-256 checksum, and GitHub Release.
+
+See the [v0.12.0 release notes](docs/releases/v0.12.0.md) and the [JWT key-rotation operations guide](docs/operations/jwt-key-rotation.md). The provider decision is recorded in [ADR 0012](docs/adr/0012-jwt-signing-key-rotation.md).
 
 ## Implemented API
 
