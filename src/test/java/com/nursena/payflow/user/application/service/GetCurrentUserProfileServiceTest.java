@@ -89,6 +89,7 @@ class GetCurrentUserProfileServiceTest {
             UserRole.USER,
             UserStatus.ACTIVE,
             CREATED_AT,
+            CREATED_AT,
             CREATED_AT
         );
     }

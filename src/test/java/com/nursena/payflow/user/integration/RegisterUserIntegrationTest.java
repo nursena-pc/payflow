@@ -5,6 +5,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.sql.Timestamp;
+
 import com.nursena.payflow.user.domain.model.UserRole;
 import com.nursena.payflow.user.domain.model.UserStatus;
 import org.junit.jupiter.api.BeforeEach;
@@ -63,7 +65,12 @@ class RegisterUserIntegrationTest {
 
         UserDatabaseRow user = jdbcTemplate.queryForObject(
             """
-            SELECT email, password_hash, role, status
+            SELECT
+                email,
+                password_hash,
+                role,
+                status,
+                email_verified_at
             FROM users
             WHERE email = ?
             """,
@@ -71,7 +78,8 @@ class RegisterUserIntegrationTest {
                 resultSet.getString("email"),
                 resultSet.getString("password_hash"),
                 resultSet.getString("role"),
-                resultSet.getString("status")
+                resultSet.getString("status"),
+                resultSet.getTimestamp("email_verified_at")
             ),
             "integration.user@example.com"
         );
@@ -89,6 +97,7 @@ class RegisterUserIntegrationTest {
             .isEqualTo(UserRole.USER.name());
         assertThat(user.status())
             .isEqualTo(UserStatus.ACTIVE.name());
+        assertThat(user.emailVerifiedAt()).isNull();
     }
 
     @Test
@@ -135,7 +144,8 @@ class RegisterUserIntegrationTest {
         String email,
         String passwordHash,
         String role,
-        String status
+        String status,
+        Timestamp emailVerifiedAt
     ) {
     }
 }

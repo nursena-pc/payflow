@@ -8,6 +8,17 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Nullable email-verification state independent from account status, with existing users safely backfilled during the V15 migration.
+- Package-bounded user-domain behavior for one-time email verification and password replacement through the future recovery workflow.
+- Constrained digest-only account-action credential storage for email verification and password recovery.
+
+### Security
+
+- New registrations remain unverified while every pre-v0.13.0 account keeps its existing authentication eligibility.
+- PostgreSQL enforces credential purpose, SHA-256 digest length, lifetime, terminal-state consistency, and at most one unresolved credential per user and purpose.
+
 ## [0.12.0] - 2026-08-04
 
 ### Added

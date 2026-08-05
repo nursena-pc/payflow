@@ -64,7 +64,10 @@ class RoadmapContractTest {
                 "- [x] v0.12.0 release preparation and publication gates complete",
                 "- [x] focused and complete Maven verification pass through protected CI",
                 "- [x] Open the dedicated v0.13.0 implementation issue under release train #106",
-                "- [ ] Add nullable `email_verified_at` as an invariant separate from `UserStatus`",
+                "- [x] Add nullable `email_verified_at` as an invariant separate from `UserStatus`",
+                "- [x] Backfill every pre-v0.13.0 user as verified to prevent migration lockout",
+                "- [x] Register new users without a verified-email timestamp",
+                "- [x] Add Flyway V15 with constrained account-action token persistence",
                 "- [ ] Persist only fixed-length SHA-256 digests, never plaintext credentials",
                 "- [ ] Revoke all active refresh-token families with `PASSWORD_RECOVERY`",
                 "- [ ] request responses do not disclose account existence or eligibility"

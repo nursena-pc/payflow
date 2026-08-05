@@ -33,6 +33,9 @@ class UserJpaEntity {
     @Column(nullable = false, length = 20)
     private UserStatus status;
 
+    @Column(name = "email_verified_at")
+    private Instant emailVerifiedAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -48,6 +51,7 @@ class UserJpaEntity {
         String passwordHash,
         UserRole role,
         UserStatus status,
+        Instant emailVerifiedAt,
         Instant createdAt,
         Instant updatedAt
     ) {
@@ -56,6 +60,7 @@ class UserJpaEntity {
         this.passwordHash = passwordHash;
         this.role = role;
         this.status = status;
+        this.emailVerifiedAt = emailVerifiedAt;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -78,6 +83,10 @@ class UserJpaEntity {
 
     UserStatus getStatus() {
         return status;
+    }
+
+    Instant getEmailVerifiedAt() {
+        return emailVerifiedAt;
     }
 
     Instant getCreatedAt() {
