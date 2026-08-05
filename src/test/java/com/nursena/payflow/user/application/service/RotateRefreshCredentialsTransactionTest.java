@@ -911,6 +911,7 @@ class RotateRefreshCredentialsTransactionTest {
             UserRole.USER,
             status,
             FAMILY_CREATED_AT,
+            FAMILY_CREATED_AT,
             FAMILY_CREATED_AT
         );
     }

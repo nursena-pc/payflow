@@ -63,6 +63,7 @@ class UserPersistenceAdapter implements UserRepositoryPort {
             user.passwordHash(),
             user.role(),
             user.status(),
+            user.emailVerifiedAt(),
             user.createdAt(),
             user.updatedAt()
         );
@@ -75,6 +76,7 @@ class UserPersistenceAdapter implements UserRepositoryPort {
             entity.getPasswordHash(),
             entity.getRole(),
             entity.getStatus(),
+            entity.getEmailVerifiedAt(),
             entity.getCreatedAt(),
             entity.getUpdatedAt()
         );

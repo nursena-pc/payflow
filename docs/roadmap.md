@@ -391,12 +391,12 @@ revokes every active refresh-token family atomically.
 ### Increment 1 — Domain model and migration policy
 
 - [x] Open the dedicated v0.13.0 implementation issue under release train #106
-- [ ] Add nullable `email_verified_at` as an invariant separate from `UserStatus`
-- [ ] Backfill every pre-v0.13.0 user as verified to prevent migration lockout
-- [ ] Register new users without a verified-email timestamp
-- [ ] Add explicit `verifyEmail` and `changePassword` domain behavior
-- [ ] Keep password mutation unavailable outside the recovery use case
-- [ ] Add Flyway V15 with constrained account-action token persistence
+- [x] Add nullable `email_verified_at` as an invariant separate from `UserStatus`
+- [x] Backfill every pre-v0.13.0 user as verified to prevent migration lockout
+- [x] Register new users without a verified-email timestamp
+- [x] Add explicit `verifyEmail` and `changePassword` domain behavior
+- [x] Keep password mutation unavailable outside the recovery use case
+- [x] Add Flyway V15 with constrained account-action token persistence
 
 ### Increment 2 — Opaque account-action credentials
 

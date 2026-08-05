@@ -941,6 +941,7 @@ class AuthenticateUserServiceTest {
             UserRole.USER,
             UserStatus.ACTIVE,
             NOW,
+            NOW,
             NOW
         );
     }
@@ -954,6 +955,7 @@ class AuthenticateUserServiceTest {
             PASSWORD_HASH,
             UserRole.USER,
             UserStatus.SUSPENDED,
+            NOW,
             NOW,
             NOW
         );

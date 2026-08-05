@@ -94,6 +94,8 @@ class RegisterUserServiceTest {
             .isEqualTo(UserRole.USER);
         assertThat(savedUser.status())
             .isEqualTo(UserStatus.ACTIVE);
+        assertThat(savedUser.isEmailVerified()).isFalse();
+        assertThat(savedUser.emailVerifiedAt()).isNull();
         assertThat(savedUser.createdAt())
             .isEqualTo(NOW);
     }

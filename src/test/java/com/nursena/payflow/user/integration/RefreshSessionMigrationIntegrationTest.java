@@ -40,7 +40,7 @@ class RefreshSessionMigrationIntegrationTest {
     }
 
     @Test
-    void shouldUpgradeV13ToV14AndPreserveExistingUserData() {
+    void shouldUpgradeV13ToLatestAndPreserveExistingUserData() {
         migrateToVersion("13");
 
         assertThat(currentSchemaVersion())
@@ -74,7 +74,7 @@ class RefreshSessionMigrationIntegrationTest {
         migrateToLatestVersion();
 
         assertThat(currentSchemaVersion())
-            .isEqualTo("14");
+            .isEqualTo("15");
 
         assertThat(migrationApplied("13"))
             .isTrue();

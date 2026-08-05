@@ -57,6 +57,9 @@ class UserPersistenceAdapterTest {
             NOW
         );
 
+        Instant verifiedAt = NOW.plusSeconds(60);
+        user.verifyEmail(verifiedAt);
+
         when(repository.saveAndFlush(any(UserJpaEntity.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -68,8 +71,10 @@ class UserPersistenceAdapterTest {
             .isEqualTo(user.passwordHash());
         assertThat(savedUser.role()).isEqualTo(user.role());
         assertThat(savedUser.status()).isEqualTo(user.status());
+        assertThat(savedUser.emailVerifiedAt())
+            .isEqualTo(verifiedAt);
         assertThat(savedUser.createdAt()).isEqualTo(NOW);
-        assertThat(savedUser.updatedAt()).isEqualTo(NOW);
+        assertThat(savedUser.updatedAt()).isEqualTo(verifiedAt);
     }
 
     @Test
@@ -80,12 +85,16 @@ class UserPersistenceAdapterTest {
             NOW
         );
 
+        Instant verifiedAt = NOW.plusSeconds(60);
+        user.verifyEmail(verifiedAt);
+
         UserJpaEntity entity = new UserJpaEntity(
             user.id(),
             user.email().value(),
             user.passwordHash(),
             user.role(),
             user.status(),
+            user.emailVerifiedAt(),
             user.createdAt(),
             user.updatedAt()
         );
@@ -107,6 +116,8 @@ class UserPersistenceAdapterTest {
             .isEqualTo(user.passwordHash());
         assertThat(foundUser.role()).isEqualTo(user.role());
         assertThat(foundUser.status()).isEqualTo(user.status());
+        assertThat(foundUser.emailVerifiedAt())
+            .isEqualTo(verifiedAt);
         assertThat(foundUser.createdAt())
             .isEqualTo(user.createdAt());
         assertThat(foundUser.updatedAt())
@@ -158,6 +169,7 @@ class UserPersistenceAdapterTest {
             user.passwordHash(),
             user.role(),
             user.status(),
+            user.emailVerifiedAt(),
             user.createdAt(),
             user.updatedAt()
         );

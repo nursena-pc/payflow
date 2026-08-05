@@ -141,6 +141,8 @@ The active `0.13.0-SNAPSHOT` line introduces email-ownership verification and se
 
 The development plan keeps email-verification state separate from account status, preserves existing users through an explicit migration policy, applies bounded Redis-backed request limits, and keeps plaintext tokens out of persistence and observable output. Public endpoint contracts, delivery behavior, concurrency guarantees, and test evidence are defined in the [roadmap](docs/roadmap.md) before implementation begins.
 
+The first implementation increment adds the nullable verification timestamp, backfills existing users as verified, keeps new registrations unverified, and introduces the constrained V15 digest-only credential schema. Credential generation, workflow endpoints, abuse control, and email delivery remain isolated in later increments.
+
 ## Implemented API
 
 | Method | Endpoint | Authentication | Description |
