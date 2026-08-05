@@ -86,6 +86,7 @@ payflow:
     account-action:
       email-verification-ttl: ${ACCOUNT_ACTION_EMAIL_VERIFICATION_TTL:24h}
       password-recovery-ttl: ${ACCOUNT_ACTION_PASSWORD_RECOVERY_TTL:30m}
+      email-verification-confirmation-uri: ${ACCOUNT_ACTION_EMAIL_VERIFICATION_CONFIRMATION_URI:https://app.payflow.local/verify-email}
     login-rate-limit:
       enabled: ${LOGIN_RATE_LIMIT_ENABLED:true}
       window: ${LOGIN_RATE_LIMIT_WINDOW:15m}

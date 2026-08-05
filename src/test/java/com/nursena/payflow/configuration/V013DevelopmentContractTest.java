@@ -56,6 +56,30 @@ class V013DevelopmentContractTest {
     }
 
     @Test
+    void shouldRecordCompletedEmailVerificationIncrement()
+        throws IOException {
+
+        assertThat(Files.readString(ROADMAP))
+            .contains(
+                "- [x] Issue a verification credential after successful registration",
+                "- [x] Add generic `POST /api/v1/auth/email-verification/requests`",
+                "- [x] Add token-confirmation `POST /api/v1/auth/email-verification/confirm`",
+                "- [x] Build links only from validated configuration, never request host headers",
+                "- [x] Mark email ownership exactly once in the confirmation transaction",
+                "- [x] Reject login for unverified new users only after credentials match",
+                "- [x] Preserve generic behavior for unknown, closed, or already-verified accounts"
+            );
+
+        assertThat(Files.readString(README))
+            .contains(
+                "The third increment connects registration and authentication",
+                "/api/v1/auth/email-verification/requests",
+                "/api/v1/auth/email-verification/confirm",
+                "validated configuration"
+            );
+    }
+
+    @Test
     void shouldDefinePublicFlowsAndSessionRevocation()
         throws IOException {
 

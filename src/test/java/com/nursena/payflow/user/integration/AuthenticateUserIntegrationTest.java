@@ -1,5 +1,7 @@
 package com.nursena.payflow.user.integration;
 
+import static com.nursena.payflow.user.support.EmailVerificationTestSupport.markVerified;
+
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -339,6 +341,8 @@ class AuthenticateUserIntegrationTest {
             .andExpect(
                 status().isCreated()
             );
+
+        markVerified(jdbcTemplate, email);
     }
 
     private static PersistedSession

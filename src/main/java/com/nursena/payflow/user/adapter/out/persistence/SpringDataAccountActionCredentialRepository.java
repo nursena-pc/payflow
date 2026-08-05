@@ -38,6 +38,18 @@ interface SpringDataAccountActionCredentialRepository
         @Param("supersededAt") Instant supersededAt
     );
 
+    @Query("""
+        SELECT credential.userId
+        FROM AccountActionCredentialJpaEntity credential
+        WHERE credential.credentialDigest = :digest
+          AND credential.purpose = :purpose
+        """)
+    Optional<UUID> findUserIdByDigestAndPurpose(
+        @Param("digest") byte[] digest,
+        @Param("purpose")
+        AccountActionCredentialPurpose purpose
+    );
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
         SELECT credential

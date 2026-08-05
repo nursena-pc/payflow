@@ -54,6 +54,9 @@ Completed capabilities include:
 - versioned PostgreSQL schema management with Flyway
 - secure-by-default Spring Security configuration
 - user registration with normalized email addresses
+- digest-only email-verification credentials issued after registration
+- generic email-verification request and single-use confirmation endpoints
+- login eligibility gated by verified email only after password validation
 - BCrypt password hashing
 - user login with RSA-signed JWT access tokens and opaque refresh credentials
 - stable JWT `kid` issuance with RS256 algorithm pinning
@@ -107,7 +110,7 @@ Completed capabilities include:
 - operator-only, paginated command-audit queries and chronological command timelines
 - Prometheus metrics, Grafana dashboards, and alert rules for Kafka consumer failures
 
-OpenAPI documentation and executable Postman workflows cover the implemented API. PayFlow v0.12.0 is the latest published release; the active `0.13.0-SNAPSHOT` line is reserved for verified-email and password-recovery workflows. The v0.12.0 release freezes a bounded JWT signing-key provider, stable key identifiers, and active/previous verification overlap without changing public API payloads.
+OpenAPI documentation covers the implemented API, while executable Postman workflows remain aligned with released end-to-end flows. PayFlow v0.12.0 is the latest published release; the active `0.13.0-SNAPSHOT` line is reserved for verified-email and password-recovery workflows. The v0.12.0 release freezes a bounded JWT signing-key provider, stable key identifiers, and active/previous verification overlap without changing public API payloads.
 
 See the [v0.12.0 release notes](docs/releases/v0.12.0.md), the [JWT key-rotation operations guide](docs/operations/jwt-key-rotation.md), the [v0.11.0 release notes](docs/releases/v0.11.0.md), and the [roadmap](docs/roadmap.md).
 
@@ -143,14 +146,18 @@ The development plan keeps email-verification state separate from account status
 
 The first implementation increment adds the nullable verification timestamp, backfills existing users as verified, keeps new registrations unverified, and introduces the constrained V15 digest-only credential schema. Credential generation, workflow endpoints, abuse control, and email delivery remain isolated in later increments.
 
-The second increment adds dedicated account-action credential ports, 256-bit canonical credential generation, strict SHA-256 digesting, purpose-specific lifetimes, serialized supersession, and pessimistically locked single-use consumption. Plaintext credentials remain confined to transient redacted issuance results intended for the future delivery boundary; public workflow endpoints, SMTP delivery, and Redis abuse control remain later increments.
+The second increment adds dedicated account-action credential ports, 256-bit canonical credential generation, strict SHA-256 digesting, purpose-specific lifetimes, serialized supersession, and pessimistically locked single-use consumption. Plaintext credentials remain confined to transient redacted issuance results intended for the delivery boundary.
+
+The third increment connects registration and authentication to the email-verification lifecycle. Registration creates one verification credential in the same transaction, eligible identities can request a superseding credential through a generic `202` endpoint, and confirmation consumes the credential while marking ownership exactly once. Confirmation links are derived only from validated configuration, and unverified accounts are rejected only after a submitted password matches. SMTP delivery and Redis-backed account-action abuse protection remain isolated in later increments.
 
 ## Implemented API
 
 | Method | Endpoint | Authentication | Description |
 |---|---|---|---|
 | `POST` | `/api/v1/auth/register` | Public | Registers a new user and stores a BCrypt password hash. |
-| `POST` | `/api/v1/auth/login` | Public | Applies Redis-backed login protection and returns access and refresh credentials. |
+| `POST` | `/api/v1/auth/login` | Public | Applies Redis-backed login protection and returns access and refresh credentials for an active verified account. |
+| `POST` | `/api/v1/auth/email-verification/requests` | Public | Accepts a generic verification request without disclosing account existence or eligibility. |
+| `POST` | `/api/v1/auth/email-verification/confirm` | Public | Consumes one opaque credential and marks email ownership exactly once. |
 | `POST` | `/api/v1/auth/refresh` | Public | Atomically rotates an active opaque refresh credential. |
 | `POST` | `/api/v1/auth/logout` | Public | Idempotently revokes the refresh-token family represented by the submitted credential. |
 | `POST` | `/api/v1/auth/logout-all` | Bearer JWT | Revokes every active refresh session owned by the authenticated user. |

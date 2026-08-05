@@ -411,13 +411,13 @@ revokes every active refresh-token family atomically.
 
 ### Increment 3 — Email-verification workflow
 
-- [ ] Issue a verification credential after successful registration
-- [ ] Add generic `POST /api/v1/auth/email-verification/requests`
-- [ ] Add token-confirmation `POST /api/v1/auth/email-verification/confirm`
-- [ ] Build links only from validated configuration, never request host headers
-- [ ] Mark email ownership exactly once in the confirmation transaction
-- [ ] Reject login for unverified new users only after credentials match
-- [ ] Preserve generic behavior for unknown, closed, or already-verified accounts
+- [x] Issue a verification credential after successful registration
+- [x] Add generic `POST /api/v1/auth/email-verification/requests`
+- [x] Add token-confirmation `POST /api/v1/auth/email-verification/confirm`
+- [x] Build links only from validated configuration, never request host headers
+- [x] Mark email ownership exactly once in the confirmation transaction
+- [x] Reject login for unverified new users only after credentials match
+- [x] Preserve generic behavior for unknown, closed, or already-verified accounts
 
 ### Increment 4 — Password-recovery workflow
 
@@ -475,7 +475,7 @@ bounded email delivery, and the security evidence needed to trust them.
 The release is ready only when:
 
 - [ ] pre-v0.13.0 users remain able to authenticate after migration
-- [ ] newly registered users cannot authenticate before email verification
+- [x] newly registered users cannot authenticate before email verification
 - [ ] account-action plaintext and digests never enter observable output
 - [ ] request responses do not disclose account existence or eligibility
 - [ ] expired, consumed, superseded, and malformed credentials fail safely

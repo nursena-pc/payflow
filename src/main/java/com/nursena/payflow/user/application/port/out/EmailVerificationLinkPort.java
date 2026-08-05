@@ -1,0 +1,8 @@
+package com.nursena.payflow.user.application.port.out;
+
+import java.net.URI;
+
+public interface EmailVerificationLinkPort {
+
+    URI build(String credential);
+}

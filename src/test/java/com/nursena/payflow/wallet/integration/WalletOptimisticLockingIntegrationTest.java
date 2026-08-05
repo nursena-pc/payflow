@@ -1,5 +1,7 @@
 package com.nursena.payflow.wallet.integration;
 
+import static com.nursena.payflow.user.support.EmailVerificationTestSupport.markVerified;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -279,6 +281,8 @@ class WalletOptimisticLockingIntegrationTest {
                     )
             )
             .andExpect(status().isCreated());
+
+        markVerified(jdbcTemplate, email);
     }
 
     private String authenticateUser(

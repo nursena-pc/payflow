@@ -29,7 +29,9 @@ public class SecurityConfiguration {
         "/api/v1/auth/register",
         "/api/v1/auth/login",
         "/api/v1/auth/refresh",
-        "/api/v1/auth/logout"
+        "/api/v1/auth/logout",
+        "/api/v1/auth/email-verification/requests",
+        "/api/v1/auth/email-verification/confirm"
     };
 
     @Bean

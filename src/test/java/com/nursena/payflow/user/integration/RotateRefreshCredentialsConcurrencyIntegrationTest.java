@@ -1,5 +1,7 @@
 package com.nursena.payflow.user.integration;
 
+import static com.nursena.payflow.user.support.EmailVerificationTestSupport.markVerified;
+
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -781,6 +783,8 @@ class RotateRefreshCredentialsConcurrencyIntegrationTest {
             .andExpect(
                 status().isCreated()
             );
+
+        markVerified(jdbcTemplate, credentials.email());
 
         MvcResult loginResult =
             mockMvc.perform(

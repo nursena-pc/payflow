@@ -10,6 +10,8 @@ import com.nursena.payflow.user.application.port.out
     .AccountActionCredentialDigestPort;
 import com.nursena.payflow.user.application.port.out
     .AccountActionCredentialRepositoryPort;
+import com.nursena.payflow.user.application.port.out
+    .UserRepositoryPort;
 import com.nursena.payflow.user.domain.exception
     .InvalidAccountActionCredentialException;
 import com.nursena.payflow.user.domain.model
@@ -29,6 +31,7 @@ class AccountActionCredentialConsumer {
         credentialRepository;
     private final AccountActionCredentialDigestPort
         credentialDigest;
+    private final UserRepositoryPort userRepository;
     private final Clock clock;
 
     AccountActionCredentialConsumer(
@@ -36,6 +39,7 @@ class AccountActionCredentialConsumer {
             credentialRepository,
         AccountActionCredentialDigestPort
             credentialDigest,
+        UserRepositoryPort userRepository,
         Clock clock
     ) {
         this.credentialRepository = Objects.requireNonNull(
@@ -45,6 +49,10 @@ class AccountActionCredentialConsumer {
         this.credentialDigest = Objects.requireNonNull(
             credentialDigest,
             "credentialDigest must not be null"
+        );
+        this.userRepository = Objects.requireNonNull(
+            userRepository,
+            "userRepository must not be null"
         );
         this.clock = Objects.requireNonNull(
             clock,
@@ -65,11 +73,29 @@ class AccountActionCredentialConsumer {
         AccountActionCredentialDigest digest =
             credentialDigest.digest(value);
 
+        UUID candidateUserId = credentialRepository
+            .findUserIdByDigestAndPurpose(
+                digest,
+                checkedPurpose
+            )
+            .orElseThrow(
+                InvalidAccountActionCredentialException::new
+            );
+
+        userRepository
+            .findByIdForUpdate(candidateUserId)
+            .orElseThrow(
+                InvalidAccountActionCredentialException::new
+            );
+
         AccountActionCredential credential =
             credentialRepository
                 .findByDigestAndPurposeForUpdate(
                     digest,
                     checkedPurpose
+                )
+                .filter(locked ->
+                    locked.userId().equals(candidateUserId)
                 )
                 .orElseThrow(
                     InvalidAccountActionCredentialException::new

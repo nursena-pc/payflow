@@ -12,6 +12,8 @@ public interface UserRepositoryPort {
 
     Optional<User> findByEmail(EmailAddress email);
 
+    Optional<User> findByEmailForUpdate(EmailAddress email);
+
     Optional<User> findById(UUID userId);
 
     Optional<User> findByIdForUpdate(UUID userId);

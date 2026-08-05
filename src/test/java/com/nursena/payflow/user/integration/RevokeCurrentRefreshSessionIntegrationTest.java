@@ -1,5 +1,7 @@
 package com.nursena.payflow.user.integration;
 
+import static com.nursena.payflow.user.support.EmailVerificationTestSupport.markVerified;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -376,6 +378,8 @@ class RevokeCurrentRefreshSessionIntegrationTest {
             .andExpect(
                 status().isCreated()
             );
+
+        markVerified(jdbcTemplate, email);
 
         MvcResult loginResult =
             mockMvc.perform(

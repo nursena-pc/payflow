@@ -46,6 +46,12 @@ class OpenApiJsonContractIntegrationTest {
     private static final String LOGIN_PATH =
         "/api/v1/auth/login";
 
+    private static final String EMAIL_VERIFICATION_REQUEST_PATH =
+        "/api/v1/auth/email-verification/requests";
+
+    private static final String EMAIL_VERIFICATION_CONFIRM_PATH =
+        "/api/v1/auth/email-verification/confirm";
+
     private static final String REFRESH_PATH =
         "/api/v1/auth/refresh";
 
@@ -189,6 +195,8 @@ class OpenApiJsonContractIntegrationTest {
             SYSTEM_HEALTH_PATH,
             REGISTER_PATH,
             LOGIN_PATH,
+            EMAIL_VERIFICATION_REQUEST_PATH,
+            EMAIL_VERIFICATION_CONFIRM_PATH,
             REFRESH_PATH,
             LOGOUT_PATH,
             LOGOUT_ALL_PATH,
@@ -263,6 +271,47 @@ class OpenApiJsonContractIntegrationTest {
                 .asInt()
         )
             .isEqualTo(1);
+
+        JsonNode verificationRequest =
+            operation(
+                EMAIL_VERIFICATION_REQUEST_PATH,
+                "post"
+            );
+
+        assertPublicOperation(verificationRequest);
+        assertThat(
+            verificationRequest
+                .path("operationId")
+                .asText()
+        ).isEqualTo(
+            "requestEmailVerification"
+        );
+        assertResponseCodes(
+            verificationRequest,
+            "202",
+            "400"
+        );
+
+        JsonNode verificationConfirm =
+            operation(
+                EMAIL_VERIFICATION_CONFIRM_PATH,
+                "post"
+            );
+
+        assertPublicOperation(verificationConfirm);
+        assertThat(
+            verificationConfirm
+                .path("operationId")
+                .asText()
+        ).isEqualTo(
+            "confirmEmailVerification"
+        );
+        assertResponseCodes(
+            verificationConfirm,
+            "204",
+            "400",
+            "422"
+        );
 
         JsonNode refresh =
             operation(

@@ -46,6 +46,10 @@ class RegisterUserServiceTest {
     @Mock
     private PasswordHashingPort passwordHashing;
 
+    @Mock
+    private EmailVerificationPreparationService
+        emailVerificationPreparation;
+
     private RegisterUserService registerUserService;
 
     @BeforeEach
@@ -55,6 +59,7 @@ class RegisterUserServiceTest {
         registerUserService = new RegisterUserService(
             userRepository,
             passwordHashing,
+            emailVerificationPreparation,
             clock
         );
     }
@@ -84,6 +89,9 @@ class RegisterUserServiceTest {
         verify(userRepository).save(userCaptor.capture());
 
         User savedUser = userCaptor.getValue();
+
+        verify(emailVerificationPreparation)
+            .prepare(savedUser.id());
 
         assertThat(userId).isEqualTo(savedUser.id());
         assertThat(savedUser.email().value())
@@ -121,6 +129,9 @@ class RegisterUserServiceTest {
 
         verify(userRepository).existsByEmail(email);
         verify(userRepository, never()).save(any(User.class));
-        verifyNoInteractions(passwordHashing);
+        verifyNoInteractions(
+            passwordHashing,
+            emailVerificationPreparation
+        );
     }
 }
