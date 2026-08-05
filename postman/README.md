@@ -42,6 +42,8 @@ Run the standard application workflow folders in this order:
 
 The registration requests generate unique source and target emails. Login requests save their JWTs. Wallet requests save wallet IDs. `Create Transfer` generates an `Idempotency-Key`.
 
+The Authentication folder also contains password-recovery request and confirmation examples. The request always expects `202 Accepted`. Before running confirmation, copy the opaque credential received through a trusted delivery or test channel into the secret `passwordRecoveryCredential` environment value. The committed environment intentionally leaves that value empty. `replacementPassword` is a local-only secret variable and should never be exported after use.
+
 Run **Operations** separately. It is not part of the unattended application workflow because it requires both:
 
 - a valid JWT whose claims contain `role=ADMIN`
@@ -100,7 +102,7 @@ Run `Create Transfer`, then run `Replay Last Transfer` without rerunning the fir
 
 ## Security
 
-The repository contains no real JWTs, privileged operator credentials, personal credentials, or production secrets. `operatorAccessToken`, `deadLetterRecordId`, `auditCommandId`, and `auditOperatorId` are intentionally empty in the committed environment.
+The repository contains no real JWTs, password-recovery credentials, privileged operator credentials, personal credentials, or production secrets. `operatorAccessToken`, `deadLetterRecordId`, `auditCommandId`, and `auditOperatorId` are intentionally empty in the committed environment.
 
 Never commit a Postman environment exported after it contains a live user or admin token. Treat an admin JWT as a privileged credential and keep it in a local environment or another trusted secret store.
 

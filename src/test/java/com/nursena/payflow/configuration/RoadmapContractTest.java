@@ -83,7 +83,13 @@ class RoadmapContractTest {
                 "- [x] Mark email ownership exactly once in the confirmation transaction",
                 "- [x] Reject login for unverified new users only after credentials match",
                 "- [x] Preserve generic behavior for unknown, closed, or already-verified accounts",
-                "- [ ] Revoke all active refresh-token families with `PASSWORD_RECOVERY`",
+                "- [x] Add generic `POST /api/v1/auth/password-recovery/requests`",
+                "- [x] Add token-confirmation `POST /api/v1/auth/password-recovery/confirm`",
+                "- [x] Reuse the registration password-strength and BCrypt policy",
+                "- [x] Consume the recovery credential and replace the password hash atomically",
+                "- [x] Revoke all active refresh-token families with `PASSWORD_RECOVERY`",
+                "- [x] Preserve the existing short access-token residual-validity boundary",
+                "- [x] Keep invalid, expired, consumed, and superseded token errors indistinguishable",
                 "- [ ] request responses do not disclose account existence or eligibility"
             );
     }

@@ -229,6 +229,56 @@ public final class OpenApiExamples {
         }
         """;
 
+
+    public static final String
+    PASSWORD_RECOVERY_REQUEST_VALIDATION_ERROR =
+        """
+        {
+          "timestamp": "2026-08-05T12:00:00Z",
+          "status": 400,
+          "code": "VALIDATION_FAILED",
+          "message": "Request validation failed.",
+          "path": "/api/v1/auth/password-recovery/requests",
+          "violations": [
+            {
+              "field": "email",
+              "message": "Email must be valid."
+            }
+          ]
+        }
+        """;
+
+    public static final String
+    PASSWORD_RECOVERY_CONFIRM_VALIDATION_ERROR =
+        """
+        {
+          "timestamp": "2026-08-05T12:00:00Z",
+          "status": 400,
+          "code": "VALIDATION_FAILED",
+          "message": "Request validation failed.",
+          "path": "/api/v1/auth/password-recovery/confirm",
+          "violations": [
+            {
+              "field": "newPassword",
+              "message": "New password must be between 12 and 72 characters."
+            }
+          ]
+        }
+        """;
+
+    public static final String
+    INVALID_PASSWORD_RECOVERY_CREDENTIAL =
+        """
+        {
+          "timestamp": "2026-08-05T12:00:00Z",
+          "status": 422,
+          "code": "ACCOUNT_ACTION_CREDENTIAL_INVALID",
+          "message": "Account action credential is invalid.",
+          "path": "/api/v1/auth/password-recovery/confirm",
+          "violations": []
+        }
+        """;
+
     private OpenApiExamples() {
     }
 }
