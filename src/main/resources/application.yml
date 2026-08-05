@@ -37,6 +37,20 @@ spring:
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
     listener:
       ack-mode: record
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_SMTP_AUTH:false}
+          starttls:
+            enable: ${MAIL_SMTP_STARTTLS_ENABLED:false}
+          connectiontimeout: ${MAIL_SMTP_CONNECTION_TIMEOUT_MS:5000}
+          timeout: ${MAIL_SMTP_READ_TIMEOUT_MS:5000}
+          writetimeout: ${MAIL_SMTP_WRITE_TIMEOUT_MS:5000}
 
 server:
   port: ${SERVER_PORT:8080}
@@ -97,6 +111,25 @@ payflow:
       trusted-proxy-cidrs: ${TRUSTED_PROXY_CIDRS:}
       max-forwarded-header-length: ${FORWARDED_HEADER_MAX_LENGTH:4096}
       max-forwarded-hops: ${FORWARDED_MAX_HOPS:16}
+  mail:
+    content-protection:
+      provider-mode: ${MAIL_CONTENT_PROTECTION_MODE:ephemeral}
+      key-base64: ${MAIL_CONTENT_ENCRYPTION_KEY:}
+    delivery:
+      from-address: ${MAIL_FROM_ADDRESS:no-reply@payflow.local}
+      from-name: ${MAIL_FROM_NAME:PayFlow}
+    outbox:
+      retry:
+        max-attempts: ${MAIL_OUTBOX_RETRY_MAX_ATTEMPTS:5}
+        initial-delay: ${MAIL_OUTBOX_RETRY_INITIAL_DELAY:30s}
+        maximum-delay: ${MAIL_OUTBOX_RETRY_MAXIMUM_DELAY:10m}
+      polling:
+        enabled: ${MAIL_OUTBOX_POLLING_ENABLED:false}
+        worker-id: ${MAIL_OUTBOX_WORKER_ID:${HOSTNAME:payflow-mail-local}}
+        batch-size: ${MAIL_OUTBOX_POLLING_BATCH_SIZE:50}
+        lease-duration: ${MAIL_OUTBOX_POLLING_LEASE_DURATION:30s}
+        fixed-delay: ${MAIL_OUTBOX_POLLING_FIXED_DELAY:2s}
+        initial-delay: ${MAIL_OUTBOX_POLLING_INITIAL_DELAY:5s}
   outbox:
     kafka:
       send-timeout: ${OUTBOX_KAFKA_SEND_TIMEOUT:10s}
@@ -145,3 +178,6 @@ payflow:
     jwt:
       key-set:
         provider-mode: configured
+  mail:
+    content-protection:
+      provider-mode: configured

@@ -135,6 +135,7 @@ class AccountActionCredentialIssuer {
             credentialRepository.save(credential);
 
         return new IssuedAccountActionCredential(
+            saved.id().value(),
             generated.value(),
             saved.expiresAt()
         );

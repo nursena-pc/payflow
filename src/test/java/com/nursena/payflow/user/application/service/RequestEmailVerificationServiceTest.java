@@ -64,7 +64,7 @@ class RequestEmailVerificationServiceTest {
             )
         );
 
-        verify(preparationService).prepare(USER_ID);
+        verify(preparationService).prepare(USER_ID, EMAIL);
     }
 
     @Test
@@ -78,7 +78,7 @@ class RequestEmailVerificationServiceTest {
             )
         );
 
-        verify(preparationService, never()).prepare(USER_ID);
+        verify(preparationService, never()).prepare(USER_ID, EMAIL);
     }
 
     @Test
@@ -92,7 +92,7 @@ class RequestEmailVerificationServiceTest {
             )
         );
 
-        verify(preparationService, never()).prepare(USER_ID);
+        verify(preparationService, never()).prepare(USER_ID, EMAIL);
     }
 
     @Test
@@ -106,7 +106,7 @@ class RequestEmailVerificationServiceTest {
             )
         );
 
-        verify(preparationService, never()).prepare(USER_ID);
+        verify(preparationService, never()).prepare(USER_ID, EMAIL);
     }
 
     private static User unverifiedUser() {

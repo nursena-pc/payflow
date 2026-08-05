@@ -18,7 +18,7 @@ The project focuses on the backend problems that distinguish a financial system 
 
 - Java 21
 - Spring Boot 3.5
-- Spring MVC, Spring Data JPA, Hibernate, Spring Security
+- Spring MVC, Spring Data JPA, Hibernate, Spring Security, Spring Mail
 - PostgreSQL and Flyway
 - Redis
 - Apache Kafka
@@ -50,13 +50,14 @@ The repository foundation, identity flow, revocable refresh sessions, Redis-back
 Completed capabilities include:
 
 - repository standards, contribution guidelines, and CI verification
-- Docker-based PostgreSQL, Redis, and Kafka infrastructure
+- Docker-based PostgreSQL, Redis, Kafka, and Mailpit infrastructure
 - versioned PostgreSQL schema management with Flyway
 - secure-by-default Spring Security configuration
 - user registration with normalized email addresses
 - digest-only email-verification credentials issued after registration
 - generic email-verification request and single-use confirmation endpoints
 - generic password-recovery request and atomic password/session reset endpoints
+- AES-256-GCM-protected account-action mail outbox with leased SMTP delivery
 - login eligibility gated by verified email only after password validation
 - BCrypt password hashing
 - user login with RSA-signed JWT access tokens and opaque refresh credentials
@@ -111,7 +112,7 @@ Completed capabilities include:
 - operator-only, paginated command-audit queries and chronological command timelines
 - Prometheus metrics, Grafana dashboards, and alert rules for Kafka consumer failures
 
-OpenAPI documentation covers the implemented API, while executable Postman workflows remain aligned with released end-to-end flows. PayFlow v0.12.0 is the latest published release; the active `0.13.0-SNAPSHOT` line is reserved for verified-email and password-recovery workflows. The v0.12.0 release freezes a bounded JWT signing-key provider, stable key identifiers, and active/previous verification overlap without changing public API payloads.
+OpenAPI documentation covers the implemented API, while executable Postman workflows remain aligned with released end-to-end flows. PayFlow v0.12.0 is the latest published release; the active `0.13.0-SNAPSHOT` line is reserved for verified-email, password-recovery, and protected account-action mail-delivery workflows. The v0.12.0 release freezes a bounded JWT signing-key provider, stable key identifiers, and active/previous verification overlap without changing public API payloads.
 
 See the [v0.12.0 release notes](docs/releases/v0.12.0.md), the [JWT key-rotation operations guide](docs/operations/jwt-key-rotation.md), the [v0.11.0 release notes](docs/releases/v0.11.0.md), and the [roadmap](docs/roadmap.md).
 
@@ -152,6 +153,10 @@ The second increment adds dedicated account-action credential ports, 256-bit can
 The third increment connects registration and authentication to the email-verification lifecycle. Registration creates one verification credential in the same transaction, eligible identities can request a superseding credential through a generic `202` endpoint, and confirmation consumes the credential while marking ownership exactly once. Confirmation links are derived only from validated configuration, and unverified accounts are rejected only after a submitted password matches. SMTP delivery and Redis-backed account-action abuse protection remain isolated in later increments.
 
 The fourth increment completes the password-recovery workflow. Active verified identities can request a superseding recovery credential through the same generic `202` boundary. Confirmation reuses the registration password-strength and BCrypt policy, consumes the credential, replaces the password hash, and revokes every active refresh-token family in one PostgreSQL transaction with the `PASSWORD_RECOVERY` reason. Existing access JWTs retain only their already-bounded residual lifetime.
+
+The fifth increment adds a dedicated secure mail outbox and SMTP adapter. Credential issuance, configured link construction, AES-256-GCM content protection, and mail persistence share the user transaction; SMTP runs only after commit. Workers use PostgreSQL leases, `FOR UPDATE SKIP LOCKED`, bounded retry, credential-expiry cutoffs, and stable `Message-ID` values. Terminal rows erase protected content, and operational output excludes recipients, links, credentials, digests, and encrypted bytes. Production requires a configured 32-byte content-protection key.
+
+See [ADR 0013](docs/adr/0013-secure-mail-outbox-and-smtp-delivery.md) and the [mail-delivery operations guide](docs/operations/account-action-mail-delivery.md).
 
 ## Implemented API
 

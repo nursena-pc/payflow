@@ -13,6 +13,7 @@ jobs:
     timeout-minutes: 25
     env:
       GRAFANA_ADMIN_PASSWORD: payflow-smoke-local-only
+      MAIL_CONTENT_ENCRYPTION_KEY: AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=
 
     steps:
       - name: Checkout
