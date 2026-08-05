@@ -143,6 +143,8 @@ The development plan keeps email-verification state separate from account status
 
 The first implementation increment adds the nullable verification timestamp, backfills existing users as verified, keeps new registrations unverified, and introduces the constrained V15 digest-only credential schema. Credential generation, workflow endpoints, abuse control, and email delivery remain isolated in later increments.
 
+The second increment adds dedicated account-action credential ports, 256-bit canonical credential generation, strict SHA-256 digesting, purpose-specific lifetimes, serialized supersession, and pessimistically locked single-use consumption. Plaintext credentials remain confined to transient redacted issuance results intended for the future delivery boundary; public workflow endpoints, SMTP delivery, and Redis abuse control remain later increments.
+
 ## Implemented API
 
 | Method | Endpoint | Authentication | Description |

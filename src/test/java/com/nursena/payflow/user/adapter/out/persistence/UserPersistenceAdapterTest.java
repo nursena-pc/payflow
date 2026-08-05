@@ -196,4 +196,36 @@ class UserPersistenceAdapterTest {
 
         verify(repository).findById(user.id());
     }
+
+    @Test
+    void shouldFindUserByIdForUpdate() {
+        User user = User.register(
+            EmailAddress.of("nursena@example.com"),
+            "$2a$12$hashed-password",
+            NOW
+        );
+
+        UserJpaEntity entity = new UserJpaEntity(
+            user.id(),
+            user.email().value(),
+            user.passwordHash(),
+            user.role(),
+            user.status(),
+            user.emailVerifiedAt(),
+            user.createdAt(),
+            user.updatedAt()
+        );
+
+        when(repository.findByIdForUpdate(user.id()))
+            .thenReturn(Optional.of(entity));
+
+        Optional<User> result =
+            adapter.findByIdForUpdate(user.id());
+
+        assertThat(result).isPresent();
+        assertThat(result.orElseThrow().id())
+            .isEqualTo(user.id());
+
+        verify(repository).findByIdForUpdate(user.id());
+    }
 }
