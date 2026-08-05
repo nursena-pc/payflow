@@ -429,27 +429,38 @@ revokes every active refresh-token family atomically.
 - [x] Preserve the existing short access-token residual-validity boundary
 - [x] Keep invalid, expired, consumed, and superseded token errors indistinguishable
 
-### Increment 5 — Delivery and abuse protection
+### Increment 5 — Protected mail outbox and SMTP delivery
 
-- [ ] Introduce an application-facing email-delivery port and SMTP adapter
-- [ ] Keep SMTP, templates, and link construction outside domain code
+- [x] Introduce an application-facing mail port and SMTP adapter
+- [x] Keep SMTP, templates, protection, and dispatch outside domain code
+- [x] Persist mail atomically with credential issuance but deliver only after commit
+- [x] Protect provider-ready mail bodies with AES-256-GCM before persistence
+- [x] Require a configured 32-byte protection key in production
+- [x] Claim work with PostgreSQL leases and `FOR UPDATE SKIP LOCKED`
+- [x] Apply bounded retry without scheduling beyond credential expiry
+- [x] Erase protected content after success, terminal failure, or supersession
+- [x] Use stable `Message-ID` values and document bounded duplicate risk
+- [x] Keep recipients, links, credentials, digests, and protected bytes out of logs and metrics
+
+### Increment 6 — Account-action abuse protection
+
 - [ ] Return the same accepted response for eligible and ineligible identities
 - [ ] Apply identical limiter work before account eligibility is evaluated
 - [ ] Limit each normalized identity and purpose to 3 requests per hour
 - [ ] Limit each effective client and purpose to 20 requests per hour
 - [ ] Store only hashed limiter dimensions with explicit Redis expiration
 - [ ] Fail closed when Redis cannot make a safe abuse-control decision
-- [ ] Record only bounded, low-cardinality delivery and security outcomes
+- [ ] Record only bounded, low-cardinality security outcomes
 
-### Increment 6 — Verification and public contracts
+### Increment 7 — Verification and public contracts
 
 - [ ] Unit-test domain state, credential shape, digesting, and lifetime policy
 - [ ] Verify Flyway V14-to-V15 upgrade and clean installation with PostgreSQL
 - [ ] Verify concurrent confirmation and transactional rollback with PostgreSQL
 - [ ] Verify identity/client thresholds, expiration, and outage behavior with Redis
-- [ ] Verify mail delivery without exposing credentials in captured diagnostics
+- [x] Verify protected mail persistence and SMTP construction without exposing credentials in diagnostics
 - [ ] Add MockMvc, real endpoint-to-database, OpenAPI, and Postman contracts
-- [ ] Add an ADR and operations guide for account-action credentials and delivery
+- [x] Add an ADR and operations guide for protected account-action mail delivery
 - [ ] Run the complete Maven verification suite and production Docker smoke
 - [ ] Pass protected `build-and-test` and `docker-smoke` checks before merge
 
@@ -461,7 +472,7 @@ revokes every active refresh-token family atomically.
 - access-token denylisting or immediate revocation of already-issued JWTs
 - browser cookies, CSRF policy, frontend pages, mobile deep links, or UI branding
 - durable storage of plaintext credentials or provider-ready reset URLs
-- encrypted email outbox or guaranteed asynchronous email delivery
+- provider-side exactly-once guarantees, attachments, localization, or automatic mail-key rotation
 - email marketing, localization, attachments, or provider migration tooling
 - generalized API-wide rate limiting or device fingerprinting
 - remote KMS, HSM, Vault, Kubernetes, or microservice extraction
@@ -476,13 +487,13 @@ The release is ready only when:
 
 - [ ] pre-v0.13.0 users remain able to authenticate after migration
 - [x] newly registered users cannot authenticate before email verification
-- [ ] account-action plaintext and digests never enter observable output
+- [x] account-action plaintext and digests never enter observable output
 - [ ] request responses do not disclose account existence or eligibility
 - [ ] expired, consumed, superseded, and malformed credentials fail safely
 - [ ] concurrent confirmation permits at most one successful state transition
 - [ ] password recovery changes the hash and revokes all refresh families atomically
 - [ ] abuse limits use normalized hashed dimensions and bounded expiration
-- [ ] SMTP failures do not weaken token or account-state correctness
+- [x] SMTP failures do not weaken token or account-state correctness
 - [ ] focused unit, PostgreSQL, Redis, HTTP, OpenAPI, and Postman tests pass
 - [ ] the complete Maven suite and production Docker smoke pass
 - [ ] ADR, operations guide, configuration, and implementation agree

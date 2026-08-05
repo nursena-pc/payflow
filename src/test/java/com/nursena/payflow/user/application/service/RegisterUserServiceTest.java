@@ -91,7 +91,10 @@ class RegisterUserServiceTest {
         User savedUser = userCaptor.getValue();
 
         verify(emailVerificationPreparation)
-            .prepare(savedUser.id());
+            .prepare(
+                savedUser.id(),
+                savedUser.email()
+            );
 
         assertThat(userId).isEqualTo(savedUser.id());
         assertThat(savedUser.email().value())

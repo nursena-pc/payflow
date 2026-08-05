@@ -56,7 +56,8 @@ public class RegisterUserService implements RegisterUserUseCase {
         User savedUser = userRepository.save(user);
 
         emailVerificationPreparation.prepare(
-            savedUser.id()
+            savedUser.id(),
+            savedUser.email()
         );
 
         return savedUser.id();

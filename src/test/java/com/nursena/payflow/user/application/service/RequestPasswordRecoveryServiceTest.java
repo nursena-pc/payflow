@@ -66,7 +66,7 @@ class RequestPasswordRecoveryServiceTest {
             )
         );
 
-        verify(preparationService).prepare(USER_ID);
+        verify(preparationService).prepare(USER_ID, EMAIL);
     }
 
     @Test
@@ -80,7 +80,7 @@ class RequestPasswordRecoveryServiceTest {
             )
         );
 
-        verify(preparationService, never()).prepare(USER_ID);
+        verify(preparationService, never()).prepare(USER_ID, EMAIL);
     }
 
     @Test
@@ -94,7 +94,7 @@ class RequestPasswordRecoveryServiceTest {
             )
         );
 
-        verify(preparationService, never()).prepare(USER_ID);
+        verify(preparationService, never()).prepare(USER_ID, EMAIL);
     }
 
     @Test
@@ -110,7 +110,7 @@ class RequestPasswordRecoveryServiceTest {
             )
         );
 
-        verify(preparationService, never()).prepare(USER_ID);
+        verify(preparationService, never()).prepare(USER_ID, EMAIL);
     }
 
     private static User unverifiedUser() {

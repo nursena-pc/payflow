@@ -18,6 +18,9 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Configuration-derived verification links that never trust request host headers.
 - Generic password-recovery request and single-use confirmation endpoints.
 - V16 refresh-session revocation support for the dedicated `PASSWORD_RECOVERY` reason.
+- Dedicated V17 account-action mail outbox with leased PostgreSQL dispatch and SMTP delivery.
+- AES-256-GCM content protection with ephemeral local and configured production key modes.
+- Mailpit-backed Compose wiring and account-action mail operations guidance.
 
 ### Security
 
@@ -29,6 +32,9 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Password recovery reuses the registration password-strength and BCrypt policy.
 - Successful recovery consumes the opaque credential, replaces the hash, and revokes every active refresh-token family atomically.
 - Invalid, expired, consumed, and superseded recovery credentials share one stable public error contract.
+- Provider-ready verification and recovery links are protected before persistence and erased after terminal delivery outcomes.
+- SMTP failures occur outside user transactions and cannot roll back valid registration or password-recovery state.
+- Mail logs and retry metadata exclude recipients, links, credentials, digests, and protected content.
 
 ## [0.12.0] - 2026-08-04
 

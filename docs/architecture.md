@@ -355,3 +355,7 @@ PostgreSQL is used instead of an in-memory substitute for behavior involving:
 - UUID persistence
 - timestamp precision
 - concurrent unique-key races
+
+## Protected account-action mail delivery
+
+Email-verification and password-recovery workflows depend on the user module's `AccountActionMailPort`. The mail-delivery adapter renders transactional content, protects provider-ready bodies with AES-256-GCM, and persists a dedicated outbox row in the credential transaction. A separate leased dispatcher decrypts only in memory and invokes SMTP after commit. Terminal outcomes erase protected content. See ADR 0013 for delivery semantics and duplicate-risk boundaries.

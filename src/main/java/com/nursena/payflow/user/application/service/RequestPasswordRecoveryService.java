@@ -61,7 +61,10 @@ public class RequestPasswordRecoveryService
             return;
         }
 
-        preparationService.prepare(user.id());
+        preparationService.prepare(
+            user.id(),
+            user.email()
+        );
     }
 
     private static boolean isEligible(User user) {

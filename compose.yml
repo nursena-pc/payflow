@@ -61,6 +61,14 @@ services:
       DB_PASSWORD: payflow
       REDIS_HOST: redis
       KAFKA_BOOTSTRAP_SERVERS: kafka:19092
+      MAIL_CONTENT_PROTECTION_MODE: configured
+      MAIL_CONTENT_ENCRYPTION_KEY: ${MAIL_CONTENT_ENCRYPTION_KEY:?MAIL_CONTENT_ENCRYPTION_KEY must be set}
+      MAIL_HOST: mailpit
+      MAIL_PORT: 1025
+      MAIL_FROM_ADDRESS: no-reply@payflow.local
+      MAIL_FROM_NAME: PayFlow
+      MAIL_OUTBOX_POLLING_ENABLED: "true"
+      MAIL_OUTBOX_WORKER_ID: payflow-compose-mail
       OUTBOX_POLLING_ENABLED: "true"
       OUTBOX_PUBLISHER_ID: payflow-compose
       OUTBOX_POLLING_BATCH_SIZE: 100
@@ -87,6 +95,8 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      mailpit:
+        condition: service_started
 
   prometheus:
     profiles: ["monitoring"]
@@ -107,12 +117,11 @@ services:
         condition: service_started
 
   mailpit:
-    profiles: ["monitoring"]
+    profiles: ["app", "monitoring"]
     image: axllent/mailpit:v1.30.4
     ports:
       - "8025:8025"
-    expose:
-      - "1025"
+      - "1025:1025"
 
   alertmanager:
     profiles: ["monitoring"]
