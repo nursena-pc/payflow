@@ -68,7 +68,14 @@ class RoadmapContractTest {
                 "- [x] Backfill every pre-v0.13.0 user as verified to prevent migration lockout",
                 "- [x] Register new users without a verified-email timestamp",
                 "- [x] Add Flyway V15 with constrained account-action token persistence",
-                "- [ ] Persist only fixed-length SHA-256 digests, never plaintext credentials",
+                "- [x] Generate at least 256 bits of cryptographically secure randomness",
+                "- [x] Use strict canonical unpadded Base64 URL encoding",
+                "- [x] Persist only fixed-length SHA-256 digests, never plaintext credentials",
+                "- [x] Separate `EMAIL_VERIFICATION` and `PASSWORD_RECOVERY` purposes",
+                "- [x] Enforce purpose-specific expiration and one successful consumption",
+                "- [x] Invalidate prior active credentials for the same user and purpose",
+                "- [x] Lock credential consumption so concurrent confirmation has one winner",
+                "- [x] Exclude credentials and digests from logs, metrics, traces, errors, and APIs",
                 "- [ ] Revoke all active refresh-token families with `PASSWORD_RECOVERY`",
                 "- [ ] request responses do not disclose account existence or eligibility"
             );

@@ -83,6 +83,9 @@ payflow:
     refresh-session:
       refresh-token-ttl: ${REFRESH_TOKEN_TTL:7d}
       family-ttl: ${REFRESH_TOKEN_FAMILY_TTL:30d}
+    account-action:
+      email-verification-ttl: ${ACCOUNT_ACTION_EMAIL_VERIFICATION_TTL:24h}
+      password-recovery-ttl: ${ACCOUNT_ACTION_PASSWORD_RECOVERY_TTL:30m}
     login-rate-limit:
       enabled: ${LOGIN_RATE_LIMIT_ENABLED:true}
       window: ${LOGIN_RATE_LIMIT_WINDOW:15m}

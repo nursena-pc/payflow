@@ -1,5 +1,8 @@
 package com.nursena.payflow.user.adapter.out.persistence;
 
+import java.util.Optional;
+import java.util.UUID;
+
 import com.nursena.payflow.user.application.port.out.UserRepositoryPort;
 import com.nursena.payflow.user.domain.exception.EmailAlreadyRegisteredException;
 import com.nursena.payflow.user.domain.model.EmailAddress;
@@ -7,8 +10,6 @@ import com.nursena.payflow.user.domain.model.User;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
-import java.util.Optional;
-import java.util.UUID;
 
 @Component
 class UserPersistenceAdapter implements UserRepositoryPort {
@@ -37,6 +38,12 @@ class UserPersistenceAdapter implements UserRepositoryPort {
     @Override
     public Optional<User> findById(UUID userId) {
         return repository.findById(userId)
+            .map(UserPersistenceAdapter::toDomain);
+    }
+
+    @Override
+    public Optional<User> findByIdForUpdate(UUID userId) {
+        return repository.findByIdForUpdate(userId)
             .map(UserPersistenceAdapter::toDomain);
     }
 

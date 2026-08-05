@@ -400,14 +400,14 @@ revokes every active refresh-token family atomically.
 
 ### Increment 2 — Opaque account-action credentials
 
-- [ ] Generate at least 256 bits of cryptographically secure randomness
-- [ ] Use strict canonical unpadded Base64 URL encoding
-- [ ] Persist only fixed-length SHA-256 digests, never plaintext credentials
-- [ ] Separate `EMAIL_VERIFICATION` and `PASSWORD_RECOVERY` purposes
-- [ ] Enforce purpose-specific expiration and one successful consumption
-- [ ] Invalidate prior active credentials for the same user and purpose
-- [ ] Lock credential consumption so concurrent confirmation has one winner
-- [ ] Exclude credentials and digests from logs, metrics, traces, errors, and APIs
+- [x] Generate at least 256 bits of cryptographically secure randomness
+- [x] Use strict canonical unpadded Base64 URL encoding
+- [x] Persist only fixed-length SHA-256 digests, never plaintext credentials
+- [x] Separate `EMAIL_VERIFICATION` and `PASSWORD_RECOVERY` purposes
+- [x] Enforce purpose-specific expiration and one successful consumption
+- [x] Invalidate prior active credentials for the same user and purpose
+- [x] Lock credential consumption so concurrent confirmation has one winner
+- [x] Exclude credentials and digests from logs, metrics, traces, errors, and APIs
 
 ### Increment 3 — Email-verification workflow
 
