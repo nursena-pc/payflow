@@ -421,13 +421,13 @@ revokes every active refresh-token family atomically.
 
 ### Increment 4 — Password-recovery workflow
 
-- [ ] Add generic `POST /api/v1/auth/password-recovery/requests`
-- [ ] Add token-confirmation `POST /api/v1/auth/password-recovery/confirm`
-- [ ] Reuse the registration password-strength and BCrypt policy
-- [ ] Consume the recovery credential and replace the password hash atomically
-- [ ] Revoke all active refresh-token families with `PASSWORD_RECOVERY`
-- [ ] Preserve the existing short access-token residual-validity boundary
-- [ ] Keep invalid, expired, consumed, and superseded token errors indistinguishable
+- [x] Add generic `POST /api/v1/auth/password-recovery/requests`
+- [x] Add token-confirmation `POST /api/v1/auth/password-recovery/confirm`
+- [x] Reuse the registration password-strength and BCrypt policy
+- [x] Consume the recovery credential and replace the password hash atomically
+- [x] Revoke all active refresh-token families with `PASSWORD_RECOVERY`
+- [x] Preserve the existing short access-token residual-validity boundary
+- [x] Keep invalid, expired, consumed, and superseded token errors indistinguishable
 
 ### Increment 5 — Delivery and abuse protection
 

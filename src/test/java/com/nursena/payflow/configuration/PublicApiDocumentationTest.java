@@ -11,6 +11,9 @@ import com.nursena.payflow.user.adapter.in.web.AuthenticateUserRequest;
 import com.nursena.payflow.user.adapter.in.web.EmailVerificationConfirmRequest;
 import com.nursena.payflow.user.adapter.in.web.EmailVerificationController;
 import com.nursena.payflow.user.adapter.in.web.EmailVerificationRequest;
+import com.nursena.payflow.user.adapter.in.web.PasswordRecoveryConfirmRequest;
+import com.nursena.payflow.user.adapter.in.web.PasswordRecoveryController;
+import com.nursena.payflow.user.adapter.in.web.PasswordRecoveryRequest;
 import com.nursena.payflow.user.adapter.in.web.RegisterUserController;
 import com.nursena.payflow.user.adapter.in.web.RegisterUserRequest;
 import io.swagger.v3.oas.annotations.Operation;
@@ -124,6 +127,50 @@ class PublicApiDocumentationTest {
             method,
             "Authentication",
             "confirmEmailVerification",
+            "204",
+            "400",
+            "422"
+        );
+    }
+
+
+    @Test
+    void shouldDocumentPasswordRecoveryRequestOperation()
+        throws NoSuchMethodException {
+
+        Method method =
+            PasswordRecoveryController.class
+                .getDeclaredMethod(
+                    "request",
+                    PasswordRecoveryRequest.class
+                );
+
+        assertDocumentation(
+            PasswordRecoveryController.class,
+            method,
+            "Authentication",
+            "requestPasswordRecovery",
+            "202",
+            "400"
+        );
+    }
+
+    @Test
+    void shouldDocumentPasswordRecoveryConfirmationOperation()
+        throws NoSuchMethodException {
+
+        Method method =
+            PasswordRecoveryController.class
+                .getDeclaredMethod(
+                    "confirm",
+                    PasswordRecoveryConfirmRequest.class
+                );
+
+        assertDocumentation(
+            PasswordRecoveryController.class,
+            method,
+            "Authentication",
+            "confirmPasswordRecovery",
             "204",
             "400",
             "422"

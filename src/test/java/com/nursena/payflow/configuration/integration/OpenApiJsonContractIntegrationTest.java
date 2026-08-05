@@ -52,6 +52,12 @@ class OpenApiJsonContractIntegrationTest {
     private static final String EMAIL_VERIFICATION_CONFIRM_PATH =
         "/api/v1/auth/email-verification/confirm";
 
+    private static final String PASSWORD_RECOVERY_REQUEST_PATH =
+        "/api/v1/auth/password-recovery/requests";
+
+    private static final String PASSWORD_RECOVERY_CONFIRM_PATH =
+        "/api/v1/auth/password-recovery/confirm";
+
     private static final String REFRESH_PATH =
         "/api/v1/auth/refresh";
 
@@ -197,6 +203,8 @@ class OpenApiJsonContractIntegrationTest {
             LOGIN_PATH,
             EMAIL_VERIFICATION_REQUEST_PATH,
             EMAIL_VERIFICATION_CONFIRM_PATH,
+            PASSWORD_RECOVERY_REQUEST_PATH,
+            PASSWORD_RECOVERY_CONFIRM_PATH,
             REFRESH_PATH,
             LOGOUT_PATH,
             LOGOUT_ALL_PATH,
@@ -308,6 +316,48 @@ class OpenApiJsonContractIntegrationTest {
         );
         assertResponseCodes(
             verificationConfirm,
+            "204",
+            "400",
+            "422"
+        );
+
+
+        JsonNode passwordRecoveryRequest =
+            operation(
+                PASSWORD_RECOVERY_REQUEST_PATH,
+                "post"
+            );
+
+        assertPublicOperation(passwordRecoveryRequest);
+        assertThat(
+            passwordRecoveryRequest
+                .path("operationId")
+                .asText()
+        ).isEqualTo(
+            "requestPasswordRecovery"
+        );
+        assertResponseCodes(
+            passwordRecoveryRequest,
+            "202",
+            "400"
+        );
+
+        JsonNode passwordRecoveryConfirm =
+            operation(
+                PASSWORD_RECOVERY_CONFIRM_PATH,
+                "post"
+            );
+
+        assertPublicOperation(passwordRecoveryConfirm);
+        assertThat(
+            passwordRecoveryConfirm
+                .path("operationId")
+                .asText()
+        ).isEqualTo(
+            "confirmPasswordRecovery"
+        );
+        assertResponseCodes(
+            passwordRecoveryConfirm,
             "204",
             "400",
             "422"
@@ -674,8 +724,71 @@ class OpenApiJsonContractIntegrationTest {
                 .asText()
         ).isEqualTo("string");
     }
+
+    @Test
+    void shouldExposePasswordRecoveryCredentialAndPasswordAsWriteOnly() {
+        JsonNode confirm = operation(
+            PASSWORD_RECOVERY_CONFIRM_PATH,
+            "post"
+        );
+
+        JsonNode requestSchema = confirm
+            .path("requestBody")
+            .path("content")
+            .path(MediaType.APPLICATION_JSON_VALUE)
+            .path("schema");
+
+        assertThat(requestSchema.path("$ref").asText())
+            .isEqualTo(
+                "#/components/schemas/"
+                    + "PasswordRecoveryConfirmRequest"
+            );
+
+        JsonNode properties = openApi
+            .path("components")
+            .path("schemas")
+            .path("PasswordRecoveryConfirmRequest")
+            .path("properties");
+
+        assertThat(fieldNames(properties))
+            .containsExactlyInAnyOrder(
+                "credential",
+                "newPassword"
+            );
+        assertThat(
+            properties
+                .path("credential")
+                .path("writeOnly")
+                .asBoolean()
+        ).isTrue();
+        assertThat(
+            properties
+                .path("newPassword")
+                .path("writeOnly")
+                .asBoolean()
+        ).isTrue();
+
+        assertThat(
+            confirm
+                .path("responses")
+                .path("422")
+                .path("content")
+                .path(MediaType.APPLICATION_JSON_VALUE)
+                .toString()
+        )
+            .contains(
+                "ACCOUNT_ACTION_CREDENTIAL_INVALID",
+                "/api/v1/auth/password-recovery/confirm"
+            )
+            .doesNotContain(
+                "credentialDigest",
+                "passwordHash"
+            );
+    }
+
     @Test
     void shouldExposeRefreshCredentialPairContract() {
+
         JsonNode refresh =
             operation(
                 REFRESH_PATH,

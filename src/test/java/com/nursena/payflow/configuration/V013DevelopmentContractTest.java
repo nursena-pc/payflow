@@ -80,7 +80,7 @@ class V013DevelopmentContractTest {
     }
 
     @Test
-    void shouldDefinePublicFlowsAndSessionRevocation()
+    void shouldRecordCompletedPasswordRecoveryIncrement()
         throws IOException {
 
         assertThat(Files.readString(ROADMAP))
@@ -90,9 +90,19 @@ class V013DevelopmentContractTest {
                 "POST /api/v1/auth/password-recovery/requests",
                 "POST /api/v1/auth/password-recovery/confirm",
                 "Backfill every pre-v0.13.0 user as verified",
-                "Revoke all active refresh-token families with `PASSWORD_RECOVERY`",
+                "- [x] Revoke all active refresh-token families with `PASSWORD_RECOVERY`",
+                "- [x] Reuse the registration password-strength and BCrypt policy",
+                "- [x] Keep invalid, expired, consumed, and superseded token errors indistinguishable",
                 "concurrent confirmation has one winner",
                 "Preserve the existing short access-token residual-validity boundary"
+            );
+
+        assertThat(Files.readString(README))
+            .contains(
+                "The fourth increment completes the password-recovery workflow",
+                "/api/v1/auth/password-recovery/requests",
+                "/api/v1/auth/password-recovery/confirm",
+                "PASSWORD_RECOVERY"
             );
 
         assertThat(Files.readString(CHANGELOG))

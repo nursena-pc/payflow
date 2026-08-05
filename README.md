@@ -56,6 +56,7 @@ Completed capabilities include:
 - user registration with normalized email addresses
 - digest-only email-verification credentials issued after registration
 - generic email-verification request and single-use confirmation endpoints
+- generic password-recovery request and atomic password/session reset endpoints
 - login eligibility gated by verified email only after password validation
 - BCrypt password hashing
 - user login with RSA-signed JWT access tokens and opaque refresh credentials
@@ -150,6 +151,8 @@ The second increment adds dedicated account-action credential ports, 256-bit can
 
 The third increment connects registration and authentication to the email-verification lifecycle. Registration creates one verification credential in the same transaction, eligible identities can request a superseding credential through a generic `202` endpoint, and confirmation consumes the credential while marking ownership exactly once. Confirmation links are derived only from validated configuration, and unverified accounts are rejected only after a submitted password matches. SMTP delivery and Redis-backed account-action abuse protection remain isolated in later increments.
 
+The fourth increment completes the password-recovery workflow. Active verified identities can request a superseding recovery credential through the same generic `202` boundary. Confirmation reuses the registration password-strength and BCrypt policy, consumes the credential, replaces the password hash, and revokes every active refresh-token family in one PostgreSQL transaction with the `PASSWORD_RECOVERY` reason. Existing access JWTs retain only their already-bounded residual lifetime.
+
 ## Implemented API
 
 | Method | Endpoint | Authentication | Description |
@@ -158,6 +161,8 @@ The third increment connects registration and authentication to the email-verifi
 | `POST` | `/api/v1/auth/login` | Public | Applies Redis-backed login protection and returns access and refresh credentials for an active verified account. |
 | `POST` | `/api/v1/auth/email-verification/requests` | Public | Accepts a generic verification request without disclosing account existence or eligibility. |
 | `POST` | `/api/v1/auth/email-verification/confirm` | Public | Consumes one opaque credential and marks email ownership exactly once. |
+| `POST` | `/api/v1/auth/password-recovery/requests` | Public | Accepts a generic recovery request without disclosing account existence or eligibility. |
+| `POST` | `/api/v1/auth/password-recovery/confirm` | Public | Atomically replaces the BCrypt password hash and revokes active refresh sessions. |
 | `POST` | `/api/v1/auth/refresh` | Public | Atomically rotates an active opaque refresh credential. |
 | `POST` | `/api/v1/auth/logout` | Public | Idempotently revokes the refresh-token family represented by the submitted credential. |
 | `POST` | `/api/v1/auth/logout-all` | Bearer JWT | Revokes every active refresh session owned by the authenticated user. |

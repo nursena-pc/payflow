@@ -173,6 +173,126 @@ class PostmanCollectionContractTest {
             .containsEntry("auditOperatorId", "");
     }
 
+
+    @Test
+    void shouldExposePasswordRecoveryWorkflowSafely()
+        throws IOException {
+        JsonNode collection =
+            objectMapper.readTree(
+                COLLECTION_PATH.toFile()
+            );
+
+        JsonNode authentication =
+            findNamedItem(
+                collection.path("item"),
+                "Authentication"
+            );
+
+        JsonNode requestRecovery =
+            findNamedItem(
+                authentication.path("item"),
+                "Request Source Password Recovery"
+            );
+
+        assertPostRequest(
+            requestRecovery,
+            "{{baseUrl}}/api/v1/auth/password-recovery/requests"
+        );
+        assertThat(
+            requestRecovery
+                .path("request")
+                .path("body")
+                .path("raw")
+                .asText()
+        ).contains("{{sourceEmail}}");
+
+        JsonNode confirmRecovery =
+            findNamedItem(
+                authentication.path("item"),
+                "Confirm Source Password Recovery"
+            );
+
+        assertPostRequest(
+            confirmRecovery,
+            "{{baseUrl}}/api/v1/auth/password-recovery/confirm"
+        );
+        assertThat(
+            confirmRecovery
+                .path("request")
+                .path("body")
+                .path("raw")
+                .asText()
+        )
+            .contains(
+                "{{passwordRecoveryCredential}}",
+                "{{replacementPassword}}"
+            );
+        assertThat(eventScript(
+            confirmRecovery,
+            "prerequest"
+        ))
+            .contains(
+                "passwordRecoveryCredential",
+                "trusted delivery channel"
+            );
+    }
+
+    @Test
+    void shouldKeepPasswordRecoveryCredentialUnset()
+        throws IOException {
+        JsonNode environment =
+            objectMapper.readTree(
+                ENVIRONMENT_PATH.toFile()
+            );
+
+        Map<String, String> values =
+            StreamSupport.stream(
+                    environment
+                        .path("values")
+                        .spliterator(),
+                    false
+                )
+                .collect(
+                    Collectors.toMap(
+                        value ->
+                            value.path("key").asText(),
+                        value ->
+                            value.path("value").asText(),
+                        (left, right) -> right,
+                        LinkedHashMap::new
+                    )
+                );
+
+        assertThat(values)
+            .containsEntry(
+                "passwordRecoveryCredential",
+                ""
+            )
+            .containsEntry(
+                "replacementPassword",
+                "ReplacementPassword123!"
+            );
+    }
+
+
+    private static void assertPostRequest(
+        JsonNode item,
+        String expectedRawUrl
+    ) {
+        JsonNode request = item.path("request");
+
+        assertThat(request.path("method").asText())
+            .isEqualTo("POST");
+        assertThat(
+            request
+                .path("url")
+                .path("raw")
+                .asText()
+        ).isEqualTo(expectedRawUrl);
+        assertThat(request.path("auth").path("type").asText())
+            .isEqualTo("noauth");
+    }
+
     private static void assertGetRequest(
         JsonNode item,
         String expectedRawUrl

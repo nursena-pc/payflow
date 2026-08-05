@@ -16,6 +16,8 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Purpose-specific account-action credential issuance and consumption with configurable verification and recovery lifetimes.
 - Registration-time email-verification issuance plus generic request and single-use confirmation endpoints.
 - Configuration-derived verification links that never trust request host headers.
+- Generic password-recovery request and single-use confirmation endpoints.
+- V16 refresh-session revocation support for the dedicated `PASSWORD_RECOVERY` reason.
 
 ### Security
 
@@ -24,6 +26,9 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Account-action credentials use 256 bits of secure randomness, strict unpadded Base64 URL encoding, digest-only persistence, serialized replacement, and single-winner consumption.
 - Correct passwords for active but unverified accounts receive the existing stable unavailable-account response without creating a refresh session.
 - Unknown, closed, and already-verified identities receive the same accepted verification-request response.
+- Password recovery reuses the registration password-strength and BCrypt policy.
+- Successful recovery consumes the opaque credential, replaces the hash, and revokes every active refresh-token family atomically.
+- Invalid, expired, consumed, and superseded recovery credentials share one stable public error contract.
 
 ## [0.12.0] - 2026-08-04
 

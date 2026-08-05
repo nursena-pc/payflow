@@ -36,8 +36,8 @@ public record RegisterUserRequest(
     )
     @NotBlank(message = "Password is required.")
     @Size(
-        min = 12,
-        max = 72,
+        min = PasswordPolicy.MIN_LENGTH,
+        max = PasswordPolicy.MAX_LENGTH,
         message =
             "Password must be between 12 and 72 characters."
     )

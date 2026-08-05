@@ -49,7 +49,7 @@ class AccountActionCredentialMigrationIntegrationTest {
     }
 
     @Test
-    void shouldUpgradeV14ToV15AndVerifyExistingUsers() {
+    void shouldUpgradeV14ToLatestAndVerifyExistingUsers() {
         migrateToVersion("14");
 
         UUID existingUserId = UUID.randomUUID();
@@ -66,8 +66,9 @@ class AccountActionCredentialMigrationIntegrationTest {
 
         migrateToLatestVersion();
 
-        assertThat(currentSchemaVersion()).isEqualTo("15");
+        assertThat(currentSchemaVersion()).isEqualTo("16");
         assertThat(migrationApplied("15")).isTrue();
+        assertThat(migrationApplied("16")).isTrue();
         assertThat(tableExists(
             "account_action_credentials"
         )).isTrue();
