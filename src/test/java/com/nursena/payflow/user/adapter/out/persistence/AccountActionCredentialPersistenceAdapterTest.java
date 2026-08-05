@@ -106,6 +106,30 @@ class AccountActionCredentialPersistenceAdapterTest {
     }
 
     @Test
+    void shouldFindOwningUserWithoutLoadingCredentialEntity() {
+        AccountActionCredential credential =
+            activeCredential();
+
+        when(repository.findUserIdByDigestAndPurpose(
+            credential.digest().value(),
+            credential.purpose()
+        ))
+            .thenReturn(Optional.of(USER_ID));
+
+        Optional<UUID> result =
+            adapter.findUserIdByDigestAndPurpose(
+                credential.digest(),
+                credential.purpose()
+            );
+
+        assertThat(result).contains(USER_ID);
+        verify(repository).findUserIdByDigestAndPurpose(
+            credential.digest().value(),
+            credential.purpose()
+        );
+    }
+
+    @Test
     void shouldFindAndLockCredentialByDigestAndPurpose() {
         AccountActionCredential credential =
             activeCredential();

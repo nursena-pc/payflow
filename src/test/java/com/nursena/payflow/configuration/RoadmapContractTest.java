@@ -76,6 +76,13 @@ class RoadmapContractTest {
                 "- [x] Invalidate prior active credentials for the same user and purpose",
                 "- [x] Lock credential consumption so concurrent confirmation has one winner",
                 "- [x] Exclude credentials and digests from logs, metrics, traces, errors, and APIs",
+                "- [x] Issue a verification credential after successful registration",
+                "- [x] Add generic `POST /api/v1/auth/email-verification/requests`",
+                "- [x] Add token-confirmation `POST /api/v1/auth/email-verification/confirm`",
+                "- [x] Build links only from validated configuration, never request host headers",
+                "- [x] Mark email ownership exactly once in the confirmation transaction",
+                "- [x] Reject login for unverified new users only after credentials match",
+                "- [x] Preserve generic behavior for unknown, closed, or already-verified accounts",
                 "- [ ] Revoke all active refresh-token families with `PASSWORD_RECOVERY`",
                 "- [ ] request responses do not disclose account existence or eligibility"
             );

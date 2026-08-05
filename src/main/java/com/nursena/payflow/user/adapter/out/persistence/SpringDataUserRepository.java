@@ -20,6 +20,16 @@ interface SpringDataUserRepository
     @Query("""
         SELECT user
         FROM UserJpaEntity user
+        WHERE user.email = :email
+        """)
+    Optional<UserJpaEntity> findByEmailForUpdate(
+        @Param("email") String email
+    );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        SELECT user
+        FROM UserJpaEntity user
         WHERE user.id = :userId
         """)
     Optional<UserJpaEntity> findByIdForUpdate(

@@ -165,6 +165,51 @@ class AuthenticateUserServiceTest {
     }
 
     @Test
+    void shouldRejectUnverifiedUserOnlyAfterPasswordMatches() {
+        EmailAddress email =
+            EmailAddress.of(
+                "unverified@example.com"
+            );
+
+        User user =
+            unverifiedActiveUser(email);
+
+        when(userRepository.findByEmail(email))
+            .thenReturn(Optional.of(user));
+
+        when(passwordVerification.matches(
+            RAW_PASSWORD,
+            PASSWORD_HASH
+        ))
+            .thenReturn(true);
+
+        assertThatThrownBy(() ->
+            authenticateUserService.authenticate(
+                new AuthenticateUserCommand(
+                    email.value(),
+                    RAW_PASSWORD,
+                    "203.0.113.10"
+                )
+            )
+        )
+            .isInstanceOf(
+                UserAccountUnavailableException.class
+            );
+
+        verify(passwordVerification).matches(
+            RAW_PASSWORD,
+            PASSWORD_HASH
+        );
+        verifyNoInteractions(
+            refreshTokenGeneration,
+            refreshTokenDigest,
+            familyRepository,
+            recordRepository,
+            accessTokenGeneration
+        );
+    }
+
+    @Test
     void shouldAuthenticateAndIssueInitialRefreshSession() {
         EmailAddress email =
             EmailAddress.of(
@@ -928,6 +973,21 @@ class AuthenticateUserServiceTest {
 
         return RefreshTokenDigest.of(
             bytes
+        );
+    }
+
+    private static User unverifiedActiveUser(
+        EmailAddress email
+    ) {
+        return User.rehydrate(
+            USER_ID,
+            email,
+            PASSWORD_HASH,
+            UserRole.USER,
+            UserStatus.ACTIVE,
+            null,
+            NOW.minusSeconds(60),
+            NOW.minusSeconds(60)
         );
     }
 

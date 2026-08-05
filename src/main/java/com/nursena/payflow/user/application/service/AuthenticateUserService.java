@@ -203,7 +203,10 @@ public class AuthenticateUserService
             throw new InvalidCredentialsException();
         }
 
-        if (user.status() != UserStatus.ACTIVE) {
+        if (
+            user.status() != UserStatus.ACTIVE
+                || !user.isEmailVerified()
+        ) {
             throw new
                 UserAccountUnavailableException();
         }

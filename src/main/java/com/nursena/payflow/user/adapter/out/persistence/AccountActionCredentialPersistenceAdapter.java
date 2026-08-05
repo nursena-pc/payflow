@@ -56,6 +56,17 @@ class AccountActionCredentialPersistenceAdapter
     }
 
     @Override
+    public Optional<UUID> findUserIdByDigestAndPurpose(
+        AccountActionCredentialDigest digest,
+        AccountActionCredentialPurpose purpose
+    ) {
+        return repository.findUserIdByDigestAndPurpose(
+            digest.value(),
+            purpose
+        );
+    }
+
+    @Override
     public Optional<AccountActionCredential>
     findByDigestAndPurposeForUpdate(
         AccountActionCredentialDigest digest,

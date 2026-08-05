@@ -18,15 +18,21 @@ public class RegisterUserService implements RegisterUserUseCase {
 
     private final UserRepositoryPort userRepository;
     private final PasswordHashingPort passwordHashing;
+    private final EmailVerificationPreparationService
+        emailVerificationPreparation;
     private final Clock clock;
 
     public RegisterUserService(
         UserRepositoryPort userRepository,
         PasswordHashingPort passwordHashing,
+        EmailVerificationPreparationService
+            emailVerificationPreparation,
         Clock clock
     ) {
         this.userRepository = userRepository;
         this.passwordHashing = passwordHashing;
+        this.emailVerificationPreparation =
+            emailVerificationPreparation;
         this.clock = clock;
     }
 
@@ -47,6 +53,12 @@ public class RegisterUserService implements RegisterUserUseCase {
             clock.instant()
         );
 
-        return userRepository.save(user).id();
+        User savedUser = userRepository.save(user);
+
+        emailVerificationPreparation.prepare(
+            savedUser.id()
+        );
+
+        return savedUser.id();
     }
 }

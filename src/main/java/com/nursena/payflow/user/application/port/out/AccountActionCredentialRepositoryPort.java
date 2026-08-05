@@ -23,6 +23,11 @@ public interface AccountActionCredentialRepositoryPort {
         Instant supersededAt
     );
 
+    Optional<UUID> findUserIdByDigestAndPurpose(
+        AccountActionCredentialDigest digest,
+        AccountActionCredentialPurpose purpose
+    );
+
     Optional<AccountActionCredential>
     findByDigestAndPurposeForUpdate(
         AccountActionCredentialDigest digest,

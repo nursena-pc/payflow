@@ -1,5 +1,7 @@
 package com.nursena.payflow.transaction.integration;
 
+import static com.nursena.payflow.user.support.EmailVerificationTestSupport.markVerified;
+
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -494,6 +496,8 @@ class TransferIdempotencyConcurrencyIntegrationTest {
                     )
             )
             .andExpect(status().isCreated());
+
+        markVerified(jdbcTemplate, email);
     }
 
     private String authenticateUser(

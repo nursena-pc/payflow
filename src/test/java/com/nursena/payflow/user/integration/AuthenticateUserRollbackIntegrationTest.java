@@ -1,5 +1,7 @@
 package com.nursena.payflow.user.integration;
 
+import static com.nursena.payflow.user.support.EmailVerificationTestSupport.markVerified;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -178,6 +180,8 @@ class AuthenticateUserRollbackIntegrationTest {
             .andExpect(
                 status().isCreated()
             );
+
+        markVerified(jdbcTemplate, credentials.email());
 
         return credentials;
     }

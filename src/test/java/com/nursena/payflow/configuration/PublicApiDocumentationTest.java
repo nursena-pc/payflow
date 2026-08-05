@@ -8,6 +8,9 @@ import java.util.Arrays;
 import com.nursena.payflow.common.api.SystemController;
 import com.nursena.payflow.user.adapter.in.web.AuthenticateUserController;
 import com.nursena.payflow.user.adapter.in.web.AuthenticateUserRequest;
+import com.nursena.payflow.user.adapter.in.web.EmailVerificationConfirmRequest;
+import com.nursena.payflow.user.adapter.in.web.EmailVerificationController;
+import com.nursena.payflow.user.adapter.in.web.EmailVerificationRequest;
 import com.nursena.payflow.user.adapter.in.web.RegisterUserController;
 import com.nursena.payflow.user.adapter.in.web.RegisterUserRequest;
 import io.swagger.v3.oas.annotations.Operation;
@@ -81,6 +84,49 @@ class PublicApiDocumentationTest {
             "403",
             "429",
             "503"
+        );
+    }
+
+    @Test
+    void shouldDocumentEmailVerificationRequestOperation()
+        throws NoSuchMethodException {
+
+        Method method =
+            EmailVerificationController.class
+                .getDeclaredMethod(
+                    "request",
+                    EmailVerificationRequest.class
+                );
+
+        assertDocumentation(
+            EmailVerificationController.class,
+            method,
+            "Authentication",
+            "requestEmailVerification",
+            "202",
+            "400"
+        );
+    }
+
+    @Test
+    void shouldDocumentEmailVerificationConfirmationOperation()
+        throws NoSuchMethodException {
+
+        Method method =
+            EmailVerificationController.class
+                .getDeclaredMethod(
+                    "confirm",
+                    EmailVerificationConfirmRequest.class
+                );
+
+        assertDocumentation(
+            EmailVerificationController.class,
+            method,
+            "Authentication",
+            "confirmEmailVerification",
+            "204",
+            "400",
+            "422"
         );
     }
 

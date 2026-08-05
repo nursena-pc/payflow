@@ -20,6 +20,8 @@ import com.nursena.payflow.user.application.port.out
     .AccountActionCredentialDigestPort;
 import com.nursena.payflow.user.application.port.out
     .AccountActionCredentialRepositoryPort;
+import com.nursena.payflow.user.application.port.out
+    .UserRepositoryPort;
 import com.nursena.payflow.user.domain.exception
     .InvalidAccountActionCredentialException;
 import com.nursena.payflow.user.domain.model
@@ -30,6 +32,10 @@ import com.nursena.payflow.user.domain.model
     .AccountActionCredentialId;
 import com.nursena.payflow.user.domain.model
     .AccountActionCredentialPurpose;
+import com.nursena.payflow.user.domain.model.EmailAddress;
+import com.nursena.payflow.user.domain.model.User;
+import com.nursena.payflow.user.domain.model.UserRole;
+import com.nursena.payflow.user.domain.model.UserStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -68,6 +74,9 @@ class AccountActionCredentialConsumerTest {
     private AccountActionCredentialDigestPort
         credentialDigest;
 
+    @Mock
+    private UserRepositoryPort userRepository;
+
     private AccountActionCredentialConsumer consumer;
 
     @BeforeEach
@@ -75,6 +84,7 @@ class AccountActionCredentialConsumerTest {
         consumer = new AccountActionCredentialConsumer(
             credentialRepository,
             credentialDigest,
+            userRepository,
             Clock.fixed(NOW, ZoneOffset.UTC)
         );
     }
@@ -83,6 +93,20 @@ class AccountActionCredentialConsumerTest {
     void shouldLockConsumeAndReturnOwningUser() {
         when(credentialDigest.digest(CREDENTIAL))
             .thenReturn(DIGEST);
+        AccountActionCredential active =
+            activeCredential();
+
+        when(
+            credentialRepository
+                .findUserIdByDigestAndPurpose(
+                    DIGEST,
+                    AccountActionCredentialPurpose
+                        .EMAIL_VERIFICATION
+                )
+        )
+            .thenReturn(Optional.of(USER_ID));
+        when(userRepository.findByIdForUpdate(USER_ID))
+            .thenReturn(Optional.of(user()));
         when(
             credentialRepository
                 .findByDigestAndPurposeForUpdate(
@@ -91,9 +115,7 @@ class AccountActionCredentialConsumerTest {
                         .EMAIL_VERIFICATION
                 )
         )
-            .thenReturn(
-                Optional.of(activeCredential())
-            );
+            .thenReturn(Optional.of(active));
         when(credentialRepository.save(
             any(AccountActionCredential.class)
         ))
@@ -128,7 +150,7 @@ class AccountActionCredentialConsumerTest {
             .thenReturn(DIGEST);
         when(
             credentialRepository
-                .findByDigestAndPurposeForUpdate(
+                .findUserIdByDigestAndPurpose(
                     DIGEST,
                     AccountActionCredentialPurpose
                         .PASSWORD_RECOVERY
@@ -173,6 +195,17 @@ class AccountActionCredentialConsumerTest {
             .thenReturn(DIGEST);
         when(
             credentialRepository
+                .findUserIdByDigestAndPurpose(
+                    DIGEST,
+                    AccountActionCredentialPurpose
+                        .EMAIL_VERIFICATION
+                )
+        )
+            .thenReturn(Optional.of(USER_ID));
+        when(userRepository.findByIdForUpdate(USER_ID))
+            .thenReturn(Optional.of(user()));
+        when(
+            credentialRepository
                 .findByDigestAndPurposeForUpdate(
                     DIGEST,
                     AccountActionCredentialPurpose
@@ -194,6 +227,19 @@ class AccountActionCredentialConsumerTest {
 
         verify(credentialRepository, never())
             .save(any());
+    }
+
+    private static User user() {
+        return User.rehydrate(
+            USER_ID,
+            EmailAddress.of("user@example.com"),
+            "$2a$12$hashed-password",
+            UserRole.USER,
+            UserStatus.ACTIVE,
+            NOW.minus(Duration.ofDays(1)),
+            NOW.minus(Duration.ofDays(1)),
+            NOW.minus(Duration.ofDays(1))
+        );
     }
 
     private static AccountActionCredential

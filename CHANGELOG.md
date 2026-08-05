@@ -14,12 +14,16 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Package-bounded user-domain behavior for one-time email verification and password replacement through the future recovery workflow.
 - Constrained digest-only account-action credential storage for email verification and password recovery.
 - Purpose-specific account-action credential issuance and consumption with configurable verification and recovery lifetimes.
+- Registration-time email-verification issuance plus generic request and single-use confirmation endpoints.
+- Configuration-derived verification links that never trust request host headers.
 
 ### Security
 
 - New registrations remain unverified while every pre-v0.13.0 account keeps its existing authentication eligibility.
 - PostgreSQL enforces credential purpose, SHA-256 digest length, lifetime, terminal-state consistency, and at most one unresolved credential per user and purpose.
 - Account-action credentials use 256 bits of secure randomness, strict unpadded Base64 URL encoding, digest-only persistence, serialized replacement, and single-winner consumption.
+- Correct passwords for active but unverified accounts receive the existing stable unavailable-account response without creating a refresh session.
+- Unknown, closed, and already-verified identities receive the same accepted verification-request response.
 
 ## [0.12.0] - 2026-08-04
 
