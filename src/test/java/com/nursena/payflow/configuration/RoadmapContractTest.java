@@ -22,7 +22,7 @@ class RoadmapContractTest {
         Path.of("docs", "roadmap.md");
 
     @Test
-    void shouldAlignRoadmapWithReleaseCandidateVersion()
+    void shouldAlignRoadmapWithPublishedReleaseVersion()
         throws Exception {
 
         String projectVersion = readProjectVersion();
@@ -33,18 +33,21 @@ class RoadmapContractTest {
 
         assertThat(roadmap)
             .contains(
-                "PayFlow v0.12.0 is the latest tagged release",
-                "v0.13.0 is in protected release",
-                "the Maven version `" + projectVersion + "`",
+                "PayFlow v0.13.0 is the latest tagged release",
+                "the Maven version",
+                "`" + projectVersion + "`",
+                "The next planned milestone is v0.14.0",
                 "## v0.10.0 — Released: Trusted Client Context",
                 "## v0.11.0 — Released: Structured Logging and Request Correlation",
                 "## v0.12.0 — Released: JWT Signing-Key Rotation",
-                "## v0.13.0 — Release Candidate: Account Recovery and Secure Mail Delivery",
-                "01a1437b13d48ce08e477f5fa5962aa9fb113be6"
+                "## v0.13.0 — Released: Account Recovery and Secure Mail Delivery",
+                "726f631a0de800870813ccb0c00b2676eb5d172b",
+                "31115952987"
             )
             .doesNotContain(
                 "0.13.0-SNAPSHOT",
-                "## v0.13.0 — Active Development"
+                "## v0.13.0 — Active Development",
+                "## v0.13.0 — Release Candidate"
             );
     }
 
@@ -64,9 +67,12 @@ class RoadmapContractTest {
                 "- [x] Run the complete Maven verification suite and production Docker smoke",
                 "1,174 tests, zero failures, zero errors",
                 "Deferred to the generalized abuse-protection milestone",
-                "They are not claimed by this release candidate",
-                "- [ ] the protected v0.13.0 release-preparation pull request is merged",
-                "- [ ] the v0.13.0 tag, JAR, checksum, and GitHub Release are published"
+                "They are not claimed by this release",
+                "- [x] the protected v0.13.0 release-preparation pull request is merged",
+                "- [x] the v0.13.0 tag, JAR, checksum, and GitHub Release are published",
+                "9879780a418d8490b835c36b7a01cd0019621a7e",
+                "78520B04BA3FDAF1BCEB3EAF29FCBE96C46265DF691C52C9048CEE6B5D58F4DA",
+                "4FDD37BC1BF5D058A391A23784CCF87DED3FADCC3F9DB564806A8A52DC1F7B51"
             );
     }
 
