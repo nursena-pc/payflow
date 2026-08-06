@@ -68,14 +68,14 @@ class V012ReleasePublicationContractTest {
 
         assertThat(Files.readString(README))
             .contains(
-                "PayFlow v0.12.0 is the latest published release",
                 "docs/releases/v0.12.0.md",
                 "## v0.12.0 release",
-                "fb0f97d076864cf3e45aabe0e3c25c81520ee101",
+                "PayFlow v0.12.0 was published from merge commit `fb0f97d076864cf3e45aabe0e3c25c81520ee101`",
                 "protected release-preparation PR #114",
                 "Release workflow run `30921514114`"
             )
             .doesNotContain(
+                "PayFlow v0.12.0 is the latest published release",
                 "The active `0.12.0-SNAPSHOT` line",
                 "v0.12.0 is in protected release preparation",
                 "## v0.12.0 release preparation"
@@ -83,13 +83,13 @@ class V012ReleasePublicationContractTest {
 
         assertThat(Files.readString(ROADMAP))
             .contains(
-                "PayFlow v0.12.0 is the latest tagged release",
                 "## v0.12.0 — Released: JWT Signing-Key Rotation",
                 "release workflow run: `30921514114`",
                 "executable JAR size: `99,140,599` bytes",
                 "BA0BF76D07B3426E9C8DDE5E128A0C7B957807F71AA982EDC5927077980AB391"
             )
             .doesNotContain(
+                "PayFlow v0.12.0 is the latest tagged release",
                 "## v0.12.0 — Release Candidate: JWT Signing-Key Rotation"
             );
     }

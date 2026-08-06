@@ -112,9 +112,11 @@ Completed capabilities include:
 - operator-only, paginated command-audit queries and chronological command timelines
 - Prometheus metrics, Grafana dashboards, and alert rules for Kafka consumer failures
 
-OpenAPI documentation covers the implemented API, while executable Postman workflows remain aligned with released end-to-end flows. PayFlow v0.12.0 is the latest published release; v0.13.0 is in protected release preparation with the Maven version frozen at `0.13.0`. The candidate combines verified-email ownership, password recovery, and protected account-action mail delivery without changing the simulated-money boundary.
+OpenAPI documentation covers the implemented API, while executable Postman workflows remain aligned with released end-to-end flows. PayFlow v0.13.0 is the latest published release and the Maven version remains `0.13.0` until the next development increment begins. The release combines verified-email ownership, password recovery, and protected account-action mail delivery without changing the simulated-money boundary.
 
-See the [v0.13.0 release notes](docs/releases/v0.13.0.md), the [account-action mail-delivery operations guide](docs/operations/account-action-mail-delivery.md), [ADR 0013](docs/adr/0013-secure-mail-outbox-and-smtp-delivery.md), the [v0.12.0 release notes](docs/releases/v0.12.0.md), and the [roadmap](docs/roadmap.md).
+The immutable v0.13.0 publication record is anchored to annotated tag `v0.13.0`, merge commit `726f631a0de800870813ccb0c00b2676eb5d172b`, and successful release workflow run [31115952987](https://github.com/nursena-pc/payflow/actions/runs/31115952987). The published `payflow-0.13.0.jar` is 100015861 bytes and its independently verified SHA-256 is `78520B04BA3FDAF1BCEB3EAF29FCBE96C46265DF691C52C9048CEE6B5D58F4DA`.
+
+See the [v0.13.0 release notes](docs/releases/v0.13.0.md), the [published GitHub Release](https://github.com/nursena-pc/payflow/releases/tag/v0.13.0), the [account-action mail-delivery operations guide](docs/operations/account-action-mail-delivery.md), [ADR 0013](docs/adr/0013-secure-mail-outbox-and-smtp-delivery.md), the [v0.12.0 release notes](docs/releases/v0.12.0.md), and the [roadmap](docs/roadmap.md).
 
 ## Structured logging
 

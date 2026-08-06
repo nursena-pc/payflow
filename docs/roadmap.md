@@ -2,14 +2,14 @@
 
 ## Current delivery focus
 
-PayFlow v0.12.0 is the latest tagged release. v0.13.0 is in protected release
-preparation and uses the Maven version `0.13.0`.
+PayFlow v0.13.0 is the latest tagged release and uses the Maven version
+`0.13.0`. The next planned milestone is v0.14.0 multi-factor authentication;
+its development version has not been opened yet.
 
-The v0.12.0 JWT signing-key rotation release was published from verified merge
-commit `fb0f97d076864cf3e45aabe0e3c25c81520ee101`. The v0.13.0 release
-candidate freezes email-ownership verification, password recovery, and secure
-account-action mail delivery while preserving the existing anti-enumeration,
-refresh-session, and logging boundaries.
+The v0.13.0 account-recovery and secure-mail-delivery release was published
+from verified merge commit `726f631a0de800870813ccb0c00b2676eb5d172b`
+through successful release workflow run `31115952987`. It preserves the
+existing anti-enumeration, refresh-session, and logging boundaries.
 
 PayFlow remains a modular monolith. PostgreSQL is the system of record; Redis is
 used only for bounded, explicitly expiring abuse-control state.
@@ -378,7 +378,7 @@ The release is ready only when:
 - executable JAR size: `99,140,599` bytes
 - verified SHA-256: `BA0BF76D07B3426E9C8DDE5E128A0C7B957807F71AA982EDC5927077980AB391`
 
-## v0.13.0 — Release Candidate: Account Recovery and Secure Mail Delivery
+## v0.13.0 — Released: Account Recovery and Secure Mail Delivery
 
 ### Product outcome
 
@@ -450,7 +450,7 @@ The generic request responses and anti-enumeration behavior are part of
 v0.13.0. Purpose-specific Redis quotas of 3 requests per normalized identity
 per hour and 20 requests per effective client per hour, hashed limiter
 dimensions, fail-closed limiter outages, and low-cardinality limiter outcomes
-are intentionally deferred. They are not claimed by this release candidate.
+are intentionally deferred. They are not claimed by this release.
 
 ### Increment 6 — Verification and public contracts
 
@@ -477,9 +477,8 @@ are intentionally deferred. They are not claimed by this release candidate.
 - remote KMS, HSM, Vault, Kubernetes, or microservice extraction
 
 These concerns require separate threat models and versioned contracts. The
-v0.13.0 release candidate is limited to ownership verification, password
-recovery, bounded email delivery, and the security evidence needed to trust
-them.
+v0.13.0 is limited to ownership verification, password recovery, bounded
+email delivery, and the security evidence needed to trust them.
 
 ## v0.13.0 release exit criteria
 
@@ -497,8 +496,8 @@ The release is ready only when:
 - [x] the complete 1,174-test Maven suite and production Docker smoke pass
 - [x] ADR, operations guide, configuration, and implementation agree
 - [x] protected feature pull requests #121, #123, and #125 are merged
-- [ ] the protected v0.13.0 release-preparation pull request is merged
-- [ ] the v0.13.0 tag, JAR, checksum, and GitHub Release are published
+- [x] the protected v0.13.0 release-preparation pull request is merged
+- [x] the v0.13.0 tag, JAR, checksum, and GitHub Release are published
 
 ### Release-candidate evidence
 
@@ -508,6 +507,16 @@ The release is ready only when:
 - integrated feature merge commit: `01a1437b13d48ce08e477f5fa5962aa9fb113be6`
 - complete verification: 1,174 tests, zero failures, zero errors
 - feature-line artifact SHA-256: `214412C8FA5E6279FD9874EC935AA95B5FA90C0CD20166CCF027C7A0EC2C5191`
+- release-preparation PR: `#127`
+- release-candidate commit: `2d4c8b9b30b2291108da93b0df1edab97f032328`
+- published merge and tag commit: `726f631a0de800870813ccb0c00b2676eb5d172b`
+- annotated tag object: `9879780a418d8490b835c36b7a01cd0019621a7e`
+- release workflow run: [`31115952987`](https://github.com/nursena-pc/payflow/actions/runs/31115952987)
+- published at: `2026-08-06T15:35:55Z`
+- published JAR size: `100015861` bytes
+- published JAR SHA-256: `78520B04BA3FDAF1BCEB3EAF29FCBE96C46265DF691C52C9048CEE6B5D58F4DA`
+- release checksum verification: passed
+- publication-evidence JSON SHA-256: `4FDD37BC1BF5D058A391A23784CCF87DED3FADCC3F9DB564806A8A52DC1F7B51`
 
 ## Later v1.0 candidates
 
