@@ -216,8 +216,7 @@ class V012ReleasePublicationContractTest {
                 "Stable JWT `kid` issuance",
                 "[#112](https://github.com/nursena-pc/payflow/issues/112)",
                 "[#113](https://github.com/nursena-pc/payflow/pull/113)",
-                "[0.12.0]: https://github.com/nursena-pc/payflow/compare/v0.11.0...v0.12.0",
-                "[Unreleased]: https://github.com/nursena-pc/payflow/compare/v0.12.0...HEAD"
+                "[0.12.0]: https://github.com/nursena-pc/payflow/compare/v0.11.0...v0.12.0"
             );
     }
 
