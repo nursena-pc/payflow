@@ -8,6 +8,9 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-08-06
+
+
 ### Added
 
 - Nullable email-verification state independent from account status, with existing users safely backfilled during the V15 migration.
@@ -35,6 +38,12 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Provider-ready verification and recovery links are protected before persistence and erased after terminal delivery outcomes.
 - SMTP failures occur outside user transactions and cannot roll back valid registration or password-recovery state.
 - Mail logs and retry metadata exclude recipients, links, credentials, digests, and protected content.
+
+### Completed milestone work
+
+- [#120](https://github.com/nursena-pc/payflow/issues/120) / [#121](https://github.com/nursena-pc/payflow/pull/121) — email-verification workflow
+- [#122](https://github.com/nursena-pc/payflow/issues/122) / [#123](https://github.com/nursena-pc/payflow/pull/123) — password-recovery workflow
+- [#124](https://github.com/nursena-pc/payflow/issues/124) / [#125](https://github.com/nursena-pc/payflow/pull/125) — secure mail outbox and SMTP delivery
 
 ## [0.12.0] - 2026-08-04
 
@@ -166,4 +175,5 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 [0.10.0]: https://github.com/nursena-pc/payflow/compare/v0.9.0...v0.10.0
 [0.11.0]: https://github.com/nursena-pc/payflow/compare/v0.10.0...v0.11.0
 [0.12.0]: https://github.com/nursena-pc/payflow/compare/v0.11.0...v0.12.0
-[Unreleased]: https://github.com/nursena-pc/payflow/compare/v0.12.0...HEAD
+[0.13.0]: https://github.com/nursena-pc/payflow/compare/v0.12.0...v0.13.0
+[Unreleased]: https://github.com/nursena-pc/payflow/compare/v0.13.0...HEAD

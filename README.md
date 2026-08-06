@@ -112,9 +112,9 @@ Completed capabilities include:
 - operator-only, paginated command-audit queries and chronological command timelines
 - Prometheus metrics, Grafana dashboards, and alert rules for Kafka consumer failures
 
-OpenAPI documentation covers the implemented API, while executable Postman workflows remain aligned with released end-to-end flows. PayFlow v0.12.0 is the latest published release; the active `0.13.0-SNAPSHOT` line is reserved for verified-email, password-recovery, and protected account-action mail-delivery workflows. The v0.12.0 release freezes a bounded JWT signing-key provider, stable key identifiers, and active/previous verification overlap without changing public API payloads.
+OpenAPI documentation covers the implemented API, while executable Postman workflows remain aligned with released end-to-end flows. PayFlow v0.12.0 is the latest published release; v0.13.0 is in protected release preparation with the Maven version frozen at `0.13.0`. The candidate combines verified-email ownership, password recovery, and protected account-action mail delivery without changing the simulated-money boundary.
 
-See the [v0.12.0 release notes](docs/releases/v0.12.0.md), the [JWT key-rotation operations guide](docs/operations/jwt-key-rotation.md), the [v0.11.0 release notes](docs/releases/v0.11.0.md), and the [roadmap](docs/roadmap.md).
+See the [v0.13.0 release notes](docs/releases/v0.13.0.md), the [account-action mail-delivery operations guide](docs/operations/account-action-mail-delivery.md), [ADR 0013](docs/adr/0013-secure-mail-outbox-and-smtp-delivery.md), the [v0.12.0 release notes](docs/releases/v0.12.0.md), and the [roadmap](docs/roadmap.md).
 
 ## Structured logging
 
@@ -140,23 +140,19 @@ The protected release-preparation PR #114 produced the verified `v0.12.0` tag ta
 
 See the [v0.12.0 release notes](docs/releases/v0.12.0.md) and the [JWT key-rotation operations guide](docs/operations/jwt-key-rotation.md). The provider decision is recorded in [ADR 0012](docs/adr/0012-jwt-signing-key-rotation.md).
 
-## v0.13.0 active development
+## v0.13.0 release preparation
 
-The active `0.13.0-SNAPSHOT` line introduces email-ownership verification and secure password recovery without weakening the existing session, token, or anti-enumeration boundaries. Account-action credentials will be opaque, single-use, time-limited, and persisted only as digests. Password recovery will revoke every active refresh-token family after a successful password change.
+The protected v0.13.0 release candidate freezes email-ownership verification, password recovery, and secure account-action mail delivery. Account-action credentials use 256 bits of cryptographically secure randomness, canonical unpadded Base64 URL encoding, purpose-specific lifetimes, digest-only persistence, serialized supersession, and pessimistically locked single-use consumption.
 
-The development plan keeps email-verification state separate from account status, preserves existing users through an explicit migration policy, applies bounded Redis-backed request limits, and keeps plaintext tokens out of persistence and observable output. Public endpoint contracts, delivery behavior, concurrency guarantees, and test evidence are defined in the [roadmap](docs/roadmap.md) before implementation begins.
+Registration issues the initial verification credential in the user transaction. Generic verification and recovery request endpoints do not disclose account existence or eligibility. Verification marks ownership exactly once. Password recovery reuses the registration password policy, replaces the BCrypt hash, consumes the recovery credential, and revokes every active refresh-token family atomically with the `PASSWORD_RECOVERY` reason.
 
-The first implementation increment adds the nullable verification timestamp, backfills existing users as verified, keeps new registrations unverified, and introduces the constrained V15 digest-only credential schema. Credential generation, workflow endpoints, abuse control, and email delivery remain isolated in later increments.
+Provider-ready verification and recovery links are protected with AES-256-GCM before persistence in the dedicated V17 mail outbox. SMTP delivery runs only after commit through a leased PostgreSQL dispatcher using `FOR UPDATE SKIP LOCKED`, bounded retry, credential-expiry cutoffs, and stable `Message-ID` values. Terminal delivery outcomes erase protected content, while logs and metrics exclude recipients, links, credentials, digests, and encrypted bytes. Production requires configured RSA signing material and a configured 32-byte mail-content protection key.
 
-The second increment adds dedicated account-action credential ports, 256-bit canonical credential generation, strict SHA-256 digesting, purpose-specific lifetimes, serialized supersession, and pessimistically locked single-use consumption. Plaintext credentials remain confined to transient redacted issuance results intended for the delivery boundary.
+Feature PRs [#121](https://github.com/nursena-pc/payflow/pull/121), [#123](https://github.com/nursena-pc/payflow/pull/123), and [#125](https://github.com/nursena-pc/payflow/pull/125) passed protected `build-and-test` and `docker-smoke` checks. The latest feature-line verification executed 1,174 tests with zero failures and zero errors. The tag-triggered release workflow will rebuild the exact tagged commit, verify that it is reachable from `main`, publish `payflow-0.13.0.jar`, and publish its SHA-256 checksum.
 
-The third increment connects registration and authentication to the email-verification lifecycle. Registration creates one verification credential in the same transaction, eligible identities can request a superseding credential through a generic `202` endpoint, and confirmation consumes the credential while marking ownership exactly once. Confirmation links are derived only from validated configuration, and unverified accounts are rejected only after a submitted password matches. SMTP delivery and Redis-backed account-action abuse protection remain isolated in later increments.
+Per-identity and per-client Redis quotas for account-action requests are explicitly deferred to the later generalized abuse-protection milestone. v0.13.0 retains generic accepted responses and credential-safe observable output, but does not claim that deferred limiter capability.
 
-The fourth increment completes the password-recovery workflow. Active verified identities can request a superseding recovery credential through the same generic `202` boundary. Confirmation reuses the registration password-strength and BCrypt policy, consumes the credential, replaces the password hash, and revokes every active refresh-token family in one PostgreSQL transaction with the `PASSWORD_RECOVERY` reason. Existing access JWTs retain only their already-bounded residual lifetime.
-
-The fifth increment adds a dedicated secure mail outbox and SMTP adapter. Credential issuance, configured link construction, AES-256-GCM content protection, and mail persistence share the user transaction; SMTP runs only after commit. Workers use PostgreSQL leases, `FOR UPDATE SKIP LOCKED`, bounded retry, credential-expiry cutoffs, and stable `Message-ID` values. Terminal rows erase protected content, and operational output excludes recipients, links, credentials, digests, and encrypted bytes. Production requires a configured 32-byte content-protection key.
-
-See [ADR 0013](docs/adr/0013-secure-mail-outbox-and-smtp-delivery.md) and the [mail-delivery operations guide](docs/operations/account-action-mail-delivery.md).
+See the [v0.13.0 release notes](docs/releases/v0.13.0.md), [ADR 0013](docs/adr/0013-secure-mail-outbox-and-smtp-delivery.md), and the [mail-delivery operations guide](docs/operations/account-action-mail-delivery.md).
 
 ## Implemented API
 

@@ -22,75 +22,51 @@ class RoadmapContractTest {
         Path.of("docs", "roadmap.md");
 
     @Test
-    void shouldAlignRoadmapWithActiveDevelopmentVersion()
+    void shouldAlignRoadmapWithReleaseCandidateVersion()
         throws Exception {
 
         String projectVersion = readProjectVersion();
         String roadmap = Files.readString(ROADMAP);
 
         assertThat(projectVersion)
-            .isEqualTo("0.13.0-SNAPSHOT");
+            .isEqualTo("0.13.0");
 
         assertThat(roadmap)
             .contains(
                 "PayFlow v0.12.0 is the latest tagged release",
+                "v0.13.0 is in protected release",
                 "the Maven version `" + projectVersion + "`",
                 "## v0.10.0 — Released: Trusted Client Context",
                 "## v0.11.0 — Released: Structured Logging and Request Correlation",
                 "## v0.12.0 — Released: JWT Signing-Key Rotation",
-                "## v0.13.0 — Active Development: Email Verification & Password Recovery",
-                "fb0f97d076864cf3e45aabe0e3c25c81520ee101",
-                "email-ownership verification and secure password recovery"
+                "## v0.13.0 — Release Candidate: Account Recovery and Secure Mail Delivery",
+                "01a1437b13d48ce08e477f5fa5962aa9fb113be6"
             )
             .doesNotContain(
-                "The v0.12.0 release candidate uses",
-                "## v0.12.0 — Release Candidate: JWT Signing-Key Rotation"
+                "0.13.0-SNAPSHOT",
+                "## v0.13.0 — Active Development"
             );
     }
 
     @Test
-    void shouldCloseV012PublicationAndOpenV013DeliveryGates()
+    void shouldFreezeDeliveredScopeAndExplicitDeferrals()
         throws IOException {
 
         assertThat(Files.readString(ROADMAP))
             .contains(
-                "- [x] Open the dedicated v0.12.0 implementation issue #112",
-                "- [x] Pass the complete Maven verification suite through protected CI",
-                "- [x] Pass protected `build-and-test` and Docker smoke CI for PR #113",
-                "- [x] Merge the JWT signing-key rotation increment through protected PR #113",
-                "- [x] Close implementation issue #112 after merge",
-                "- [x] Prepare v0.12.0 release notes after the implementation PR is merged",
-                "- [x] Merge v0.12.0 release preparation through protected PR #114",
-                "- [x] v0.12.0 release preparation and publication gates complete",
-                "- [x] focused and complete Maven verification pass through protected CI",
-                "- [x] Open the dedicated v0.13.0 implementation issue under release train #106",
-                "- [x] Add nullable `email_verified_at` as an invariant separate from `UserStatus`",
                 "- [x] Backfill every pre-v0.13.0 user as verified to prevent migration lockout",
-                "- [x] Register new users without a verified-email timestamp",
-                "- [x] Add Flyway V15 with constrained account-action token persistence",
-                "- [x] Generate at least 256 bits of cryptographically secure randomness",
-                "- [x] Use strict canonical unpadded Base64 URL encoding",
                 "- [x] Persist only fixed-length SHA-256 digests, never plaintext credentials",
-                "- [x] Separate `EMAIL_VERIFICATION` and `PASSWORD_RECOVERY` purposes",
-                "- [x] Enforce purpose-specific expiration and one successful consumption",
-                "- [x] Invalidate prior active credentials for the same user and purpose",
-                "- [x] Lock credential consumption so concurrent confirmation has one winner",
-                "- [x] Exclude credentials and digests from logs, metrics, traces, errors, and APIs",
-                "- [x] Issue a verification credential after successful registration",
                 "- [x] Add generic `POST /api/v1/auth/email-verification/requests`",
-                "- [x] Add token-confirmation `POST /api/v1/auth/email-verification/confirm`",
-                "- [x] Build links only from validated configuration, never request host headers",
-                "- [x] Mark email ownership exactly once in the confirmation transaction",
-                "- [x] Reject login for unverified new users only after credentials match",
-                "- [x] Preserve generic behavior for unknown, closed, or already-verified accounts",
-                "- [x] Add generic `POST /api/v1/auth/password-recovery/requests`",
                 "- [x] Add token-confirmation `POST /api/v1/auth/password-recovery/confirm`",
-                "- [x] Reuse the registration password-strength and BCrypt policy",
-                "- [x] Consume the recovery credential and replace the password hash atomically",
                 "- [x] Revoke all active refresh-token families with `PASSWORD_RECOVERY`",
-                "- [x] Preserve the existing short access-token residual-validity boundary",
-                "- [x] Keep invalid, expired, consumed, and superseded token errors indistinguishable",
-                "- [ ] request responses do not disclose account existence or eligibility"
+                "- [x] Protect provider-ready mail bodies with AES-256-GCM before persistence",
+                "- [x] Claim work with PostgreSQL leases and `FOR UPDATE SKIP LOCKED`",
+                "- [x] Run the complete Maven verification suite and production Docker smoke",
+                "1,174 tests, zero failures, zero errors",
+                "Deferred to the generalized abuse-protection milestone",
+                "They are not claimed by this release candidate",
+                "- [ ] the protected v0.13.0 release-preparation pull request is merged",
+                "- [ ] the v0.13.0 tag, JAR, checksum, and GitHub Release are published"
             );
     }
 

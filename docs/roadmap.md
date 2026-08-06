@@ -2,14 +2,14 @@
 
 ## Current delivery focus
 
-PayFlow v0.12.0 is the latest tagged release. The active development line uses
-the Maven version `0.13.0-SNAPSHOT`.
+PayFlow v0.12.0 is the latest tagged release. v0.13.0 is in protected release
+preparation and uses the Maven version `0.13.0`.
 
 The v0.12.0 JWT signing-key rotation release was published from verified merge
-commit `fb0f97d076864cf3e45aabe0e3c25c81520ee101`. The v0.13.0 increment
-focuses on email-ownership verification and secure password recovery while
-preserving the existing anti-enumeration, refresh-session, and logging
-boundaries.
+commit `fb0f97d076864cf3e45aabe0e3c25c81520ee101`. The v0.13.0 release
+candidate freezes email-ownership verification, password recovery, and secure
+account-action mail delivery while preserving the existing anti-enumeration,
+refresh-session, and logging boundaries.
 
 PayFlow remains a modular monolith. PostgreSQL is the system of record; Redis is
 used only for bounded, explicitly expiring abuse-control state.
@@ -378,7 +378,7 @@ The release is ready only when:
 - executable JAR size: `99,140,599` bytes
 - verified SHA-256: `BA0BF76D07B3426E9C8DDE5E128A0C7B957807F71AA982EDC5927077980AB391`
 
-## v0.13.0 — Active Development: Email Verification & Password Recovery
+## v0.13.0 — Release Candidate: Account Recovery and Secure Mail Delivery
 
 ### Product outcome
 
@@ -386,7 +386,9 @@ PayFlow users can prove ownership of their normalized email address and recover
 access after forgetting a password without exposing whether an account exists.
 Every account-action credential is opaque, single-use, time-limited, and stored
 only as a digest. A successful password recovery changes the BCrypt hash and
-revokes every active refresh-token family atomically.
+revokes every active refresh-token family atomically. Provider-ready messages
+are protected before persistence and delivered after commit through a leased
+SMTP outbox.
 
 ### Increment 1 — Domain model and migration policy
 
@@ -442,27 +444,24 @@ revokes every active refresh-token family atomically.
 - [x] Use stable `Message-ID` values and document bounded duplicate risk
 - [x] Keep recipients, links, credentials, digests, and protected bytes out of logs and metrics
 
-### Increment 6 — Account-action abuse protection
+### Deferred to the generalized abuse-protection milestone
 
-- [ ] Return the same accepted response for eligible and ineligible identities
-- [ ] Apply identical limiter work before account eligibility is evaluated
-- [ ] Limit each normalized identity and purpose to 3 requests per hour
-- [ ] Limit each effective client and purpose to 20 requests per hour
-- [ ] Store only hashed limiter dimensions with explicit Redis expiration
-- [ ] Fail closed when Redis cannot make a safe abuse-control decision
-- [ ] Record only bounded, low-cardinality security outcomes
+The generic request responses and anti-enumeration behavior are part of
+v0.13.0. Purpose-specific Redis quotas of 3 requests per normalized identity
+per hour and 20 requests per effective client per hour, hashed limiter
+dimensions, fail-closed limiter outages, and low-cardinality limiter outcomes
+are intentionally deferred. They are not claimed by this release candidate.
 
-### Increment 7 — Verification and public contracts
+### Increment 6 — Verification and public contracts
 
-- [ ] Unit-test domain state, credential shape, digesting, and lifetime policy
-- [ ] Verify Flyway V14-to-V15 upgrade and clean installation with PostgreSQL
-- [ ] Verify concurrent confirmation and transactional rollback with PostgreSQL
-- [ ] Verify identity/client thresholds, expiration, and outage behavior with Redis
+- [x] Unit-test domain state, credential shape, digesting, and lifetime policy
+- [x] Verify Flyway V14-to-V17 upgrades and clean installation with PostgreSQL
+- [x] Verify concurrent confirmation and transactional rollback with PostgreSQL
 - [x] Verify protected mail persistence and SMTP construction without exposing credentials in diagnostics
-- [ ] Add MockMvc, real endpoint-to-database, OpenAPI, and Postman contracts
+- [x] Add MockMvc, real endpoint-to-database, OpenAPI, and Postman contracts
 - [x] Add an ADR and operations guide for protected account-action mail delivery
-- [ ] Run the complete Maven verification suite and production Docker smoke
-- [ ] Pass protected `build-and-test` and `docker-smoke` checks before merge
+- [x] Run the complete Maven verification suite and production Docker smoke
+- [x] Pass protected `build-and-test` and `docker-smoke` checks for PRs #121, #123, and #125
 
 ## Explicit v0.13.0 non-goals
 
@@ -473,32 +472,42 @@ revokes every active refresh-token family atomically.
 - browser cookies, CSRF policy, frontend pages, mobile deep links, or UI branding
 - durable storage of plaintext credentials or provider-ready reset URLs
 - provider-side exactly-once guarantees, attachments, localization, or automatic mail-key rotation
-- email marketing, localization, attachments, or provider migration tooling
-- generalized API-wide rate limiting or device fingerprinting
+- purpose-specific Redis request quotas and generalized API-wide rate limiting
+- device fingerprinting or behavioral risk scoring
 - remote KMS, HSM, Vault, Kubernetes, or microservice extraction
 
 These concerns require separate threat models and versioned contracts. The
-v0.13.0 increment is limited to ownership verification, password recovery,
-bounded email delivery, and the security evidence needed to trust them.
+v0.13.0 release candidate is limited to ownership verification, password
+recovery, bounded email delivery, and the security evidence needed to trust
+them.
 
 ## v0.13.0 release exit criteria
 
 The release is ready only when:
 
-- [ ] pre-v0.13.0 users remain able to authenticate after migration
+- [x] pre-v0.13.0 users remain able to authenticate after migration
 - [x] newly registered users cannot authenticate before email verification
 - [x] account-action plaintext and digests never enter observable output
-- [ ] request responses do not disclose account existence or eligibility
-- [ ] expired, consumed, superseded, and malformed credentials fail safely
-- [ ] concurrent confirmation permits at most one successful state transition
-- [ ] password recovery changes the hash and revokes all refresh families atomically
-- [ ] abuse limits use normalized hashed dimensions and bounded expiration
+- [x] request responses do not disclose account existence or eligibility
+- [x] expired, consumed, superseded, and malformed credentials fail safely
+- [x] concurrent confirmation permits at most one successful state transition
+- [x] password recovery changes the hash and revokes all refresh families atomically
 - [x] SMTP failures do not weaken token or account-state correctness
-- [ ] focused unit, PostgreSQL, Redis, HTTP, OpenAPI, and Postman tests pass
-- [ ] the complete Maven suite and production Docker smoke pass
-- [ ] ADR, operations guide, configuration, and implementation agree
-- [ ] protected feature and release-preparation pull requests are merged
+- [x] focused unit, PostgreSQL, HTTP, OpenAPI, and Postman tests pass
+- [x] the complete 1,174-test Maven suite and production Docker smoke pass
+- [x] ADR, operations guide, configuration, and implementation agree
+- [x] protected feature pull requests #121, #123, and #125 are merged
+- [ ] the protected v0.13.0 release-preparation pull request is merged
 - [ ] the v0.13.0 tag, JAR, checksum, and GitHub Release are published
+
+### Release-candidate evidence
+
+- email-verification feature commit: `66e181a124fc73d1dbe30b274d372bc88017ceeb`
+- password-recovery feature commit: `c720b13b107010ed4b53c538b08b048aa8f21f98`
+- secure-mail-outbox feature commit: `8baed12af2b52fcf49b87996ab75486490db565f`
+- integrated feature merge commit: `01a1437b13d48ce08e477f5fa5962aa9fb113be6`
+- complete verification: 1,174 tests, zero failures, zero errors
+- feature-line artifact SHA-256: `214412C8FA5E6279FD9874EC935AA95B5FA90C0CD20166CCF027C7A0EC2C5191`
 
 ## Later v1.0 candidates
 
