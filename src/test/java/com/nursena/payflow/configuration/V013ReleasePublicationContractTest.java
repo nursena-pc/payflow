@@ -40,7 +40,7 @@ class V013ReleasePublicationContractTest {
         assertThat(Files.readString(README))
             .contains(
                 "PayFlow v0.13.0 is the latest published release",
-                "Maven version remains `0.13.0`",
+                "## v0.13.0 release",
                 "annotated tag `v0.13.0`",
                 "726f631a0de800870813ccb0c00b2676eb5d172b",
                 "31115952987",
@@ -48,8 +48,8 @@ class V013ReleasePublicationContractTest {
                 "78520B04BA3FDAF1BCEB3EAF29FCBE96C46265DF691C52C9048CEE6B5D58F4DA"
             )
             .doesNotContain(
-                "0.13.0-SNAPSHOT",
-                "v0.13.0 is in protected release preparation"
+                "v0.13.0 is in protected release preparation",
+                "## v0.13.0 release preparation"
             );
     }
 

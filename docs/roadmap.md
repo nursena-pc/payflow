@@ -2,14 +2,15 @@
 
 ## Current delivery focus
 
-PayFlow v0.13.0 is the latest tagged release and uses the Maven version
-`0.13.0`. The next planned milestone is v0.14.0 multi-factor authentication;
-its development version has not been opened yet.
+PayFlow v0.13.0 is the latest tagged release. The active development line uses
+the Maven version `0.14.0-SNAPSHOT`.
 
 The v0.13.0 account-recovery and secure-mail-delivery release was published
 from verified merge commit `726f631a0de800870813ccb0c00b2676eb5d172b`
-through successful release workflow run `31115952987`. It preserves the
-existing anti-enumeration, refresh-session, and logging boundaries.
+through successful release workflow run `31115952987`. The v0.14.0 milestone
+adds TOTP multi-factor authentication, digest-only recovery codes, and bounded
+step-up authentication while preserving the existing anti-enumeration,
+refresh-session, and logging boundaries.
 
 PayFlow remains a modular monolith. PostgreSQL is the system of record; Redis is
 used only for bounded, explicitly expiring abuse-control state.
@@ -518,8 +519,116 @@ The release is ready only when:
 - release checksum verification: passed
 - publication-evidence JSON SHA-256: `4FDD37BC1BF5D058A391A23784CCF87DED3FADCC3F9DB564806A8A52DC1F7B51`
 
+## v0.14.0 — Active Development: MFA and Step-Up Authentication
+
+### Product outcome
+
+PayFlow users can protect an email-verified account with a standards-compatible
+TOTP authenticator, complete MFA during login, recover with one-time codes, and
+prove recent possession of a second factor before selected account-security or
+operator actions. Password verification remains the first login factor. No
+access or refresh credential is issued until an enabled MFA challenge succeeds.
+
+### Increment 1 — Threat model and lifecycle boundaries
+
+- [x] Open the dedicated v0.14.0 implementation issue
+- [ ] Record MFA enrollment, login, recovery, disable, bypass, replay, and concurrency threats
+- [ ] Keep MFA state separate from `UserStatus` and email-verification state
+- [ ] Define `DISABLED`, `PENDING`, and `ENABLED` lifecycle transitions explicitly
+- [ ] Define stable public errors that do not reveal secrets, recovery-code state, or internal challenge state
+- [ ] Define account-security refresh-family revocation reasons before implementation
+- [ ] Keep controllers, JWT adapters, and JPA entities outside the MFA domain model
+
+### Increment 2 — TOTP enrollment and secret protection
+
+- [ ] Require an authenticated, active, email-verified user to begin enrollment
+- [ ] Generate a high-entropy TOTP secret with a standards-compatible `otpauth://` provisioning value
+- [ ] Protect every pending or active TOTP secret before PostgreSQL persistence
+- [ ] Use a dedicated MFA secret-protection port and separate production key material
+- [ ] Return the plaintext provisioning secret only in the enrollment response that created it
+- [ ] Activate enrollment only after a valid TOTP proof within the documented clock-skew window
+- [ ] Serialize replacement so one user has at most one effective pending or active authenticator
+- [ ] Exclude secrets, provisioning URIs, TOTP values, protected bytes, and key material from observable output
+
+### Increment 3 — MFA login challenge
+
+- [ ] Preserve existing Redis-backed password-attempt protection before user lookup and password verification
+- [ ] Issue a short-lived opaque MFA login challenge only after the password and account eligibility checks succeed
+- [ ] Persist only a fixed-length challenge digest, expiration, bounded attempt state, and terminal state
+- [ ] Issue no access or refresh credential while an enabled user's challenge remains unresolved
+- [ ] Consume a successful challenge exactly once before issuing access and refresh credentials
+- [ ] Permit one documented TOTP clock step on either side of the current step
+- [ ] Reject expired, exhausted, replayed, malformed, and superseded challenges through one stable public contract
+- [ ] Lock verification so concurrent submissions have at most one successful winner
+
+### Increment 4 — Recovery codes and MFA disable
+
+- [ ] Generate recovery codes from cryptographically secure randomness
+- [ ] Return plaintext recovery codes once at activation or explicit rotation
+- [ ] Persist only fixed-length recovery-code digests
+- [ ] Consume every recovery code atomically and at most once
+- [ ] Make recovery-code and TOTP challenge failures indistinguishable at the public boundary
+- [ ] Require recent step-up proof before recovery-code rotation or MFA disable
+- [ ] Revoke active refresh-token families after MFA disable or secret replacement
+- [ ] Preserve append-only, credential-free account-security audit evidence
+
+### Increment 5 — Step-up authentication
+
+- [ ] Introduce an application-facing step-up policy independent from controller annotations
+- [ ] Bind every step-up grant to one authenticated subject, purpose, issue time, and short expiration
+- [ ] Require a recent second-factor proof for MFA disable and recovery-code rotation
+- [ ] Evaluate dead-letter replay and discard as explicit operator step-up candidates
+- [ ] Reject cross-purpose, expired, replayed, or wrong-subject grants
+- [ ] Keep step-up grants out of logs, metric labels, audit payloads, and persistence plaintext
+- [ ] Document which operations remain bearer-only and which require step-up
+
+### Increment 6 — Verification and public contracts
+
+- [ ] Unit-test TOTP vectors, clock skew, lifecycle transitions, protection, digesting, and redaction
+- [ ] Verify clean Flyway installation and upgrades from the v0.13.0 schema with PostgreSQL
+- [ ] Verify enrollment replacement, challenge consumption, recovery-code use, and disable races
+- [ ] Add real endpoint-to-database, MockMvc, OpenAPI, and Postman contracts
+- [ ] Add an MFA threat model, ADR, and operations guide
+- [ ] Verify production startup fails safely without configured MFA secret-protection material
+- [ ] Run the complete Maven verification suite and production Docker smoke
+- [ ] Pass protected `build-and-test` and `docker-smoke` checks for every increment
+
+## Explicit v0.14.0 non-goals
+
+- SMS, voice-call, or email-delivered one-time passwords
+- WebAuthn, passkeys, FIDO2 security keys, or biometric authentication
+- external OAuth, OpenID Connect, SAML, or social-login providers
+- trusted-device cookies, remember-this-device behavior, or device fingerprinting
+- behavioral analytics, geolocation risk, impossible-travel detection, or adaptive authentication
+- generalized registration, refresh, recovery, or operations rate-limit policy; that remains a v0.15.0 concern
+- frontend QR rendering, mobile deep-link UX, or authenticator-app branding
+- remote KMS, HSM, Vault, Kubernetes, or microservice extraction
+- access-token denylisting or immediate revocation of already-issued JWTs
+
+These concerns require separate threat models and versioned contracts. v0.14.0
+is limited to TOTP enrollment, MFA login completion, single-use recovery codes,
+selected step-up policies, and the evidence needed to trust those boundaries.
+
+## v0.14.0 release exit criteria
+
+The release is ready only when:
+
+- [ ] TOTP secrets are never stored or emitted as durable plaintext
+- [ ] enabled MFA prevents access and refresh issuance until the second factor succeeds
+- [ ] login challenges are short-lived, digest-only, attempt-bounded, and single-use
+- [ ] recovery codes are returned once, stored only as digests, and consumed once
+- [ ] concurrent enrollment, challenge, recovery, rotation, and disable operations preserve one valid outcome
+- [ ] account-security changes revoke active refresh-token families as documented
+- [ ] selected step-up operations reject wrong-subject, wrong-purpose, expired, and replayed grants
+- [ ] errors, logs, metrics, traces, and audits expose no MFA credentials or protected secret material
+- [ ] focused unit, PostgreSQL, HTTP, OpenAPI, and Postman tests pass
+- [ ] the complete Maven suite and production Docker smoke pass
+- [ ] threat model, ADR, operations guide, configuration, and implementation agree
+- [ ] protected feature and release-preparation pull requests are merged
+- [ ] the v0.14.0 tag, JAR, checksum, and GitHub Release are published
+
 ## Later v1.0 candidates
 
-Later v1.0 candidates include multi-factor authentication, generalized abuse
-protection, load/performance evidence, backup/restore rehearsal, API freeze,
-SBOM generation, and release stabilization.
+Later v1.0 candidates include generalized abuse protection, load/performance
+evidence, backup/restore rehearsal, API freeze, SBOM generation, and release
+stabilization.

@@ -112,7 +112,7 @@ Completed capabilities include:
 - operator-only, paginated command-audit queries and chronological command timelines
 - Prometheus metrics, Grafana dashboards, and alert rules for Kafka consumer failures
 
-OpenAPI documentation covers the implemented API, while executable Postman workflows remain aligned with released end-to-end flows. PayFlow v0.13.0 is the latest published release and the Maven version remains `0.13.0` until the next development increment begins. The release combines verified-email ownership, password recovery, and protected account-action mail delivery without changing the simulated-money boundary.
+OpenAPI documentation covers the implemented API, while executable Postman workflows remain aligned with released end-to-end flows. PayFlow v0.13.0 is the latest published release, and the active development line uses `0.14.0-SNAPSHOT`. The v0.14.0 milestone adds TOTP multi-factor authentication, digest-only single-use recovery codes, and bounded step-up authentication without changing the simulated-money boundary.
 
 The immutable v0.13.0 publication record is anchored to annotated tag `v0.13.0`, merge commit `726f631a0de800870813ccb0c00b2676eb5d172b`, and successful release workflow run [31115952987](https://github.com/nursena-pc/payflow/actions/runs/31115952987). The published `payflow-0.13.0.jar` is 100015861 bytes and its independently verified SHA-256 is `78520B04BA3FDAF1BCEB3EAF29FCBE96C46265DF691C52C9048CEE6B5D58F4DA`.
 
@@ -142,19 +142,31 @@ The protected release-preparation PR #114 produced the verified `v0.12.0` tag ta
 
 See the [v0.12.0 release notes](docs/releases/v0.12.0.md) and the [JWT key-rotation operations guide](docs/operations/jwt-key-rotation.md). The provider decision is recorded in [ADR 0012](docs/adr/0012-jwt-signing-key-rotation.md).
 
-## v0.13.0 release preparation
+## v0.13.0 release
 
-The protected v0.13.0 release candidate freezes email-ownership verification, password recovery, and secure account-action mail delivery. Account-action credentials use 256 bits of cryptographically secure randomness, canonical unpadded Base64 URL encoding, purpose-specific lifetimes, digest-only persistence, serialized supersession, and pessimistically locked single-use consumption.
+PayFlow v0.13.0 was published from merge commit `726f631a0de800870813ccb0c00b2676eb5d172b`. The release freezes email-ownership verification, password recovery, and secure account-action mail delivery. Account-action credentials use 256 bits of cryptographically secure randomness, canonical unpadded Base64 URL encoding, purpose-specific lifetimes, digest-only persistence, serialized supersession, and pessimistically locked single-use consumption.
 
 Registration issues the initial verification credential in the user transaction. Generic verification and recovery request endpoints do not disclose account existence or eligibility. Verification marks ownership exactly once. Password recovery reuses the registration password policy, replaces the BCrypt hash, consumes the recovery credential, and revokes every active refresh-token family atomically with the `PASSWORD_RECOVERY` reason.
 
 Provider-ready verification and recovery links are protected with AES-256-GCM before persistence in the dedicated V17 mail outbox. SMTP delivery runs only after commit through a leased PostgreSQL dispatcher using `FOR UPDATE SKIP LOCKED`, bounded retry, credential-expiry cutoffs, and stable `Message-ID` values. Terminal delivery outcomes erase protected content, while logs and metrics exclude recipients, links, credentials, digests, and encrypted bytes. Production requires configured RSA signing material and a configured 32-byte mail-content protection key.
 
-Feature PRs [#121](https://github.com/nursena-pc/payflow/pull/121), [#123](https://github.com/nursena-pc/payflow/pull/123), and [#125](https://github.com/nursena-pc/payflow/pull/125) passed protected `build-and-test` and `docker-smoke` checks. The latest feature-line verification executed 1,174 tests with zero failures and zero errors. The tag-triggered release workflow will rebuild the exact tagged commit, verify that it is reachable from `main`, publish `payflow-0.13.0.jar`, and publish its SHA-256 checksum.
+Feature PRs [#121](https://github.com/nursena-pc/payflow/pull/121), [#123](https://github.com/nursena-pc/payflow/pull/123), and [#125](https://github.com/nursena-pc/payflow/pull/125), plus release-preparation PR [#127](https://github.com/nursena-pc/payflow/pull/127), passed protected `build-and-test` and `docker-smoke` checks. Release workflow run [31115952987](https://github.com/nursena-pc/payflow/actions/runs/31115952987) rebuilt the tagged commit and published `payflow-0.13.0.jar` with its independently verified SHA-256 checksum.
 
-Per-identity and per-client Redis quotas for account-action requests are explicitly deferred to the later generalized abuse-protection milestone. v0.13.0 retains generic accepted responses and credential-safe observable output, but does not claim that deferred limiter capability.
+Per-identity and per-client Redis quotas for account-action requests remain explicitly deferred to the later generalized abuse-protection milestone. v0.13.0 retains generic accepted responses and credential-safe observable output, but does not claim that deferred limiter capability.
 
 See the [v0.13.0 release notes](docs/releases/v0.13.0.md), [ADR 0013](docs/adr/0013-secure-mail-outbox-and-smtp-delivery.md), and the [mail-delivery operations guide](docs/operations/account-action-mail-delivery.md).
+
+## v0.14.0 active development
+
+The active `0.14.0-SNAPSHOT` line introduces TOTP-based multi-factor authentication and step-up authentication as a separate identity-security increment. The design begins with an explicit threat model and a package-bounded MFA lifecycle instead of coupling authenticator state directly to controllers, JWT parsing, or persistence adapters.
+
+Enrollment will create a pending authenticator secret, protect it before PostgreSQL persistence through a dedicated application port, and activate it only after a valid TOTP proof. The plaintext secret and `otpauth://` provisioning value may cross the enrollment response boundary once, but they must never enter logs, metrics, traces, errors, audit payloads, or durable plaintext storage.
+
+Users with enabled MFA will complete password verification before receiving a short-lived, digest-only login challenge. A valid TOTP or one unused recovery code will consume that challenge exactly once before access and refresh credentials are issued. Challenge attempts, expiration, replay, concurrent verification, and refresh-session side effects will be covered with real PostgreSQL tests.
+
+Recovery codes will be generated from cryptographically secure randomness, returned once at activation or explicit rotation, stored only as fixed-length digests, and consumed atomically. Disabling or rotating MFA will require a recent step-up proof and will revoke active refresh-token families with a dedicated account-security reason.
+
+The first delivery increment freezes the threat model, persistence boundaries, public error semantics, clock-skew policy, and explicit non-goals in the [roadmap](docs/roadmap.md). Generalized API-wide abuse protection, SMS or email OTP, WebAuthn/passkeys, external identity providers, device trust, and behavioral risk scoring remain outside v0.14.0.
 
 ## Implemented API
 

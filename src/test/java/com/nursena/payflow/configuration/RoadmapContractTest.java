@@ -22,37 +22,44 @@ class RoadmapContractTest {
         Path.of("docs", "roadmap.md");
 
     @Test
-    void shouldAlignRoadmapWithPublishedReleaseVersion()
+    void shouldAlignRoadmapWithActiveDevelopmentVersion()
         throws Exception {
 
         String projectVersion = readProjectVersion();
         String roadmap = Files.readString(ROADMAP);
+        String normalizedRoadmap = normalizeWhitespace(roadmap);
 
         assertThat(projectVersion)
-            .isEqualTo("0.13.0");
+            .isEqualTo("0.14.0-SNAPSHOT");
 
         assertThat(roadmap)
             .contains(
                 "PayFlow v0.13.0 is the latest tagged release",
-                "the Maven version",
-                "`" + projectVersion + "`",
-                "The next planned milestone is v0.14.0",
+                "the Maven version `" + projectVersion + "`",
                 "## v0.10.0 — Released: Trusted Client Context",
                 "## v0.11.0 — Released: Structured Logging and Request Correlation",
                 "## v0.12.0 — Released: JWT Signing-Key Rotation",
                 "## v0.13.0 — Released: Account Recovery and Secure Mail Delivery",
+                "## v0.14.0 — Active Development: MFA and Step-Up Authentication",
                 "726f631a0de800870813ccb0c00b2676eb5d172b",
                 "31115952987"
             )
             .doesNotContain(
                 "0.13.0-SNAPSHOT",
-                "## v0.13.0 — Active Development",
-                "## v0.13.0 — Release Candidate"
+                "## v0.14.0 — Release Candidate",
+                "## v0.14.0 — Released"
+            );
+
+        assertThat(normalizedRoadmap)
+            .contains(
+                "TOTP multi-factor authentication",
+                "digest-only recovery codes",
+                "bounded step-up authentication"
             );
     }
 
     @Test
-    void shouldFreezeDeliveredScopeAndExplicitDeferrals()
+    void shouldFreezeV013PublicationAndOpenV014Boundaries()
         throws IOException {
 
         assertThat(Files.readString(ROADMAP))
@@ -72,8 +79,22 @@ class RoadmapContractTest {
                 "- [x] the v0.13.0 tag, JAR, checksum, and GitHub Release are published",
                 "9879780a418d8490b835c36b7a01cd0019621a7e",
                 "78520B04BA3FDAF1BCEB3EAF29FCBE96C46265DF691C52C9048CEE6B5D58F4DA",
-                "4FDD37BC1BF5D058A391A23784CCF87DED3FADCC3F9DB564806A8A52DC1F7B51"
+                "4FDD37BC1BF5D058A391A23784CCF87DED3FADCC3F9DB564806A8A52DC1F7B51",
+                "- [x] Open the dedicated v0.14.0 implementation issue",
+                "Keep MFA state separate from `UserStatus` and email-verification state",
+                "Protect every pending or active TOTP secret before PostgreSQL persistence",
+                "Persist only fixed-length recovery-code digests",
+                "Introduce an application-facing step-up policy independent from controller annotations",
+                "generalized registration, refresh, recovery, or operations rate-limit policy; that remains a v0.15.0 concern"
             );
+    }
+
+    private static String normalizeWhitespace(
+        String value
+    ) {
+        return value
+            .replaceAll("\\s+", " ")
+            .trim();
     }
 
     private static String readProjectVersion()
