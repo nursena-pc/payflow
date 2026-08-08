@@ -70,6 +70,15 @@ class OpenApiJsonContractIntegrationTest {
     private static final String USER_PROFILE_PATH =
         "/api/v1/users/me";
 
+    private static final String MFA_STATUS_PATH =
+        "/api/v1/users/me/mfa";
+
+    private static final String MFA_ENROLLMENT_PATH =
+        MFA_STATUS_PATH + "/enrollment";
+
+    private static final String MFA_ENROLLMENT_CONFIRM_PATH =
+        MFA_ENROLLMENT_PATH + "/confirm";
+
     private static final String WALLETS_PATH =
         "/api/v1/wallets";
 
@@ -209,6 +218,9 @@ class OpenApiJsonContractIntegrationTest {
             LOGOUT_PATH,
             LOGOUT_ALL_PATH,
             USER_PROFILE_PATH,
+            MFA_STATUS_PATH,
+            MFA_ENROLLMENT_PATH,
+            MFA_ENROLLMENT_CONFIRM_PATH,
             WALLETS_PATH,
             CURRENT_WALLET_PATH,
             TOP_UP_PATH,

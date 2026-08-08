@@ -3,6 +3,8 @@ package com.nursena.payflow.configuration;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.test.web.servlet.request
+    .MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request
     .MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request
     .MockMvcRequestBuilders.post;
@@ -247,6 +249,53 @@ class SecurityConfigurationTest {
         verify(
             probeService
         ).customerAccessed();
+    }
+
+    @Test
+    void shouldRejectAnonymousMfaEnrollmentEndpoints()
+        throws Exception {
+
+        mockMvc.perform(
+                post("/api/v1/users/me/mfa/enrollment")
+            )
+            .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(
+                get("/api/v1/users/me/mfa")
+            )
+            .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shouldPermitAuthenticatedMfaEnrollmentMatchers()
+        throws Exception {
+
+        mockDecodedJwt("user-token", "USER");
+
+        mockMvc.perform(
+                post("/api/v1/users/me/mfa/enrollment")
+                    .header(AUTHORIZATION, bearer("user-token"))
+            )
+            .andExpect(status().isNotFound());
+
+        mockMvc.perform(
+                get("/api/v1/users/me/mfa")
+                    .header(AUTHORIZATION, bearer("user-token"))
+            )
+            .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void shouldPermitAuthenticatedPendingEnrollmentCancellationMatcher()
+        throws Exception {
+
+        mockDecodedJwt("user-token", "USER");
+
+        mockMvc.perform(
+                delete("/api/v1/users/me/mfa/enrollment")
+                    .header(AUTHORIZATION, bearer("user-token"))
+            )
+            .andExpect(status().isNotFound());
     }
 
     @Test

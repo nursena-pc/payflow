@@ -169,7 +169,7 @@ class V014MfaFoundationContractTest {
     }
 
     @Test
-    void shouldMarkOnlyFoundationIncrementComplete()
+    void shouldRetainFoundationWhileEnrollmentIncrementAdvances()
         throws IOException {
 
         String roadmap =
@@ -185,7 +185,7 @@ class V014MfaFoundationContractTest {
                 "- [x] Keep controllers, JWT adapters, and JPA entities outside the MFA domain model"
             )
             .contains(
-                "- [ ] Generate a high-entropy TOTP secret with a standards-compatible `otpauth://` provisioning value",
+                "- [x] Generate a high-entropy TOTP secret with a standards-compatible `otpauth://` provisioning value",
                 "- [ ] Issue a short-lived opaque MFA login challenge only after the password and account eligibility checks succeed",
                 "- [ ] Generate recovery codes from cryptographically secure randomness",
                 "- [ ] Introduce an application-facing step-up policy independent from controller annotations"

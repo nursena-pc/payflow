@@ -547,14 +547,23 @@ MFA persistence, endpoints, TOTP verification, or runtime step-up enforcement.
 
 ### Increment 2 — TOTP enrollment and secret protection
 
-- [ ] Require an authenticated, active, email-verified user to begin enrollment
-- [ ] Generate a high-entropy TOTP secret with a standards-compatible `otpauth://` provisioning value
-- [ ] Protect every pending or active TOTP secret before PostgreSQL persistence
-- [ ] Use a dedicated MFA secret-protection port and separate production key material
-- [ ] Return the plaintext provisioning secret only in the enrollment response that created it
-- [ ] Activate enrollment only after a valid TOTP proof within the documented clock-skew window
-- [ ] Serialize replacement so one user has at most one effective pending or active authenticator
-- [ ] Exclude secrets, provisioning URIs, TOTP values, protected bytes, and key material from observable output
+- [x] Require an authenticated, active, email-verified user to begin enrollment
+- [x] Generate a high-entropy TOTP secret with a standards-compatible `otpauth://` provisioning value
+- [x] Protect every pending or active TOTP secret before PostgreSQL persistence
+- [x] Use a dedicated MFA secret-protection port and separate production key material
+- [x] Return the plaintext provisioning secret only in the enrollment response that created it
+- [x] Activate enrollment only after a valid TOTP proof within the documented clock-skew window
+- [x] Serialize replacement so one user has at most one effective pending or active authenticator
+- [x] Exclude secrets, provisioning URIs, TOTP values, protected bytes, and key material from observable output
+
+The enrollment implementation uses V18 `mfa_authenticators` persistence with one
+row per user, pessimistic user/authenticator locking, a ten-minute pending
+enrollment lifetime, 160-bit TOTP secrets, RFC 4226/6238 HMAC-SHA1 with six
+digits and a ±1 time-step verification window, and AES-256-GCM protection
+bound to the owning user identifier. Starting enrollment requires the current
+password in addition to an authenticated bearer context; overlapping pending or
+enabled enrollment attempts return the stable `MFA_STATE_CONFLICT` contract.
+Cancelling a pending enrollment deletes the protected secret row.
 
 ### Increment 3 — MFA login challenge
 

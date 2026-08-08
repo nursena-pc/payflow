@@ -13,12 +13,17 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Domain-only MFA lifecycle foundation with explicit `DISABLED`, `PENDING`, and `ENABLED` transitions.
 - Typed step-up purpose vocabulary for user account-security changes and explicit Kafka dead-letter operator candidates.
 - ADR 0014 and a versioned MFA threat model covering enrollment, login challenge, recovery, disable, replay, concurrency, and observable-output boundaries.
+- Authenticated TOTP enrollment, status, confirmation, and pending-cancellation endpoints.
+- PostgreSQL V18 authenticator persistence with one-row-per-user serialization and protected secret storage.
+- Standards-compatible 160-bit Base32 TOTP provisioning with HMAC-SHA1, six digits, 30-second steps, and a bounded ±1 verification window.
 
 ### Security
 
 - Dedicated `MFA_DISABLED` and `MFA_AUTHENTICATOR_REPLACED` refresh-family revocation reasons reserved before mutation workflows are implemented.
 - Stable coarse public failure semantics prevent future MFA endpoints from exposing internal challenge, TOTP, recovery-code, or step-up state.
 - MFA lifecycle policy remains independent from `UserStatus`, email-verification state, Spring Security, JWT adapters, and JPA entities.
+- TOTP secrets are AES-256-GCM protected before persistence with user-bound authenticated data and a production-only configured key boundary separate from JWT and mail keys.
+- Enrollment requires the authenticated user's current password, rejects overlapping pending or enabled authenticators, and returns plaintext provisioning material only in the response that creates it.
 
 ## [0.13.0] - 2026-08-06
 
