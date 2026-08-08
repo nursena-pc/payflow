@@ -168,6 +168,8 @@ Recovery codes will be generated from cryptographically secure randomness, retur
 
 The first delivery increment now freezes the domain lifecycle, typed step-up purpose vocabulary, account-security refresh-family revocation reasons, stable public failure semantics, and concurrency/observable-output boundaries. The accepted design is recorded in [ADR 0014](docs/adr/0014-mfa-and-step-up-authentication.md) and the [MFA threat model](docs/security/mfa-threat-model.md). No MFA endpoint, authenticator persistence, TOTP verification, recovery-code implementation, or runtime step-up enforcement is introduced by this foundation increment. Generalized API-wide abuse protection, SMS or email OTP, WebAuthn/passkeys, external identity providers, device trust, and behavioral risk scoring remain outside v0.14.0.
 
+The second increment implements authenticated TOTP enrollment without changing the login flow yet. `POST /api/v1/users/me/mfa/enrollment` requires the current password, generates a 160-bit secret, returns the canonical Base32 secret and `otpauth://` URI once, and persists only AES-256-GCM-protected secret material. `POST /api/v1/users/me/mfa/enrollment/confirm` activates the pending authenticator only after a six-digit TOTP proof within the current ±1 30-second step. `DELETE /api/v1/users/me/mfa/enrollment` cancels only pending enrollment, while `GET /api/v1/users/me/mfa` exposes lifecycle metadata without secret material. PostgreSQL V18 enforces one effective authenticator row per user and production requires a dedicated MFA encryption key independent from JWT and mail keys. See the [TOTP enrollment security contract](docs/security/mfa-enrollment.md).
+
 ## Implemented API
 
 | Method | Endpoint | Authentication | Description |
@@ -178,6 +180,10 @@ The first delivery increment now freezes the domain lifecycle, typed step-up pur
 | `POST` | `/api/v1/auth/email-verification/confirm` | Public | Consumes one opaque credential and marks email ownership exactly once. |
 | `POST` | `/api/v1/auth/password-recovery/requests` | Public | Accepts a generic recovery request without disclosing account existence or eligibility. |
 | `POST` | `/api/v1/auth/password-recovery/confirm` | Public | Atomically replaces the BCrypt password hash and revokes active refresh sessions. |
+| `GET` | `/api/v1/users/me/mfa` | Bearer | Returns the owning user's MFA lifecycle metadata without secret material. |
+| `POST` | `/api/v1/users/me/mfa/enrollment` | Bearer + current password | Starts one pending TOTP enrollment and returns the provisioning secret once. |
+| `POST` | `/api/v1/users/me/mfa/enrollment/confirm` | Bearer | Activates the pending authenticator after a valid six-digit TOTP proof. |
+| `DELETE` | `/api/v1/users/me/mfa/enrollment` | Bearer | Cancels only a pending enrollment and deletes its protected secret row. |
 | `POST` | `/api/v1/auth/refresh` | Public | Atomically rotates an active opaque refresh credential. |
 | `POST` | `/api/v1/auth/logout` | Public | Idempotently revokes the refresh-token family represented by the submitted credential. |
 | `POST` | `/api/v1/auth/logout-all` | Bearer JWT | Revokes every active refresh session owned by the authenticated user. |

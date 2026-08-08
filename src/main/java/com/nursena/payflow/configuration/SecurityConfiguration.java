@@ -1,5 +1,6 @@
 package com.nursena.payflow.configuration;
 
+import static org.springframework.http.HttpMethod.DELETE;
 import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.http.HttpMethod.POST;
 
@@ -60,6 +61,7 @@ public class SecurityConfiguration {
                 .requestMatchers(
                     GET,
                     "/api/v1/users/me",
+                    "/api/v1/users/me/mfa",
                     "/api/v1/wallets/me",
                     "/api/v1/transactions/me"
                 )
@@ -67,9 +69,16 @@ public class SecurityConfiguration {
                 .requestMatchers(
                     POST,
                     "/api/v1/auth/logout-all",
+                    "/api/v1/users/me/mfa/enrollment",
+                    "/api/v1/users/me/mfa/enrollment/confirm",
                     "/api/v1/wallets",
                     "/api/v1/wallets/me/top-ups",
                     "/api/v1/transfers"
+                )
+                .authenticated()
+                .requestMatchers(
+                    DELETE,
+                    "/api/v1/users/me/mfa/enrollment"
                 )
                 .authenticated()
                 .anyRequest()

@@ -48,7 +48,7 @@ class MailOutboxMigrationIntegrationTest {
         assertThat(tableExists("mail_outbox_messages")).isFalse();
 
         migrateToLatestVersion();
-        assertThat(currentSchemaVersion()).isEqualTo("17");
+        assertThat(currentSchemaVersion()).isEqualTo("18");
 
         UUID userId = UUID.randomUUID();
         UUID credentialId = UUID.randomUUID();

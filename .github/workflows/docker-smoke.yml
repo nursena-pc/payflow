@@ -14,6 +14,7 @@ jobs:
     env:
       GRAFANA_ADMIN_PASSWORD: payflow-smoke-local-only
       MAIL_CONTENT_ENCRYPTION_KEY: AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=
+      MFA_SECRET_ENCRYPTION_KEY: ICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj8=
 
     steps:
       - name: Checkout

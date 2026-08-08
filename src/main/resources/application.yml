@@ -102,6 +102,13 @@ payflow:
       password-recovery-ttl: ${ACCOUNT_ACTION_PASSWORD_RECOVERY_TTL:30m}
       email-verification-confirmation-uri: ${ACCOUNT_ACTION_EMAIL_VERIFICATION_CONFIRMATION_URI:https://app.payflow.local/verify-email}
       password-recovery-confirmation-uri: ${ACCOUNT_ACTION_PASSWORD_RECOVERY_CONFIRMATION_URI:https://app.payflow.local/recover-password}
+    mfa:
+      totp:
+        issuer: ${MFA_TOTP_ISSUER:PayFlow}
+        enrollment-ttl: ${MFA_ENROLLMENT_TTL:10m}
+      secret-protection:
+        provider-mode: ${MFA_SECRET_PROTECTION_MODE:ephemeral}
+        key-base64: ${MFA_SECRET_ENCRYPTION_KEY:}
     login-rate-limit:
       enabled: ${LOGIN_RATE_LIMIT_ENABLED:true}
       window: ${LOGIN_RATE_LIMIT_WINDOW:15m}
@@ -177,6 +184,9 @@ payflow:
   security:
     jwt:
       key-set:
+        provider-mode: configured
+    mfa:
+      secret-protection:
         provider-mode: configured
   mail:
     content-protection:
