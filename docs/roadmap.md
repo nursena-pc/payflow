@@ -532,12 +532,18 @@ access or refresh credential is issued until an enabled MFA challenge succeeds.
 ### Increment 1 — Threat model and lifecycle boundaries
 
 - [x] Open the dedicated v0.14.0 implementation issue
-- [ ] Record MFA enrollment, login, recovery, disable, bypass, replay, and concurrency threats
-- [ ] Keep MFA state separate from `UserStatus` and email-verification state
-- [ ] Define `DISABLED`, `PENDING`, and `ENABLED` lifecycle transitions explicitly
-- [ ] Define stable public errors that do not reveal secrets, recovery-code state, or internal challenge state
-- [ ] Define account-security refresh-family revocation reasons before implementation
-- [ ] Keep controllers, JWT adapters, and JPA entities outside the MFA domain model
+- [x] Record MFA enrollment, login, recovery, disable, bypass, replay, and concurrency threats
+- [x] Keep MFA state separate from `UserStatus` and email-verification state
+- [x] Define `DISABLED`, `PENDING`, and `ENABLED` lifecycle transitions explicitly
+- [x] Define stable public errors that do not reveal secrets, recovery-code state, or internal challenge state
+- [x] Define account-security refresh-family revocation reasons before implementation
+- [x] Keep controllers, JWT adapters, and JPA entities outside the MFA domain model
+
+The accepted foundation is documented in [ADR 0014](adr/0014-mfa-and-step-up-authentication.md)
+and the [MFA threat model](security/mfa-threat-model.md). The domain now freezes the
+lifecycle state machine, typed step-up purposes, and dedicated `MFA_DISABLED` and
+`MFA_AUTHENTICATOR_REPLACED` refresh-family revocation reasons without adding
+MFA persistence, endpoints, TOTP verification, or runtime step-up enforcement.
 
 ### Increment 2 — TOTP enrollment and secret protection
 

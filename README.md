@@ -166,7 +166,7 @@ Users with enabled MFA will complete password verification before receiving a sh
 
 Recovery codes will be generated from cryptographically secure randomness, returned once at activation or explicit rotation, stored only as fixed-length digests, and consumed atomically. Disabling or rotating MFA will require a recent step-up proof and will revoke active refresh-token families with a dedicated account-security reason.
 
-The first delivery increment freezes the threat model, persistence boundaries, public error semantics, clock-skew policy, and explicit non-goals in the [roadmap](docs/roadmap.md). Generalized API-wide abuse protection, SMS or email OTP, WebAuthn/passkeys, external identity providers, device trust, and behavioral risk scoring remain outside v0.14.0.
+The first delivery increment now freezes the domain lifecycle, typed step-up purpose vocabulary, account-security refresh-family revocation reasons, stable public failure semantics, and concurrency/observable-output boundaries. The accepted design is recorded in [ADR 0014](docs/adr/0014-mfa-and-step-up-authentication.md) and the [MFA threat model](docs/security/mfa-threat-model.md). No MFA endpoint, authenticator persistence, TOTP verification, recovery-code implementation, or runtime step-up enforcement is introduced by this foundation increment. Generalized API-wide abuse protection, SMS or email OTP, WebAuthn/passkeys, external identity providers, device trust, and behavioral risk scoring remain outside v0.14.0.
 
 ## Implemented API
 
