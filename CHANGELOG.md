@@ -8,6 +8,18 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Domain-only MFA lifecycle foundation with explicit `DISABLED`, `PENDING`, and `ENABLED` transitions.
+- Typed step-up purpose vocabulary for user account-security changes and explicit Kafka dead-letter operator candidates.
+- ADR 0014 and a versioned MFA threat model covering enrollment, login challenge, recovery, disable, replay, concurrency, and observable-output boundaries.
+
+### Security
+
+- Dedicated `MFA_DISABLED` and `MFA_AUTHENTICATOR_REPLACED` refresh-family revocation reasons reserved before mutation workflows are implemented.
+- Stable coarse public failure semantics prevent future MFA endpoints from exposing internal challenge, TOTP, recovery-code, or step-up state.
+- MFA lifecycle policy remains independent from `UserStatus`, email-verification state, Spring Security, JWT adapters, and JPA entities.
+
 ## [0.13.0] - 2026-08-06
 
 
