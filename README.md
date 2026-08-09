@@ -168,14 +168,17 @@ Recovery codes will be generated from cryptographically secure randomness, retur
 
 The first delivery increment now freezes the domain lifecycle, typed step-up purpose vocabulary, account-security refresh-family revocation reasons, stable public failure semantics, and concurrency/observable-output boundaries. The accepted design is recorded in [ADR 0014](docs/adr/0014-mfa-and-step-up-authentication.md) and the [MFA threat model](docs/security/mfa-threat-model.md). No MFA endpoint, authenticator persistence, TOTP verification, recovery-code implementation, or runtime step-up enforcement is introduced by this foundation increment. Generalized API-wide abuse protection, SMS or email OTP, WebAuthn/passkeys, external identity providers, device trust, and behavioral risk scoring remain outside v0.14.0.
 
-The second increment implements authenticated TOTP enrollment without changing the login flow yet. `POST /api/v1/users/me/mfa/enrollment` requires the current password, generates a 160-bit secret, returns the canonical Base32 secret and `otpauth://` URI once, and persists only AES-256-GCM-protected secret material. `POST /api/v1/users/me/mfa/enrollment/confirm` activates the pending authenticator only after a six-digit TOTP proof within the current ±1 30-second step. `DELETE /api/v1/users/me/mfa/enrollment` cancels only pending enrollment, while `GET /api/v1/users/me/mfa` exposes lifecycle metadata without secret material. PostgreSQL V18 enforces one effective authenticator row per user and production requires a dedicated MFA encryption key independent from JWT and mail keys. See the [TOTP enrollment security contract](docs/security/mfa-enrollment.md).
+The second increment implemented authenticated TOTP enrollment before the login flow was gated by MFA. `POST /api/v1/users/me/mfa/enrollment` requires the current password, generates a 160-bit secret, returns the canonical Base32 secret and `otpauth://` URI once, and persists only AES-256-GCM-protected secret material. `POST /api/v1/users/me/mfa/enrollment/confirm` activates the pending authenticator only after a six-digit TOTP proof within the current ±1 30-second step. `DELETE /api/v1/users/me/mfa/enrollment` cancels only pending enrollment, while `GET /api/v1/users/me/mfa` exposes lifecycle metadata without secret material. PostgreSQL V18 enforces one effective authenticator row per user and production requires a dedicated MFA encryption key independent from JWT and mail keys. See the [TOTP enrollment security contract](docs/security/mfa-enrollment.md).
+
+The third increment gates credential issuance for `ENABLED` MFA users. A correct password creates no access token, refresh-token family, or refresh-token record; it returns `202` with one short-lived opaque challenge instead. PostgreSQL V19 stores only the SHA-256 challenge digest, expiration, bounded attempt budget, and terminal state. `POST /api/v1/auth/mfa/challenges/confirm` locks and consumes the challenge after a valid TOTP proof, then enters the same credential-issuance boundary used by non-MFA login. Unknown, expired, exhausted, superseded, malformed, replayed, and invalid-proof outcomes share `401 MFA_CHALLENGE_INVALID`. Concurrent confirmation has at most one successful credential-issuing winner. See the [MFA login challenge security contract](docs/security/mfa-login-challenge.md).
 
 ## Implemented API
 
 | Method | Endpoint | Authentication | Description |
 |---|---|---|---|
 | `POST` | `/api/v1/auth/register` | Public | Registers a new user and stores a BCrypt password hash. |
-| `POST` | `/api/v1/auth/login` | Public | Applies Redis-backed login protection and returns access and refresh credentials for an active verified account. |
+| `POST` | `/api/v1/auth/login` | Public | Applies Redis-backed password protection; returns credentials when MFA is disabled or `202 MFA_REQUIRED` with an opaque challenge when MFA is enabled. |
+| `POST` | `/api/v1/auth/mfa/challenges/confirm` | Public | Consumes one pending MFA login challenge after a valid TOTP proof and then issues access and refresh credentials. |
 | `POST` | `/api/v1/auth/email-verification/requests` | Public | Accepts a generic verification request without disclosing account existence or eligibility. |
 | `POST` | `/api/v1/auth/email-verification/confirm` | Public | Consumes one opaque credential and marks email ownership exactly once. |
 | `POST` | `/api/v1/auth/password-recovery/requests` | Public | Accepts a generic recovery request without disclosing account existence or eligibility. |
@@ -483,11 +486,13 @@ docker compose --profile app up --build
 
 ## Database model
 
-Flyway migrations define users, refresh-token families and records, wallets, payment transactions, immutable ledger entries, transactional outbox records, processed Kafka events, Kafka dead-letter records, and append-only operator command audits.
+Flyway migrations define users, MFA authenticators and digest-only login challenges, refresh-token families and records, wallets, payment transactions, immutable ledger entries, transactional outbox records, processed Kafka events, Kafka dead-letter records, and append-only operator command audits.
 
 Important database guarantees include:
 
 - unique normalized user email addresses
+- one effective MFA authenticator per user
+- fixed-length and unique MFA login-challenge digests with one pending challenge per user
 - fixed-length and globally unique refresh-token digests
 - plaintext refresh tokens excluded from the persistence schema
 - same-family refresh-token successor lineage

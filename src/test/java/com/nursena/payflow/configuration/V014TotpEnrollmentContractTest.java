@@ -18,7 +18,7 @@ class V014TotpEnrollmentContractTest {
     private static final Path MIGRATION = ROOT.resolve("src/main/resources/db/migration/V18__create_mfa_authenticators.sql");
 
     @Test
-    void shouldMarkEnrollmentIncrementCompleteWithoutClaimingLoginChallenge() throws IOException {
+    void shouldPreserveCompletedEnrollmentIncrementContract() throws IOException {
         String roadmap = Files.readString(ROADMAP);
         assertThat(roadmap).contains(
             "- [x] Require an authenticated, active, email-verified user to begin enrollment",
@@ -29,7 +29,7 @@ class V014TotpEnrollmentContractTest {
             "- [x] Activate enrollment only after a valid TOTP proof within the documented clock-skew window",
             "- [x] Serialize replacement so one user has at most one effective pending or active authenticator",
             "- [x] Exclude secrets, provisioning URIs, TOTP values, protected bytes, and key material from observable output",
-            "- [ ] Issue a short-lived opaque MFA login challenge only after the password and account eligibility checks succeed",
+            "- [x] Issue a short-lived opaque MFA login challenge only after the password and account eligibility checks succeed",
             "- [ ] Generate recovery codes from cryptographically secure randomness",
             "- [ ] Introduce an application-facing step-up policy independent from controller annotations"
         );
@@ -79,14 +79,13 @@ class V014TotpEnrollmentContractTest {
     }
 
     @Test
-    void shouldExposeEnrollmentEndpointsWithoutChangingLoginContract() throws IOException {
+    void shouldExposeEnrollmentEndpointsAsCompletedPublicContract() throws IOException {
         String readme = Files.readString(README);
         assertThat(readme).contains(
             "`GET` | `/api/v1/users/me/mfa`",
             "`POST` | `/api/v1/users/me/mfa/enrollment`",
             "`POST` | `/api/v1/users/me/mfa/enrollment/confirm`",
-            "`DELETE` | `/api/v1/users/me/mfa/enrollment`",
-            "without changing the login flow yet"
+            "`DELETE` | `/api/v1/users/me/mfa/enrollment`"
         );
     }
 

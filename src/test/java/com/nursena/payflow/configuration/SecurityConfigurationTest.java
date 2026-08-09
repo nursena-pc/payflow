@@ -252,6 +252,16 @@ class SecurityConfigurationTest {
     }
 
     @Test
+    void shouldPermitAnonymousMfaLoginChallengeConfirmationMatcher()
+        throws Exception {
+
+        mockMvc.perform(
+                post("/api/v1/auth/mfa/challenges/confirm")
+            )
+            .andExpect(status().isNotFound());
+    }
+
+    @Test
     void shouldRejectAnonymousMfaEnrollmentEndpoints()
         throws Exception {
 

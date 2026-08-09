@@ -16,6 +16,8 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Authenticated TOTP enrollment, status, confirmation, and pending-cancellation endpoints.
 - PostgreSQL V18 authenticator persistence with one-row-per-user serialization and protected secret storage.
 - Standards-compatible 160-bit Base32 TOTP provisioning with HMAC-SHA1, six digits, 30-second steps, and a bounded ±1 verification window.
+- Password-first MFA login challenges with `202 MFA_REQUIRED` for enabled authenticators and a dedicated confirmation endpoint.
+- PostgreSQL V19 digest-only challenge persistence with expiration, attempt budget, terminal state, supersession, and pessimistic consumption locking.
 
 ### Security
 
@@ -24,6 +26,9 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - MFA lifecycle policy remains independent from `UserStatus`, email-verification state, Spring Security, JWT adapters, and JPA entities.
 - TOTP secrets are AES-256-GCM protected before persistence with user-bound authenticated data and a production-only configured key boundary separate from JWT and mail keys.
 - Enrollment requires the authenticated user's current password, rejects overlapping pending or enabled authenticators, and returns plaintext provisioning material only in the response that creates it.
+- MFA-enabled password login creates no access token, refresh-token family, or refresh-token record until a TOTP challenge is consumed successfully.
+- Unknown, malformed, expired, exhausted, superseded, replayed, and invalid-proof challenge outcomes share the stable `MFA_CHALLENGE_INVALID` contract.
+- Challenge plaintext, digests, TOTP values, and revealed authenticator secrets stay outside observable output; concurrent confirmation permits one credential-issuing winner.
 
 ## [0.13.0] - 2026-08-06
 

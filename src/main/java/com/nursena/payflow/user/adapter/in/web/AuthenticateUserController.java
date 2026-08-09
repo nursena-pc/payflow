@@ -17,6 +17,10 @@ import com.nursena.payflow.user.application.port.in
 import com.nursena.payflow.user.application.port.in
     .AuthenticateUserResult;
 import com.nursena.payflow.user.application.port.in
+    .AuthenticatedUserResult;
+import com.nursena.payflow.user.application.port.in
+    .MfaChallengeRequiredResult;
+import com.nursena.payflow.user.application.port.in
     .AuthenticateUserUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -82,10 +86,9 @@ public class AuthenticateUserController {
         operationId = "authenticateUser",
         summary = "Authenticate a user",
         description =
-            "Applies distributed login protection, "
-                + "validates user credentials, and "
-                + "returns an RSA-signed JWT access "
-                + "token with an opaque refresh token."
+            "Applies distributed login protection, validates the password, "
+                + "and returns credentials when MFA is disabled or a "
+                + "short-lived opaque MFA challenge when MFA is enabled."
     )
     @ApiResponses({
         @ApiResponse(
@@ -100,6 +103,16 @@ public class AuthenticateUserController {
                 examples = @ExampleObject(
                     value =
                         OpenApiExamples.LOGIN_SUCCESS
+                )
+            )
+        ),
+        @ApiResponse(
+            responseCode = "202",
+            description = "Password accepted; MFA completion is required.",
+            content = @Content(
+                mediaType = APPLICATION_JSON_VALUE,
+                schema = @Schema(
+                    implementation = MfaChallengeRequiredResponse.class
                 )
             )
         ),
@@ -195,7 +208,7 @@ public class AuthenticateUserController {
         )
     })
     @PostMapping("/login")
-    public ResponseEntity<AuthenticateUserResponse>
+    public ResponseEntity<?>
     authenticate(
         @Valid @RequestBody
         AuthenticateUserRequest request,
@@ -219,15 +232,28 @@ public class AuthenticateUserController {
                 command
             );
 
-        AuthenticateUserResponse response =
-            new AuthenticateUserResponse(
-                result.accessToken(),
-                TOKEN_TYPE,
-                result.expiresAt(),
-                result.refreshToken(),
-                result.refreshTokenExpiresAt()
-            );
+        if (result instanceof AuthenticatedUserResult authenticated) {
+            AuthenticateUserResponse response =
+                new AuthenticateUserResponse(
+                    authenticated.accessToken(),
+                    TOKEN_TYPE,
+                    authenticated.expiresAt(),
+                    authenticated.refreshToken(),
+                    authenticated.refreshTokenExpiresAt()
+                );
 
-        return ResponseEntity.ok(response);
+            return ResponseEntity.ok(response);
+        }
+
+        MfaChallengeRequiredResult challenge =
+            (MfaChallengeRequiredResult) result;
+
+        return ResponseEntity.accepted().body(
+            new MfaChallengeRequiredResponse(
+                "MFA_REQUIRED",
+                challenge.challengeToken(),
+                challenge.expiresAt()
+            )
+        );
     }
 }
