@@ -6,6 +6,8 @@ import java.util.Base64;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
+import com.nursena.payflow.user.application.port.out.MfaRecoveryCodeDigestPort;
+import com.nursena.payflow.user.application.port.out.MfaRecoveryCodeGenerationPort;
 import com.nursena.payflow.user.application.port.out.MfaSecretProtectionPort;
 import com.nursena.payflow.user.application.port.out.TotpSecretGenerationPort;
 import com.nursena.payflow.user.application.port.out.TotpVerificationPort;
@@ -49,6 +51,18 @@ class MfaSecurityConfiguration {
     @Bean
     TotpVerificationPort totpVerificationPort() {
         return new HmacSha1TotpVerificationAdapter();
+    }
+
+    @Bean
+    MfaRecoveryCodeGenerationPort mfaRecoveryCodeGenerationPort() {
+        return new SecureRandomMfaRecoveryCodeGenerationAdapter(
+            new SecureRandom()
+        );
+    }
+
+    @Bean
+    MfaRecoveryCodeDigestPort mfaRecoveryCodeDigestPort() {
+        return new Sha256MfaRecoveryCodeDigestAdapter();
     }
 
     private static byte[] randomKey() {

@@ -9,9 +9,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -54,6 +56,8 @@ class MfaLoginChallengeHttpIntegrationTest {
     private static final String PASSWORD = "StrongPassword123!";
     private static final byte[] TOTP_SECRET = "01234567890123456789"
         .getBytes(StandardCharsets.US_ASCII);
+    private static final String RECOVERY_CODE =
+        "AbCdEfGhIjKlMnOpQrStUv";
 
     @Container
     @ServiceConnection
@@ -70,6 +74,7 @@ class MfaLoginChallengeHttpIntegrationTest {
 
     @BeforeEach
     void cleanDatabase() {
+        jdbcTemplate.update("DELETE FROM mfa_recovery_codes");
         jdbcTemplate.update("DELETE FROM mfa_login_challenges");
         jdbcTemplate.update("DELETE FROM refresh_token_records");
         jdbcTemplate.update("DELETE FROM refresh_token_families");
@@ -127,6 +132,91 @@ class MfaLoginChallengeHttpIntegrationTest {
         )).isEqualTo("CONSUMED");
     }
 
+
+    @Test
+    void shouldConsumeUnusedRecoveryCodeAndIssueCredentials() throws Exception {
+        UserFixture fixture = insertEnabledMfaUser();
+        insertRecoveryCode(fixture.userId(), RECOVERY_CODE);
+        String challenge = challengeToken(login(fixture.email()));
+
+        mockMvc.perform(post("/api/v1/auth/mfa/challenges/confirm")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(
+                    new ChallengeRequest(challenge, RECOVERY_CODE)
+                )))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.accessToken").isNotEmpty())
+            .andExpect(jsonPath("$.refreshToken").isNotEmpty());
+
+        assertThat(jdbcTemplate.queryForObject(
+            "SELECT consumed_at IS NOT NULL FROM mfa_recovery_codes WHERE user_id = ?",
+            Boolean.class,
+            fixture.userId()
+        )).isTrue();
+        assertThat(count("refresh_token_families")).isEqualTo(1);
+        assertThat(count("refresh_token_records")).isEqualTo(1);
+    }
+
+    @Test
+    void shouldRejectReusedRecoveryCodeThroughGenericFailure() throws Exception {
+        UserFixture fixture = insertEnabledMfaUser();
+        insertRecoveryCode(fixture.userId(), RECOVERY_CODE);
+        String firstChallenge = challengeToken(login(fixture.email()));
+
+        mockMvc.perform(post("/api/v1/auth/mfa/challenges/confirm")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(
+                    new ChallengeRequest(firstChallenge, RECOVERY_CODE)
+                )))
+            .andExpect(status().isOk());
+
+        String secondChallenge = challengeToken(login(fixture.email()));
+
+        mockMvc.perform(post("/api/v1/auth/mfa/challenges/confirm")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(
+                    new ChallengeRequest(secondChallenge, RECOVERY_CODE)
+                )))
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.code").value("MFA_CHALLENGE_INVALID"));
+
+        assertThat(jdbcTemplate.queryForObject(
+            "SELECT attempts_remaining FROM mfa_login_challenges WHERE state = 'PENDING' AND user_id = ?",
+            Integer.class,
+            fixture.userId()
+        )).isEqualTo(4);
+        assertThat(count("refresh_token_families")).isEqualTo(1);
+    }
+
+    @Test
+    void shouldPermitExactlyOneConcurrentRecoveryCodeConsumption() throws Exception {
+        UserFixture fixture = insertEnabledMfaUser();
+        insertRecoveryCode(fixture.userId(), RECOVERY_CODE);
+        String challenge = challengeToken(login(fixture.email()));
+        CountDownLatch start = new CountDownLatch(1);
+
+        try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            Future<Integer> first = executor.submit(
+                () -> confirmStatus(start, challenge, RECOVERY_CODE)
+            );
+            Future<Integer> second = executor.submit(
+                () -> confirmStatus(start, challenge, RECOVERY_CODE)
+            );
+            start.countDown();
+
+            assertThat(List.of(first.get(), second.get()))
+                .containsExactlyInAnyOrder(200, 401);
+        }
+
+        assertThat(jdbcTemplate.queryForObject(
+            "SELECT COUNT(*) FROM mfa_recovery_codes WHERE user_id = ? AND consumed_at IS NOT NULL",
+            Integer.class,
+            fixture.userId()
+        )).isEqualTo(1);
+        assertThat(count("refresh_token_families")).isEqualTo(1);
+        assertThat(count("refresh_token_records")).isEqualTo(1);
+    }
+
     @Test
     void shouldPersistAttemptFailureWithoutIssuingCredentials() throws Exception {
         UserFixture fixture = insertEnabledMfaUser();
@@ -162,7 +252,7 @@ class MfaLoginChallengeHttpIntegrationTest {
             Future<Integer> second = executor.submit(() -> confirmStatus(start, challenge, code));
             start.countDown();
 
-            assertThat(java.util.List.of(first.get(), second.get()))
+            assertThat(List.of(first.get(), second.get()))
                 .containsExactlyInAnyOrder(200, 401);
         }
 
@@ -239,6 +329,24 @@ class MfaLoginChallengeHttpIntegrationTest {
             Timestamp.from(now)
         );
         return new UserFixture(userId, email);
+    }
+
+
+    private void insertRecoveryCode(UUID userId, String recoveryCode)
+        throws Exception {
+        byte[] digest = MessageDigest.getInstance("SHA-256")
+            .digest(recoveryCode.getBytes(StandardCharsets.US_ASCII));
+        jdbcTemplate.update(
+            """
+            INSERT INTO mfa_recovery_codes (
+                id, user_id, code_digest, created_at, consumed_at
+            ) VALUES (?, ?, ?, ?, NULL)
+            """,
+            UUID.randomUUID(),
+            userId,
+            digest,
+            Timestamp.from(Instant.now())
+        );
     }
 
     private int count(String table) {

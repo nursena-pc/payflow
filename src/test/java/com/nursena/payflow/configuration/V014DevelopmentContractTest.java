@@ -18,11 +18,9 @@ class V014DevelopmentContractTest {
 
     private static final Path ROADMAP =
         Path.of("docs", "roadmap.md");
-
     @Test
     void shouldExposeV014DevelopmentStatus()
         throws IOException {
-
         assertThat(Files.readString(README))
             .contains(
                 "PayFlow v0.13.0 is the latest published release",
@@ -31,18 +29,16 @@ class V014DevelopmentContractTest {
                 "TOTP-based multi-factor authentication",
                 "digest-only login challenge",
                 "single-use recovery codes",
-                "recent step-up proof"
+                "purpose-bound step-up grants"
             )
             .doesNotContain(
                 "Maven version remains `0.13.0`",
                 "## v0.14.0 release preparation"
             );
     }
-
     @Test
     void shouldDefineMfaLifecycleAndSecretBoundaries()
         throws IOException {
-
         assertThat(Files.readString(ROADMAP))
             .contains(
                 "`DISABLED`, `PENDING`, and `ENABLED` lifecycle transitions",
@@ -55,11 +51,9 @@ class V014DevelopmentContractTest {
                 "Exclude secrets, provisioning URIs, TOTP values, protected bytes, and key material from observable output"
             );
     }
-
     @Test
     void shouldDefineChallengeAndRecoveryCodeBoundaries()
         throws IOException {
-
         assertThat(Files.readString(ROADMAP))
             .contains(
                 "Issue a short-lived opaque MFA login challenge only after the password and account eligibility checks succeed",
@@ -69,14 +63,12 @@ class V014DevelopmentContractTest {
                 "concurrent submissions have at most one successful winner",
                 "Persist only fixed-length recovery-code digests",
                 "Consume every recovery code atomically and at most once",
-                "Revoke active refresh-token families after MFA disable or secret replacement"
+                "Revoke active refresh-token families after MFA disable or authenticator replacement"
             );
     }
-
     @Test
     void shouldDefineStepUpPolicyAndExplicitDeferrals()
         throws IOException {
-
         assertThat(Files.readString(ROADMAP))
             .contains(
                 "application-facing step-up policy independent from controller annotations",
@@ -89,11 +81,9 @@ class V014DevelopmentContractTest {
                 "access-token denylisting or immediate revocation of already-issued JWTs"
             );
     }
-
     @Test
     void shouldRetainV013PublicationAndUnreleasedChangelog()
         throws IOException {
-
         assertThat(Files.readString(ROADMAP))
             .contains(
                 "## v0.13.0 — Released: Account Recovery and Secure Mail Delivery",
@@ -101,7 +91,6 @@ class V014DevelopmentContractTest {
                 "release workflow run: [`31115952987`]",
                 "published JAR SHA-256: `78520B04BA3FDAF1BCEB3EAF29FCBE96C46265DF691C52C9048CEE6B5D58F4DA`"
             );
-
         assertThat(Files.readString(CHANGELOG))
             .contains(
                 "## [Unreleased]",

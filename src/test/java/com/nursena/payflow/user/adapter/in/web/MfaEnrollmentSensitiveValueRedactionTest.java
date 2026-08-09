@@ -3,6 +3,7 @@ package com.nursena.payflow.user.adapter.in.web;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 import com.nursena.payflow.user.application.port.in.BeginMfaEnrollmentCommand;
@@ -26,6 +27,8 @@ class MfaEnrollmentSensitiveValueRedactionTest {
         var userId = UUID.randomUUID();
         var expiresAt = Instant.parse("2026-08-08T10:10:00Z");
 
+        String recoveryCode = "AbCdEfGhIjKlMnOpQrStUv";
+
         Object[] sensitiveObjects = {
             new BeginMfaEnrollmentRequest(PASSWORD),
             new BeginMfaEnrollmentCommand(userId, PASSWORD),
@@ -42,6 +45,16 @@ class MfaEnrollmentSensitiveValueRedactionTest {
                 SECRET,
                 PROVISIONING_URI,
                 expiresAt
+            ),
+            new com.nursena.payflow.user.application.port.in.ConfirmMfaEnrollmentResult(
+                MfaLifecycleState.ENABLED,
+                expiresAt,
+                List.of(recoveryCode)
+            ),
+            new MfaEnrollmentConfirmationResponse(
+                MfaLifecycleState.ENABLED,
+                expiresAt,
+                List.of(recoveryCode)
             )
         };
 
@@ -51,6 +64,7 @@ class MfaEnrollmentSensitiveValueRedactionTest {
                 .doesNotContain(CODE)
                 .doesNotContain(SECRET)
                 .doesNotContain(PROVISIONING_URI)
+                .doesNotContain(recoveryCode)
                 .containsIgnoringCase("redacted");
         }
     }

@@ -586,16 +586,26 @@ credential-issuance boundary. Unknown, malformed, expired, exhausted,
 superseded, replayed, and invalid-proof outcomes share the stable
 `MFA_CHALLENGE_INVALID` response.
 
-### Increment 4 — Recovery codes and MFA disable
+### Increment 4 — Recovery codes
 
-- [ ] Generate recovery codes from cryptographically secure randomness
-- [ ] Return plaintext recovery codes once at activation or explicit rotation
-- [ ] Persist only fixed-length recovery-code digests
-- [ ] Consume every recovery code atomically and at most once
-- [ ] Make recovery-code and TOTP challenge failures indistinguishable at the public boundary
-- [ ] Require recent step-up proof before recovery-code rotation or MFA disable
-- [ ] Revoke active refresh-token families after MFA disable or secret replacement
-- [ ] Preserve append-only, credential-free account-security audit evidence
+- [x] Generate recovery codes from cryptographically secure randomness
+- [x] Return plaintext recovery codes once when TOTP enrollment is activated
+- [x] Persist only fixed-length recovery-code digests
+- [x] Consume every recovery code atomically and at most once
+- [x] Make recovery-code and TOTP challenge failures indistinguishable at the public boundary
+- [x] Keep recovery-code plaintext and digests out of observable output
+- [ ] Rotate recovery codes only after a recent purpose-bound step-up proof exists
+
+The recovery-code implementation generates ten independent 128-bit opaque
+Base64URL values when pending TOTP enrollment becomes `ENABLED`. The activation
+response returns that plaintext set once while PostgreSQL V20 persists only
+32-byte SHA-256 digests. Login-challenge confirmation accepts either the
+existing six-digit TOTP proof or one unused recovery code. The matching recovery
+row is pessimistically locked and consumed in the same transaction as challenge
+consumption and credential issuance. Invalid, unknown, malformed, and already
+consumed recovery proofs share `401 MFA_CHALLENGE_INVALID` with invalid TOTP.
+Explicit recovery-code rotation is intentionally deferred until purpose-bound
+step-up grants exist.
 
 ### Increment 5 — Step-up authentication
 
@@ -607,7 +617,16 @@ superseded, replayed, and invalid-proof outcomes share the stable
 - [ ] Keep step-up grants out of logs, metric labels, audit payloads, and persistence plaintext
 - [ ] Document which operations remain bearer-only and which require step-up
 
-### Increment 6 — Verification and public contracts
+### Increment 6 — MFA disable, recovery-code rotation, and replacement
+
+- [ ] Require the exact recent step-up purpose before MFA disable or recovery-code rotation
+- [ ] Rotate the complete recovery-code set atomically and return replacement plaintext once
+- [ ] Disable the enabled authenticator only after `mfa-disable` step-up succeeds
+- [ ] Require `mfa-authenticator-replacement` step-up before replacing an enabled authenticator
+- [ ] Revoke active refresh-token families after MFA disable or authenticator replacement
+- [ ] Preserve append-only, credential-free account-security audit evidence
+
+### Increment 7 — Verification and public contracts
 
 - [ ] Unit-test TOTP vectors, clock skew, lifecycle transitions, protection, digesting, and redaction
 - [ ] Verify clean Flyway installation and upgrades from the v0.13.0 schema with PostgreSQL

@@ -63,7 +63,7 @@ class ConfirmMfaLoginChallengeControllerTest {
     }
 
     @Test
-    void shouldReturnGenericUnauthorizedForInvalidChallengeOrTotp() throws Exception {
+    void shouldReturnGenericUnauthorizedForInvalidChallengeOrProof() throws Exception {
         when(useCase.confirm(any(ConfirmMfaLoginChallengeCommand.class)))
             .thenThrow(new InvalidMfaLoginChallengeException());
 
@@ -75,6 +75,34 @@ class ConfirmMfaLoginChallengeControllerTest {
             .andExpect(jsonPath("$.message").value(
                 "The MFA challenge or proof could not be verified."
             ));
+    }
+
+
+    @Test
+    void shouldPassRecoveryCodeThroughSameConfirmationCommand() throws Exception {
+        when(useCase.confirm(any(ConfirmMfaLoginChallengeCommand.class)))
+            .thenReturn(new AuthenticatedUserResult(
+                "access",
+                Instant.parse("2026-08-09T12:15:00Z"),
+                "refresh",
+                Instant.parse("2026-08-16T12:00:00Z")
+            ));
+
+        String recoveryCode = "AbCdEfGhIjKlMnOpQrStUv";
+
+        mockMvc.perform(post("/api/v1/auth/mfa/challenges/confirm")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    "{\"challengeToken\":\"challenge\",\"code\":\""
+                        + recoveryCode
+                        + "\"}"
+                ))
+            .andExpect(status().isOk());
+
+        verify(useCase).confirm(argThat(command ->
+            command.challengeToken().equals("challenge")
+                && command.code().equals(recoveryCode)
+        ));
     }
 
     @Test

@@ -3,20 +3,15 @@ package com.nursena.payflow.user.application.service;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
 import java.util.Objects;
 import java.util.UUID;
 
-import com.nursena.payflow.user.application.exception.MfaSecurityUnavailableException;
 import com.nursena.payflow.user.application.port.in.AuthenticatedUserResult;
 import com.nursena.payflow.user.application.port.in.ConfirmMfaLoginChallengeCommand;
 import com.nursena.payflow.user.application.port.in.ConfirmMfaLoginChallengeUseCase;
 import com.nursena.payflow.user.application.port.out.MfaAuthenticatorRepositoryPort;
 import com.nursena.payflow.user.application.port.out.MfaLoginChallengeDigestPort;
 import com.nursena.payflow.user.application.port.out.MfaLoginChallengeRepositoryPort;
-import com.nursena.payflow.user.application.port.out.MfaSecretProtectionFailureException;
-import com.nursena.payflow.user.application.port.out.MfaSecretProtectionPort;
-import com.nursena.payflow.user.application.port.out.TotpVerificationPort;
 import com.nursena.payflow.user.application.port.out.UserRepositoryPort;
 import com.nursena.payflow.user.domain.exception.InvalidMfaLoginChallengeException;
 import com.nursena.payflow.user.domain.model.MfaAuthenticator;
@@ -37,8 +32,7 @@ public class ConfirmMfaLoginChallengeService
     private final MfaLoginChallengeRepositoryPort challengeRepository;
     private final UserRepositoryPort userRepository;
     private final MfaAuthenticatorRepositoryPort authenticatorRepository;
-    private final MfaSecretProtectionPort secretProtection;
-    private final TotpVerificationPort totpVerification;
+    private final MfaLoginSecondFactorVerifier secondFactorVerifier;
     private final AuthenticationCredentialIssuer credentialIssuer;
     private final Clock clock;
 
@@ -47,8 +41,7 @@ public class ConfirmMfaLoginChallengeService
         MfaLoginChallengeRepositoryPort challengeRepository,
         UserRepositoryPort userRepository,
         MfaAuthenticatorRepositoryPort authenticatorRepository,
-        MfaSecretProtectionPort secretProtection,
-        TotpVerificationPort totpVerification,
+        MfaLoginSecondFactorVerifier secondFactorVerifier,
         AuthenticationCredentialIssuer credentialIssuer,
         Clock clock
     ) {
@@ -56,8 +49,7 @@ public class ConfirmMfaLoginChallengeService
         this.challengeRepository = challengeRepository;
         this.userRepository = userRepository;
         this.authenticatorRepository = authenticatorRepository;
-        this.secretProtection = secretProtection;
-        this.totpVerification = totpVerification;
+        this.secondFactorVerifier = secondFactorVerifier;
         this.credentialIssuer = credentialIssuer;
         this.clock = clock;
     }
@@ -99,28 +91,12 @@ public class ConfirmMfaLoginChallengeService
             .filter(value -> value.state() == MfaLifecycleState.ENABLED)
             .orElseThrow(InvalidMfaLoginChallengeException::new);
 
-        byte[] secret;
-        try {
-            secret = secretProtection.reveal(
-                user.id(),
-                authenticator.protectedSecret()
-            );
-        }
-        catch (MfaSecretProtectionFailureException exception) {
-            throw new MfaSecurityUnavailableException();
-        }
-
-        boolean verified;
-        try {
-            verified = totpVerification.verify(
-                secret,
-                checkedCommand.code(),
-                now
-            );
-        }
-        finally {
-            Arrays.fill(secret, (byte) 0);
-        }
+        boolean verified = secondFactorVerifier.verifyAndConsume(
+            user.id(),
+            authenticator,
+            checkedCommand.code(),
+            now
+        );
 
         if (!verified) {
             challengeRepository.save(challenge.failAttempt(now));

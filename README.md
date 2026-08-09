@@ -164,13 +164,13 @@ Enrollment will create a pending authenticator secret, protect it before Postgre
 
 Users with enabled MFA will complete password verification before receiving a short-lived, digest-only login challenge. A valid TOTP or one unused recovery code will consume that challenge exactly once before access and refresh credentials are issued. Challenge attempts, expiration, replay, concurrent verification, and refresh-session side effects will be covered with real PostgreSQL tests.
 
-Recovery codes will be generated from cryptographically secure randomness, returned once at activation or explicit rotation, stored only as fixed-length digests, and consumed atomically. Disabling or rotating MFA will require a recent step-up proof and will revoke active refresh-token families with a dedicated account-security reason.
+The fourth increment implements recovery codes without weakening the step-up boundary reserved for later account-security mutations. Successful TOTP enrollment confirmation generates ten independent 128-bit canonical Base64URL recovery codes, returns that plaintext set once, and stores only SHA-256 digests in PostgreSQL V20. Login-challenge confirmation accepts either the existing six-digit TOTP proof or one unused recovery code; recovery-code consumption, challenge consumption, and credential issuance share one transaction. Explicit recovery-code rotation, MFA disable, and authenticator replacement remain deferred until purpose-bound step-up grants exist.
 
 The first delivery increment now freezes the domain lifecycle, typed step-up purpose vocabulary, account-security refresh-family revocation reasons, stable public failure semantics, and concurrency/observable-output boundaries. The accepted design is recorded in [ADR 0014](docs/adr/0014-mfa-and-step-up-authentication.md) and the [MFA threat model](docs/security/mfa-threat-model.md). No MFA endpoint, authenticator persistence, TOTP verification, recovery-code implementation, or runtime step-up enforcement is introduced by this foundation increment. Generalized API-wide abuse protection, SMS or email OTP, WebAuthn/passkeys, external identity providers, device trust, and behavioral risk scoring remain outside v0.14.0.
 
 The second increment implemented authenticated TOTP enrollment before the login flow was gated by MFA. `POST /api/v1/users/me/mfa/enrollment` requires the current password, generates a 160-bit secret, returns the canonical Base32 secret and `otpauth://` URI once, and persists only AES-256-GCM-protected secret material. `POST /api/v1/users/me/mfa/enrollment/confirm` activates the pending authenticator only after a six-digit TOTP proof within the current ±1 30-second step. `DELETE /api/v1/users/me/mfa/enrollment` cancels only pending enrollment, while `GET /api/v1/users/me/mfa` exposes lifecycle metadata without secret material. PostgreSQL V18 enforces one effective authenticator row per user and production requires a dedicated MFA encryption key independent from JWT and mail keys. See the [TOTP enrollment security contract](docs/security/mfa-enrollment.md).
 
-The third increment gates credential issuance for `ENABLED` MFA users. A correct password creates no access token, refresh-token family, or refresh-token record; it returns `202` with one short-lived opaque challenge instead. PostgreSQL V19 stores only the SHA-256 challenge digest, expiration, bounded attempt budget, and terminal state. `POST /api/v1/auth/mfa/challenges/confirm` locks and consumes the challenge after a valid TOTP proof, then enters the same credential-issuance boundary used by non-MFA login. Unknown, expired, exhausted, superseded, malformed, replayed, and invalid-proof outcomes share `401 MFA_CHALLENGE_INVALID`. Concurrent confirmation has at most one successful credential-issuing winner. See the [MFA login challenge security contract](docs/security/mfa-login-challenge.md).
+The third increment gates credential issuance for `ENABLED` MFA users. A correct password creates no access token, refresh-token family, or refresh-token record; it returns `202` with one short-lived opaque challenge instead. PostgreSQL V19 stores only the SHA-256 challenge digest, expiration, bounded attempt budget, and terminal state. `POST /api/v1/auth/mfa/challenges/confirm` locks and consumes the challenge after a valid second-factor proof, then enters the same credential-issuance boundary used by non-MFA login. The fourth increment extends that proof boundary to one unused recovery code while preserving the same generic failure and single-winner semantics. Unknown, expired, exhausted, superseded, malformed, replayed, consumed-recovery-code, and invalid-proof outcomes share `401 MFA_CHALLENGE_INVALID`. Concurrent confirmation has at most one successful credential-issuing winner. See the [MFA login challenge security contract](docs/security/mfa-login-challenge.md) and [recovery-code security contract](docs/security/mfa-recovery-codes.md).
 
 ## Implemented API
 
@@ -178,14 +178,14 @@ The third increment gates credential issuance for `ENABLED` MFA users. A correct
 |---|---|---|---|
 | `POST` | `/api/v1/auth/register` | Public | Registers a new user and stores a BCrypt password hash. |
 | `POST` | `/api/v1/auth/login` | Public | Applies Redis-backed password protection; returns credentials when MFA is disabled or `202 MFA_REQUIRED` with an opaque challenge when MFA is enabled. |
-| `POST` | `/api/v1/auth/mfa/challenges/confirm` | Public | Consumes one pending MFA login challenge after a valid TOTP proof and then issues access and refresh credentials. |
+| `POST` | `/api/v1/auth/mfa/challenges/confirm` | Public | Consumes one pending MFA login challenge after a valid TOTP or unused recovery-code proof and then issues access and refresh credentials. |
 | `POST` | `/api/v1/auth/email-verification/requests` | Public | Accepts a generic verification request without disclosing account existence or eligibility. |
 | `POST` | `/api/v1/auth/email-verification/confirm` | Public | Consumes one opaque credential and marks email ownership exactly once. |
 | `POST` | `/api/v1/auth/password-recovery/requests` | Public | Accepts a generic recovery request without disclosing account existence or eligibility. |
 | `POST` | `/api/v1/auth/password-recovery/confirm` | Public | Atomically replaces the BCrypt password hash and revokes active refresh sessions. |
 | `GET` | `/api/v1/users/me/mfa` | Bearer | Returns the owning user's MFA lifecycle metadata without secret material. |
 | `POST` | `/api/v1/users/me/mfa/enrollment` | Bearer + current password | Starts one pending TOTP enrollment and returns the provisioning secret once. |
-| `POST` | `/api/v1/users/me/mfa/enrollment/confirm` | Bearer | Activates the pending authenticator after a valid six-digit TOTP proof. |
+| `POST` | `/api/v1/users/me/mfa/enrollment/confirm` | Bearer | Activates the pending authenticator after a valid six-digit TOTP proof and returns ten plaintext recovery codes once. |
 | `DELETE` | `/api/v1/users/me/mfa/enrollment` | Bearer | Cancels only a pending enrollment and deletes its protected secret row. |
 | `POST` | `/api/v1/auth/refresh` | Public | Atomically rotates an active opaque refresh credential. |
 | `POST` | `/api/v1/auth/logout` | Public | Idempotently revokes the refresh-token family represented by the submitted credential. |
@@ -486,13 +486,14 @@ docker compose --profile app up --build
 
 ## Database model
 
-Flyway migrations define users, MFA authenticators and digest-only login challenges, refresh-token families and records, wallets, payment transactions, immutable ledger entries, transactional outbox records, processed Kafka events, Kafka dead-letter records, and append-only operator command audits.
+Flyway migrations define users, MFA authenticators, digest-only login challenges and recovery codes, refresh-token families and records, wallets, payment transactions, immutable ledger entries, transactional outbox records, processed Kafka events, Kafka dead-letter records, and append-only operator command audits.
 
 Important database guarantees include:
 
 - unique normalized user email addresses
 - one effective MFA authenticator per user
 - fixed-length and unique MFA login-challenge digests with one pending challenge per user
+- fixed-length recovery-code digests with single-use consumption and no durable plaintext recovery credential
 - fixed-length and globally unique refresh-token digests
 - plaintext refresh tokens excluded from the persistence schema
 - same-family refresh-token successor lineage

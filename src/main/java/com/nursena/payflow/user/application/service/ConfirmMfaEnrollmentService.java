@@ -3,6 +3,7 @@ package com.nursena.payflow.user.application.service;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Objects;
 
 import com.nursena.payflow.user.application.exception.MfaSecurityUnavailableException;
@@ -34,6 +35,7 @@ public class ConfirmMfaEnrollmentService
     private final MfaAuthenticatorRepositoryPort authenticatorRepository;
     private final MfaSecretProtectionPort secretProtection;
     private final TotpVerificationPort totpVerification;
+    private final MfaRecoveryCodeIssuer recoveryCodeIssuer;
     private final Clock clock;
 
     public ConfirmMfaEnrollmentService(
@@ -41,12 +43,14 @@ public class ConfirmMfaEnrollmentService
         MfaAuthenticatorRepositoryPort authenticatorRepository,
         MfaSecretProtectionPort secretProtection,
         TotpVerificationPort totpVerification,
+        MfaRecoveryCodeIssuer recoveryCodeIssuer,
         Clock clock
     ) {
         this.userRepository = userRepository;
         this.authenticatorRepository = authenticatorRepository;
         this.secretProtection = secretProtection;
         this.totpVerification = totpVerification;
+        this.recoveryCodeIssuer = recoveryCodeIssuer;
         this.clock = clock;
     }
 
@@ -107,10 +111,15 @@ public class ConfirmMfaEnrollmentService
             authenticatorRepository.save(
                 authenticator.activate(now)
             );
+        List<String> recoveryCodes = recoveryCodeIssuer.issue(
+            user.id(),
+            now
+        );
 
         return new ConfirmMfaEnrollmentResult(
             activated.state(),
-            activated.activatedAt()
+            activated.activatedAt(),
+            recoveryCodes
         );
     }
 
