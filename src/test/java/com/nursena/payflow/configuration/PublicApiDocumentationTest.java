@@ -82,6 +82,7 @@ class PublicApiDocumentationTest {
             "Authentication",
             "authenticateUser",
             "200",
+            "202",
             "400",
             "401",
             "403",

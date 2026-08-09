@@ -567,14 +567,24 @@ Cancelling a pending enrollment deletes the protected secret row.
 
 ### Increment 3 — MFA login challenge
 
-- [ ] Preserve existing Redis-backed password-attempt protection before user lookup and password verification
-- [ ] Issue a short-lived opaque MFA login challenge only after the password and account eligibility checks succeed
-- [ ] Persist only a fixed-length challenge digest, expiration, bounded attempt state, and terminal state
-- [ ] Issue no access or refresh credential while an enabled user's challenge remains unresolved
-- [ ] Consume a successful challenge exactly once before issuing access and refresh credentials
-- [ ] Permit one documented TOTP clock step on either side of the current step
-- [ ] Reject expired, exhausted, replayed, malformed, and superseded challenges through one stable public contract
-- [ ] Lock verification so concurrent submissions have at most one successful winner
+- [x] Preserve existing Redis-backed password-attempt protection before user lookup and password verification
+- [x] Issue a short-lived opaque MFA login challenge only after the password and account eligibility checks succeed
+- [x] Persist only a fixed-length challenge digest, expiration, bounded attempt state, and terminal state
+- [x] Issue no access or refresh credential while an enabled user's challenge remains unresolved
+- [x] Consume a successful challenge exactly once before issuing access and refresh credentials
+- [x] Permit one documented TOTP clock step on either side of the current step
+- [x] Reject expired, exhausted, replayed, malformed, and superseded challenges through one stable public contract
+- [x] Lock verification so concurrent submissions have at most one successful winner
+
+The login-challenge implementation uses V19 digest-only PostgreSQL persistence,
+a five-minute default lifetime, five-attempt default budget, explicit terminal
+states, and pessimistic user/challenge/authenticator locking. Password success
+for an MFA-enabled account returns `202 MFA_REQUIRED` without creating access or
+refresh credentials. `POST /api/v1/auth/mfa/challenges/confirm` consumes one
+pending challenge after a valid TOTP proof and only then enters the shared
+credential-issuance boundary. Unknown, malformed, expired, exhausted,
+superseded, replayed, and invalid-proof outcomes share the stable
+`MFA_CHALLENGE_INVALID` response.
 
 ### Increment 4 — Recovery codes and MFA disable
 

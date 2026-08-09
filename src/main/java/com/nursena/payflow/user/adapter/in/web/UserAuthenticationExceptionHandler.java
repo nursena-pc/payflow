@@ -11,8 +11,12 @@ import com.nursena.payflow.user.application.exception
     .LoginRateLimitExceededException;
 import com.nursena.payflow.user.application.exception
     .LoginRateLimitUnavailableException;
+import com.nursena.payflow.user.application.exception
+    .MfaSecurityUnavailableException;
 import com.nursena.payflow.user.domain.exception
     .InvalidCredentialsException;
+import com.nursena.payflow.user.domain.exception
+    .InvalidMfaLoginChallengeException;
 import com.nursena.payflow.user.domain.exception
     .InvalidRefreshTokenException;
 import com.nursena.payflow.user.domain.exception
@@ -34,6 +38,7 @@ import org.springframework.web.bind.annotation
 @RestControllerAdvice(
     assignableTypes = {
         AuthenticateUserController.class,
+        ConfirmMfaLoginChallengeController.class,
         RotateRefreshCredentialsController.class
     }
 )
@@ -53,6 +58,36 @@ public class UserAuthenticationExceptionHandler {
     ) {
         return buildResponse(
             HttpStatus.UNAUTHORIZED,
+            exception.getCode(),
+            exception.getMessage(),
+            request
+        );
+    }
+
+    @ExceptionHandler(
+        InvalidMfaLoginChallengeException.class
+    )
+    ResponseEntity<ApiError> handleInvalidMfaChallenge(
+        InvalidMfaLoginChallengeException exception,
+        HttpServletRequest request
+    ) {
+        return buildResponse(
+            HttpStatus.UNAUTHORIZED,
+            exception.getCode(),
+            exception.getMessage(),
+            request
+        );
+    }
+
+    @ExceptionHandler(
+        MfaSecurityUnavailableException.class
+    )
+    ResponseEntity<ApiError> handleMfaSecurityUnavailable(
+        MfaSecurityUnavailableException exception,
+        HttpServletRequest request
+    ) {
+        return buildResponse(
+            HttpStatus.SERVICE_UNAVAILABLE,
             exception.getCode(),
             exception.getMessage(),
             request

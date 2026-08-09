@@ -37,7 +37,9 @@ import com.nursena.payflow.user.application.exception
 import com.nursena.payflow.user.application.port.in
     .AuthenticateUserCommand;
 import com.nursena.payflow.user.application.port.in
-    .AuthenticateUserResult;
+    .AuthenticatedUserResult;
+import com.nursena.payflow.user.application.port.in
+    .MfaChallengeRequiredResult;
 import com.nursena.payflow.user.application.port.in
     .AuthenticateUserUseCase;
 import com.nursena.payflow.user.application.port.out
@@ -124,7 +126,7 @@ class AuthenticateUserControllerTest {
             any(AuthenticateUserCommand.class)
         ))
             .thenReturn(
-                new AuthenticateUserResult(
+                new AuthenticatedUserResult(
                     "signed-access-token",
                     ACCESS_EXPIRES_AT,
                     "opaque-refresh-token",
@@ -201,6 +203,34 @@ class AuthenticateUserControllerTest {
                             )
                 )
             );
+    }
+
+    @Test
+    void shouldReturnAcceptedChallengeWithoutCredentialFieldsWhenMfaIsEnabled()
+        throws Exception {
+
+        when(authenticateUserUseCase.authenticate(
+            any(AuthenticateUserCommand.class)
+        ))
+            .thenReturn(
+                new MfaChallengeRequiredResult(
+                    "opaque-mfa-challenge",
+                    Instant.parse("2026-07-28T12:05:00Z")
+                )
+            );
+
+        mockMvc.perform(
+                loginRequest(
+                    "nursena@example.com",
+                    "StrongPassword123!"
+                )
+            )
+            .andExpect(status().isAccepted())
+            .andExpect(jsonPath("$.authenticationStatus").value("MFA_REQUIRED"))
+            .andExpect(jsonPath("$.challengeToken").value("opaque-mfa-challenge"))
+            .andExpect(jsonPath("$.expiresAt").value("2026-07-28T12:05:00Z"))
+            .andExpect(jsonPath("$.accessToken").doesNotExist())
+            .andExpect(jsonPath("$.refreshToken").doesNotExist());
     }
 
     @Test

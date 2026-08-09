@@ -46,6 +46,9 @@ class OpenApiJsonContractIntegrationTest {
     private static final String LOGIN_PATH =
         "/api/v1/auth/login";
 
+    private static final String MFA_LOGIN_CHALLENGE_CONFIRM_PATH =
+        "/api/v1/auth/mfa/challenges/confirm";
+
     private static final String EMAIL_VERIFICATION_REQUEST_PATH =
         "/api/v1/auth/email-verification/requests";
 
@@ -210,6 +213,7 @@ class OpenApiJsonContractIntegrationTest {
             SYSTEM_HEALTH_PATH,
             REGISTER_PATH,
             LOGIN_PATH,
+            MFA_LOGIN_CHALLENGE_CONFIRM_PATH,
             EMAIL_VERIFICATION_REQUEST_PATH,
             EMAIL_VERIFICATION_CONFIRM_PATH,
             PASSWORD_RECOVERY_REQUEST_PATH,
@@ -267,6 +271,7 @@ class OpenApiJsonContractIntegrationTest {
         assertResponseCodes(
             login,
             "200",
+            "202",
             "400",
             "401",
             "403",
@@ -291,6 +296,23 @@ class OpenApiJsonContractIntegrationTest {
                 .asInt()
         )
             .isEqualTo(1);
+
+        JsonNode mfaChallengeConfirm =
+            operation(
+                MFA_LOGIN_CHALLENGE_CONFIRM_PATH,
+                "post"
+            );
+
+        assertPublicOperation(mfaChallengeConfirm);
+        assertThat(
+            mfaChallengeConfirm.path("operationId").asText()
+        ).isEqualTo("confirmMfaLoginChallenge");
+        assertResponseCodes(
+            mfaChallengeConfirm,
+            "200",
+            "401",
+            "503"
+        );
 
         JsonNode verificationRequest =
             operation(

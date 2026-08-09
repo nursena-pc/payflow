@@ -106,6 +106,9 @@ payflow:
       totp:
         issuer: ${MFA_TOTP_ISSUER:PayFlow}
         enrollment-ttl: ${MFA_ENROLLMENT_TTL:10m}
+      login-challenge:
+        ttl: ${MFA_LOGIN_CHALLENGE_TTL:5m}
+        max-attempts: ${MFA_LOGIN_CHALLENGE_MAX_ATTEMPTS:5}
       secret-protection:
         provider-mode: ${MFA_SECRET_PROTECTION_MODE:ephemeral}
         key-base64: ${MFA_SECRET_ENCRYPTION_KEY:}
