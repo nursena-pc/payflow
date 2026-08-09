@@ -2,8 +2,6 @@ package com.nursena.payflow.user.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -15,15 +13,11 @@ import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.UUID;
 
-import com.nursena.payflow.user.application.exception.MfaSecurityUnavailableException;
 import com.nursena.payflow.user.application.port.in.AuthenticatedUserResult;
 import com.nursena.payflow.user.application.port.in.ConfirmMfaLoginChallengeCommand;
 import com.nursena.payflow.user.application.port.out.MfaAuthenticatorRepositoryPort;
 import com.nursena.payflow.user.application.port.out.MfaLoginChallengeDigestPort;
 import com.nursena.payflow.user.application.port.out.MfaLoginChallengeRepositoryPort;
-import com.nursena.payflow.user.application.port.out.MfaSecretProtectionFailureException;
-import com.nursena.payflow.user.application.port.out.MfaSecretProtectionPort;
-import com.nursena.payflow.user.application.port.out.TotpVerificationPort;
 import com.nursena.payflow.user.application.port.out.UserRepositoryPort;
 import com.nursena.payflow.user.domain.exception.InvalidMfaLoginChallengeException;
 import com.nursena.payflow.user.domain.model.EmailAddress;
@@ -46,17 +40,20 @@ import org.springframework.transaction.annotation.Transactional;
 @ExtendWith(MockitoExtension.class)
 class ConfirmMfaLoginChallengeServiceTest {
 
-    private static final UUID USER_ID = UUID.fromString("76bf88a0-8524-43ff-ac1a-c77547d89e43");
-    private static final UUID CHALLENGE_ID = UUID.fromString("8db7ea3b-b29a-4f1d-bf4a-30d250c7278b");
-    private static final Instant NOW = Instant.parse("2026-08-08T12:00:00Z");
-    private static final MfaLoginChallengeDigest DIGEST = MfaLoginChallengeDigest.of(new byte[32]);
+    private static final UUID USER_ID =
+        UUID.fromString("76bf88a0-8524-43ff-ac1a-c77547d89e43");
+    private static final UUID CHALLENGE_ID =
+        UUID.fromString("8db7ea3b-b29a-4f1d-bf4a-30d250c7278b");
+    private static final Instant NOW =
+        Instant.parse("2026-08-08T12:00:00Z");
+    private static final MfaLoginChallengeDigest DIGEST =
+        MfaLoginChallengeDigest.of(new byte[32]);
 
     @Mock MfaLoginChallengeDigestPort digestPort;
     @Mock MfaLoginChallengeRepositoryPort challengeRepository;
     @Mock UserRepositoryPort userRepository;
     @Mock MfaAuthenticatorRepositoryPort authenticatorRepository;
-    @Mock MfaSecretProtectionPort secretProtection;
-    @Mock TotpVerificationPort totpVerification;
+    @Mock MfaLoginSecondFactorVerifier secondFactorVerifier;
     @Mock AuthenticationCredentialIssuer credentialIssuer;
 
     private ConfirmMfaLoginChallengeService service;
@@ -69,8 +66,7 @@ class ConfirmMfaLoginChallengeServiceTest {
             challengeRepository,
             userRepository,
             authenticatorRepository,
-            secretProtection,
-            totpVerification,
+            secondFactorVerifier,
             credentialIssuer,
             Clock.fixed(NOW, ZoneOffset.UTC)
         );
@@ -87,37 +83,52 @@ class ConfirmMfaLoginChallengeServiceTest {
     }
 
     @Test
-    void shouldConsumeValidTotpChallengeBeforeIssuingCredentials() {
-        MfaLoginChallenge challenge = pending(5, NOW.plusSeconds(300));
-        stubCandidate(challenge);
-        byte[] secret = new byte[20];
-        when(secretProtection.reveal(any(), any()))
-            .thenReturn(secret);
-        when(totpVerification.verify(secret, "123456", NOW)).thenReturn(true);
+    void shouldConsumeValidSecondFactorChallengeBeforeIssuingCredentials() {
+        MfaLoginChallenge challenge = pending(
+            5,
+            NOW.plusSeconds(300)
+        );
+        MfaAuthenticator authenticator = stubCandidate(challenge);
+        when(secondFactorVerifier.verifyAndConsume(
+            USER_ID,
+            authenticator,
+            "123456",
+            NOW
+        )).thenReturn(true);
         AuthenticatedUserResult credentials = credentials();
         when(credentialIssuer.issue(user, NOW)).thenReturn(credentials);
 
-        assertThat(service.confirm(command("challenge", "123456"))).isSameAs(credentials);
+        assertThat(service.confirm(command("challenge", "123456")))
+            .isSameAs(credentials);
         verify(challengeRepository).save(
             org.mockito.ArgumentMatchers.argThat(saved ->
                 saved.state() == MfaLoginChallengeState.CONSUMED
             )
         );
         verify(credentialIssuer).issue(user, NOW);
-        assertThat(secret).containsOnly((byte) 0);
     }
 
     @Test
-    void shouldDecrementAttemptAndReturnGenericFailureForWrongTotp() {
-        MfaLoginChallenge challenge = pending(5, NOW.plusSeconds(300));
-        stubCandidate(challenge);
-        byte[] secret = new byte[20];
-        when(secretProtection.reveal(any(), any())).thenReturn(secret);
-        when(totpVerification.verify(secret, "000000", NOW)).thenReturn(false);
+    void shouldDecrementAttemptAndReturnGenericFailureForInvalidProof() {
+        MfaLoginChallenge challenge = pending(
+            5,
+            NOW.plusSeconds(300)
+        );
+        MfaAuthenticator authenticator = stubCandidate(challenge);
+        when(secondFactorVerifier.verifyAndConsume(
+            USER_ID,
+            authenticator,
+            "invalid-proof",
+            NOW
+        )).thenReturn(false);
 
-        assertThatThrownBy(() -> service.confirm(command("challenge", "000000")))
+        assertThatThrownBy(() -> service.confirm(
+            command("challenge", "invalid-proof")
+        ))
             .isInstanceOf(InvalidMfaLoginChallengeException.class)
-            .hasMessage("The MFA challenge or proof could not be verified.");
+            .hasMessage(
+                "The MFA challenge or proof could not be verified."
+            );
         verify(challengeRepository).save(
             org.mockito.ArgumentMatchers.argThat(saved ->
                 saved.state() == MfaLoginChallengeState.PENDING
@@ -129,14 +140,21 @@ class ConfirmMfaLoginChallengeServiceTest {
 
     @Test
     void shouldExhaustFinalAttempt() {
-        MfaLoginChallenge challenge = pending(1, NOW.plusSeconds(300));
-        stubCandidate(challenge);
-        byte[] secret = new byte[20];
-        when(secretProtection.reveal(any(), any())).thenReturn(secret);
-        when(totpVerification.verify(secret, "000000", NOW)).thenReturn(false);
+        MfaLoginChallenge challenge = pending(
+            1,
+            NOW.plusSeconds(300)
+        );
+        MfaAuthenticator authenticator = stubCandidate(challenge);
+        when(secondFactorVerifier.verifyAndConsume(
+            USER_ID,
+            authenticator,
+            "000000",
+            NOW
+        )).thenReturn(false);
 
-        assertThatThrownBy(() -> service.confirm(command("challenge", "000000")))
-            .isInstanceOf(InvalidMfaLoginChallengeException.class);
+        assertThatThrownBy(() -> service.confirm(
+            command("challenge", "000000")
+        )).isInstanceOf(InvalidMfaLoginChallengeException.class);
         verify(challengeRepository).save(
             org.mockito.ArgumentMatchers.argThat(saved ->
                 saved.state() == MfaLoginChallengeState.EXHAUSTED
@@ -149,96 +167,143 @@ class ConfirmMfaLoginChallengeServiceTest {
     void shouldPersistExpirationBeforeGenericFailure() {
         MfaLoginChallenge challenge = pending(5, NOW);
         when(digestPort.digest("challenge")).thenReturn(DIGEST);
-        when(challengeRepository.findUserIdByDigest(DIGEST)).thenReturn(Optional.of(USER_ID));
-        when(userRepository.findByIdForUpdate(USER_ID)).thenReturn(Optional.of(user));
-        when(challengeRepository.findByDigestForUpdate(DIGEST)).thenReturn(Optional.of(challenge));
+        when(challengeRepository.findUserIdByDigest(DIGEST))
+            .thenReturn(Optional.of(USER_ID));
+        when(userRepository.findByIdForUpdate(USER_ID))
+            .thenReturn(Optional.of(user));
+        when(challengeRepository.findByDigestForUpdate(DIGEST))
+            .thenReturn(Optional.of(challenge));
 
-        assertThatThrownBy(() -> service.confirm(command("challenge", "123456")))
-            .isInstanceOf(InvalidMfaLoginChallengeException.class);
+        assertThatThrownBy(() -> service.confirm(
+            command("challenge", "123456")
+        )).isInstanceOf(InvalidMfaLoginChallengeException.class);
         verify(challengeRepository).save(
-            org.mockito.ArgumentMatchers.argThat(saved -> saved.state() == MfaLoginChallengeState.EXPIRED)
+            org.mockito.ArgumentMatchers.argThat(saved ->
+                saved.state() == MfaLoginChallengeState.EXPIRED
+            )
         );
-        verifyNoInteractions(authenticatorRepository, credentialIssuer);
+        verifyNoInteractions(
+            authenticatorRepository,
+            secondFactorVerifier,
+            credentialIssuer
+        );
     }
 
     @Test
     void shouldRejectConsumedChallengeWithoutReissuingCredentials() {
-        MfaLoginChallenge consumed = pending(5, NOW.plusSeconds(300)).consume(NOW.minusSeconds(1));
+        MfaLoginChallenge consumed = pending(
+            5,
+            NOW.plusSeconds(300)
+        ).consume(NOW.minusSeconds(1));
         when(digestPort.digest("challenge")).thenReturn(DIGEST);
-        when(challengeRepository.findUserIdByDigest(DIGEST)).thenReturn(Optional.of(USER_ID));
-        when(userRepository.findByIdForUpdate(USER_ID)).thenReturn(Optional.of(user));
-        when(challengeRepository.findByDigestForUpdate(DIGEST)).thenReturn(Optional.of(consumed));
+        when(challengeRepository.findUserIdByDigest(DIGEST))
+            .thenReturn(Optional.of(USER_ID));
+        when(userRepository.findByIdForUpdate(USER_ID))
+            .thenReturn(Optional.of(user));
+        when(challengeRepository.findByDigestForUpdate(DIGEST))
+            .thenReturn(Optional.of(consumed));
 
-        assertThatThrownBy(() -> service.confirm(command("challenge", "123456")))
-            .isInstanceOf(InvalidMfaLoginChallengeException.class);
-        verifyNoInteractions(credentialIssuer);
+        assertThatThrownBy(() -> service.confirm(
+            command("challenge", "123456")
+        )).isInstanceOf(InvalidMfaLoginChallengeException.class);
+        verifyNoInteractions(secondFactorVerifier, credentialIssuer);
     }
 
     @Test
     void shouldRejectUnknownChallengeWithoutLookingUpUser() {
         when(digestPort.digest("unknown")).thenReturn(DIGEST);
-        when(challengeRepository.findUserIdByDigest(DIGEST)).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> service.confirm(command("unknown", "123456")))
-            .isInstanceOf(InvalidMfaLoginChallengeException.class);
-        verifyNoInteractions(userRepository, credentialIssuer);
+        when(challengeRepository.findUserIdByDigest(DIGEST))
+            .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.confirm(
+            command("unknown", "123456")
+        )).isInstanceOf(InvalidMfaLoginChallengeException.class);
+        verifyNoInteractions(
+            userRepository,
+            secondFactorVerifier,
+            credentialIssuer
+        );
     }
 
     @Test
     void shouldRejectMalformedChallengeThroughSamePublicException() {
-        assertThatThrownBy(() -> service.confirm(command(" ", "123456")))
-            .isInstanceOf(InvalidMfaLoginChallengeException.class);
-        verifyNoInteractions(challengeRepository, userRepository, credentialIssuer);
-    }
-
-    @Test
-    void shouldFailClosedWhenSecretCannotBeRevealed() {
-        stubCandidate(pending(5, NOW.plusSeconds(300)));
-        when(secretProtection.reveal(any(), any()))
-            .thenThrow(new MfaSecretProtectionFailureException());
-        assertThatThrownBy(() -> service.confirm(command("challenge", "123456")))
-            .isInstanceOf(MfaSecurityUnavailableException.class);
-        verifyNoInteractions(credentialIssuer);
+        assertThatThrownBy(() -> service.confirm(
+            command(" ", "123456")
+        )).isInstanceOf(InvalidMfaLoginChallengeException.class);
+        verifyNoInteractions(
+            challengeRepository,
+            userRepository,
+            secondFactorVerifier,
+            credentialIssuer
+        );
     }
 
     @Test
     void shouldRequireEnabledAuthenticatorAtVerificationTime() {
-        MfaLoginChallenge challenge = pending(5, NOW.plusSeconds(300));
+        MfaLoginChallenge challenge = pending(
+            5,
+            NOW.plusSeconds(300)
+        );
         when(digestPort.digest("challenge")).thenReturn(DIGEST);
-        when(challengeRepository.findUserIdByDigest(DIGEST)).thenReturn(Optional.of(USER_ID));
-        when(userRepository.findByIdForUpdate(USER_ID)).thenReturn(Optional.of(user));
-        when(challengeRepository.findByDigestForUpdate(DIGEST)).thenReturn(Optional.of(challenge));
-        when(authenticatorRepository.findByUserIdForUpdate(USER_ID)).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> service.confirm(command("challenge", "123456")))
-            .isInstanceOf(InvalidMfaLoginChallengeException.class);
-        verifyNoInteractions(secretProtection, credentialIssuer);
+        when(challengeRepository.findUserIdByDigest(DIGEST))
+            .thenReturn(Optional.of(USER_ID));
+        when(userRepository.findByIdForUpdate(USER_ID))
+            .thenReturn(Optional.of(user));
+        when(challengeRepository.findByDigestForUpdate(DIGEST))
+            .thenReturn(Optional.of(challenge));
+        when(authenticatorRepository.findByUserIdForUpdate(USER_ID))
+            .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.confirm(
+            command("challenge", "123456")
+        )).isInstanceOf(InvalidMfaLoginChallengeException.class);
+        verifyNoInteractions(secondFactorVerifier, credentialIssuer);
     }
 
     @Test
-    void shouldUseNoRollbackForGenericChallengeFailure() throws Exception {
-        Method method = ConfirmMfaLoginChallengeService.class.getDeclaredMethod(
-            "confirm",
-            ConfirmMfaLoginChallengeCommand.class
-        );
-        Transactional transactional = method.getAnnotation(Transactional.class);
+    void shouldUseNoRollbackForGenericChallengeFailure()
+        throws Exception {
+        Method method = ConfirmMfaLoginChallengeService.class
+            .getDeclaredMethod(
+                "confirm",
+                ConfirmMfaLoginChallengeCommand.class
+            );
+        Transactional transactional =
+            method.getAnnotation(Transactional.class);
         assertThat(transactional).isNotNull();
         assertThat(transactional.noRollbackFor())
-            .containsExactly(InvalidMfaLoginChallengeException.class);
+            .containsExactly(
+                InvalidMfaLoginChallengeException.class
+            );
     }
 
-    private void stubCandidate(MfaLoginChallenge challenge) {
+    private MfaAuthenticator stubCandidate(
+        MfaLoginChallenge challenge
+    ) {
+        MfaAuthenticator authenticator = enabledAuthenticator();
         when(digestPort.digest("challenge")).thenReturn(DIGEST);
-        when(challengeRepository.findUserIdByDigest(DIGEST)).thenReturn(Optional.of(USER_ID));
-        when(userRepository.findByIdForUpdate(USER_ID)).thenReturn(Optional.of(user));
-        when(challengeRepository.findByDigestForUpdate(DIGEST)).thenReturn(Optional.of(challenge));
+        when(challengeRepository.findUserIdByDigest(DIGEST))
+            .thenReturn(Optional.of(USER_ID));
+        when(userRepository.findByIdForUpdate(USER_ID))
+            .thenReturn(Optional.of(user));
+        when(challengeRepository.findByDigestForUpdate(DIGEST))
+            .thenReturn(Optional.of(challenge));
         when(authenticatorRepository.findByUserIdForUpdate(USER_ID))
-            .thenReturn(Optional.of(enabledAuthenticator()));
+            .thenReturn(Optional.of(authenticator));
+        return authenticator;
     }
 
-    private static ConfirmMfaLoginChallengeCommand command(String token, String code) {
+    private static ConfirmMfaLoginChallengeCommand command(
+        String token,
+        String code
+    ) {
         return new ConfirmMfaLoginChallengeCommand(token, code);
     }
 
-    private static MfaLoginChallenge pending(int attempts, Instant expiresAt) {
+    private static MfaLoginChallenge pending(
+        int attempts,
+        Instant expiresAt
+    ) {
         return MfaLoginChallenge.issue(
             CHALLENGE_ID,
             USER_ID,

@@ -65,7 +65,7 @@ class PasswordRecoveryMigrationIntegrationTest {
 
         migrateToLatestVersion();
 
-        assertThat(currentSchemaVersion()).isEqualTo("19");
+        assertThat(currentSchemaVersion()).isEqualTo("20");
 
         assertThat(revoke(
             familyId,

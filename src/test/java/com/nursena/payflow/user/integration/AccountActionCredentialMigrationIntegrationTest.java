@@ -66,7 +66,7 @@ class AccountActionCredentialMigrationIntegrationTest {
 
         migrateToLatestVersion();
 
-        assertThat(currentSchemaVersion()).isEqualTo("19");
+        assertThat(currentSchemaVersion()).isEqualTo("20");
         assertThat(migrationApplied("15")).isTrue();
         assertThat(migrationApplied("16")).isTrue();
         assertThat(tableExists(

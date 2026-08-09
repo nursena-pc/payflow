@@ -444,6 +444,43 @@ class OpenApiJsonContractIntegrationTest {
     }
 
     @Test
+    void shouldExposeRecoveryCodesInMfaConfirmationContracts() {
+        JsonNode confirmationSchema =
+            openApi
+                .path("components")
+                .path("schemas")
+                .path("MfaEnrollmentConfirmationResponse");
+
+        assertThat(confirmationSchema.isObject()).isTrue();
+
+        JsonNode recoveryCodes = confirmationSchema
+            .path("properties")
+            .path("recoveryCodes");
+
+        assertThat(recoveryCodes.path("type").asText())
+            .isEqualTo("array");
+        assertThat(recoveryCodes.path("items").path("type").asText())
+            .isEqualTo("string");
+        assertThat(recoveryCodes.path("description").asText())
+            .contains("One-time plaintext recovery codes");
+
+        JsonNode challengeRequestSchema =
+            openApi
+                .path("components")
+                .path("schemas")
+                .path("ConfirmMfaLoginChallengeRequest");
+
+        assertThat(challengeRequestSchema.isObject()).isTrue();
+        assertThat(
+            challengeRequestSchema
+                .path("properties")
+                .path("code")
+                .path("description")
+                .asText()
+        ).contains("unused MFA recovery code");
+    }
+
+    @Test
     void shouldExposeAuthenticatedApiOperations() {
         JsonNode profile =
             operation(

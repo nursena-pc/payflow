@@ -12,7 +12,7 @@ class V014MfaLoginChallengeContractTest {
     private static final Path ROOT = Path.of("");
 
     @Test
-    void shouldMarkLoginChallengeIncrementCompleteWithoutClaimingRecoveryCodes() throws IOException {
+    void shouldRetainCompletedLoginChallengeWhileRecoveryCodesAdvance() throws IOException {
         String roadmap = Files.readString(ROOT.resolve("docs/roadmap.md"));
         assertThat(roadmap).contains(
             "- [x] Preserve existing Redis-backed password-attempt protection before user lookup and password verification",
@@ -22,7 +22,7 @@ class V014MfaLoginChallengeContractTest {
             "- [x] Consume a successful challenge exactly once before issuing access and refresh credentials",
             "- [x] Reject expired, exhausted, replayed, malformed, and superseded challenges through one stable public contract",
             "- [x] Lock verification so concurrent submissions have at most one successful winner",
-            "- [ ] Generate recovery codes from cryptographically secure randomness"
+            "- [x] Generate recovery codes from cryptographically secure randomness"
         );
     }
 
@@ -77,13 +77,18 @@ class V014MfaLoginChallengeContractTest {
     }
 
     @Test
-    void shouldKeepRecoveryAndStepUpOutsideThisIncrement() throws IOException {
+    void shouldExtendChallengeProofWithoutAddingLifecycleMutation()
+        throws IOException {
         String security = normalizeWhitespace(
-            Files.readString(ROOT.resolve("docs/security/mfa-login-challenge.md"))
+            Files.readString(
+                ROOT.resolve("docs/security/mfa-login-challenge.md")
+            )
         );
         assertThat(security).contains(
-            "Recovery codes, MFA disable, authenticator replacement, and reusable step-up",
-            "outside this increment",
+            "six-digit proof uses the existing RFC 4226/6238 profile",
+            "22-character Base64URL proof is treated as a recovery-code candidate",
+            "same `401 MFA_CHALLENGE_INVALID` contract",
+            "MFA disable, recovery-code rotation, authenticator replacement",
             "Generalized API-wide abuse protection remains a v0.15.0 concern"
         );
     }

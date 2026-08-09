@@ -18,6 +18,9 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Standards-compatible 160-bit Base32 TOTP provisioning with HMAC-SHA1, six digits, 30-second steps, and a bounded ±1 verification window.
 - Password-first MFA login challenges with `202 MFA_REQUIRED` for enabled authenticators and a dedicated confirmation endpoint.
 - PostgreSQL V19 digest-only challenge persistence with expiration, attempt budget, terminal state, supersession, and pessimistic consumption locking.
+- Ten 128-bit Base64URL MFA recovery codes returned once when enrollment is activated.
+- PostgreSQL V20 digest-only recovery-code persistence with pessimistic single-use consumption.
+- MFA login challenge completion with either the existing TOTP proof or one unused recovery code.
 
 ### Security
 
@@ -29,6 +32,8 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - MFA-enabled password login creates no access token, refresh-token family, or refresh-token record until a TOTP challenge is consumed successfully.
 - Unknown, malformed, expired, exhausted, superseded, replayed, and invalid-proof challenge outcomes share the stable `MFA_CHALLENGE_INVALID` contract.
 - Challenge plaintext, digests, TOTP values, and revealed authenticator secrets stay outside observable output; concurrent confirmation permits one credential-issuing winner.
+- Recovery-code plaintext and digests remain outside logs, metrics, traces, audit payloads, and exception messages; invalid, unknown, malformed, and consumed recovery proofs reuse `MFA_CHALLENGE_INVALID`.
+- Recovery-code consumption, challenge consumption, and credential issuance share one transaction so downstream credential failure cannot permanently consume a recovery code.
 
 ## [0.13.0] - 2026-08-06
 

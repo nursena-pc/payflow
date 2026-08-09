@@ -52,7 +52,7 @@ class MfaLoginChallengeMigrationIntegrationTest {
         migrateTo("18");
         assertThat(tableExists("mfa_login_challenges")).isFalse();
         flyway().migrate();
-        assertThat(currentSchemaVersion()).isEqualTo("19");
+        assertThat(currentSchemaVersion()).isEqualTo("20");
         assertThat(tableExists("mfa_login_challenges")).isTrue();
     }
 

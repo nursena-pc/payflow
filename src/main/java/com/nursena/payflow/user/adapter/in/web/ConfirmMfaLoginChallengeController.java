@@ -38,8 +38,9 @@ public class ConfirmMfaLoginChallengeController {
         operationId = "confirmMfaLoginChallenge",
         summary = "Complete an MFA login challenge",
         description =
-            "Consumes one pending challenge after a valid TOTP proof and only "
-                + "then issues access and refresh credentials."
+            "Consumes one pending challenge after a valid TOTP or unused "
+                + "recovery-code proof and only then issues access and refresh "
+                + "credentials."
     )
     @ApiResponses({
         @ApiResponse(

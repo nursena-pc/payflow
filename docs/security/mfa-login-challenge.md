@@ -2,18 +2,19 @@
 
 ## Scope
 
-This increment changes the password-login outcome only for users whose TOTP
-MFA authenticator is already `ENABLED`. Password verification remains the first
-factor and the existing Redis-backed password-attempt protection still executes
-before user lookup and password verification.
+Password verification remains the first factor and the existing Redis-backed
+password-attempt protection still executes before user lookup and password
+verification. A successful password check does not create an access token,
+refresh-token family, or refresh-token record for an MFA-enabled user. Instead
+the application returns one short-lived opaque challenge.
 
-A successful password check does not create an access token, refresh-token
-family, or refresh-token record for an MFA-enabled user. Instead the application
-returns one short-lived opaque challenge. Only successful challenge confirmation
-may enter the existing credential-issuance boundary.
+Challenge confirmation accepts either the enabled authenticator's six-digit
+TOTP proof or one unused MFA recovery code. Only successful second-factor
+confirmation may enter the existing credential-issuance boundary.
 
-Recovery codes, MFA disable, authenticator replacement, and reusable step-up
-grants are intentionally outside this increment.
+MFA disable, recovery-code rotation, authenticator replacement, and reusable
+step-up grants remain outside this increment sequence until purpose-bound
+step-up authorization exists.
 
 ## Challenge credential
 
@@ -32,14 +33,20 @@ the owning user row is locked. PostgreSQL additionally enforces at most one
 
 ## Verification and terminal states
 
-`POST /api/v1/auth/mfa/challenges/confirm` accepts the opaque challenge and a
-TOTP proof. Verification resolves the digest to a candidate user, locks the user,
-locks the challenge, and locks the enabled authenticator before revealing the
-protected TOTP secret.
+`POST /api/v1/auth/mfa/challenges/confirm` accepts the opaque challenge and one
+second-factor proof. Verification resolves the challenge digest to a candidate
+user, locks the user, locks the challenge, and locks the enabled authenticator
+before selecting the proof path.
 
-A valid TOTP proof uses the same RFC 4226/6238 profile as enrollment: HMAC-SHA1,
-six digits, 30-second steps, and one adjacent counter on either side. The
-plaintext secret is zeroed after verification.
+A six-digit proof uses the existing RFC 4226/6238 profile: HMAC-SHA1, six digits,
+30-second steps, and one adjacent counter on either side. The revealed plaintext
+TOTP secret is zeroed after verification.
+
+A canonical 22-character Base64URL proof is treated as a recovery-code
+candidate. PayFlow hashes it with SHA-256, pessimistically locks a matching code
+for the challenge user, and accepts only an unconsumed row. The recovery code is
+consumed in the same transaction as challenge consumption and credential
+issuance.
 
 Challenge states are:
 
@@ -49,20 +56,25 @@ Challenge states are:
 - `EXPIRED` — the lifetime elapsed before successful confirmation.
 - `SUPERSEDED` — a newer successful password stage replaced it.
 
-Invalid TOTP proofs decrement the persisted attempt budget. The transition to
-`EXHAUSTED` and the transition to `EXPIRED` are committed even though the public
-request returns an authentication failure. A consumed, exhausted, expired,
-superseded, unknown, oversized, blank, or replayed challenge uses the same
-`401 MFA_CHALLENGE_INVALID` contract as an invalid TOTP proof.
+Invalid TOTP, unknown recovery-code, malformed recovery-code, and consumed
+recovery-code proofs decrement the same persisted challenge attempt budget.
+`EXHAUSTED` and `EXPIRED` transitions are committed even though the public
+request returns an authentication failure. Consumed, exhausted, expired,
+superseded, unknown, oversized, blank, replayed, and invalid-proof outcomes use
+the same `401 MFA_CHALLENGE_INVALID` contract.
 
-## Concurrency
+## Concurrency and transaction boundary
 
 Challenge confirmation uses pessimistic locking. Two concurrent confirmations
-for the same challenge cannot both cross the credential-issuance boundary. The
-winner persists `CONSUMED` before access and refresh credentials are created;
-the loser observes a terminal challenge and receives the generic unauthorized
-contract. Integration verification requires exactly one refresh-token family
-and one initial refresh-token record after concurrent replay.
+for the same challenge cannot both cross the credential-issuance boundary. A
+recovery-code row is also pessimistically locked before it is consumed. The
+winner persists both recovery-code consumption when applicable and challenge
+`CONSUMED` before access and refresh credentials are created; all of those writes
+share the same transaction. If downstream credential issuance fails, the
+recovery-code and challenge writes roll back together.
+
+Integration verification requires exactly one refresh-token family and one
+initial refresh-token record after concurrent replay.
 
 ## Observable-output boundary
 
@@ -73,10 +85,12 @@ exception messages, or persistent plaintext columns:
 - challenge digest;
 - TOTP code;
 - revealed TOTP secret;
+- recovery-code plaintext;
+- recovery-code digest;
 - access token;
 - refresh token.
 
-Request, response, command, generated-challenge, and digest value objects use
+Request, response, command, generated-credential, and digest value objects use
 redacted `toString()` behavior where credentials could otherwise be exposed.
 
 ## Operational configuration
@@ -86,5 +100,6 @@ MFA_LOGIN_CHALLENGE_TTL=5m
 MFA_LOGIN_CHALLENGE_MAX_ATTEMPTS=5
 ```
 
-These settings bound only the post-password MFA challenge. Generalized API-wide
-abuse protection remains a v0.15.0 concern.
+These settings bound the post-password MFA challenge regardless of which
+second-factor proof is supplied. Generalized API-wide abuse protection remains
+a v0.15.0 concern.
