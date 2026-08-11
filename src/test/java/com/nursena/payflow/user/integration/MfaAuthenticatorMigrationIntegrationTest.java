@@ -58,7 +58,7 @@ class MfaAuthenticatorMigrationIntegrationTest {
         migrateTo("17");
         assertThat(tableExists("mfa_authenticators")).isFalse();
         flyway().migrate();
-        assertThat(currentSchemaVersion()).isEqualTo("21");
+        assertThat(currentSchemaVersion()).isEqualTo("23");
         assertThat(tableExists("mfa_authenticators")).isTrue();
     }
 

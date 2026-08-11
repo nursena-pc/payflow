@@ -56,6 +56,11 @@ class MfaRecoveryCodePersistenceAdapter
         ).map(MfaRecoveryCodePersistenceAdapter::toDomain);
     }
 
+    @Override
+    public void deleteAllByUserId(UUID userId) {
+        repository.deleteAllByUserId(userId);
+    }
+
     private static MfaRecoveryCodeJpaEntity toEntity(
         MfaRecoveryCode recoveryCode
     ) {

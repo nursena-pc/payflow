@@ -60,7 +60,7 @@ class MfaRecoveryCodeMigrationIntegrationTest {
 
         flyway().migrate();
 
-        assertThat(currentSchemaVersion()).isEqualTo("21");
+        assertThat(currentSchemaVersion()).isEqualTo("23");
         assertThat(tableExists("mfa_recovery_codes")).isTrue();
     }
 
