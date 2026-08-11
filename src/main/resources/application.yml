@@ -109,6 +109,8 @@ payflow:
       login-challenge:
         ttl: ${MFA_LOGIN_CHALLENGE_TTL:5m}
         max-attempts: ${MFA_LOGIN_CHALLENGE_MAX_ATTEMPTS:5}
+      step-up:
+        ttl: ${MFA_STEP_UP_TTL:5m}
       secret-protection:
         provider-mode: ${MFA_SECRET_PROTECTION_MODE:ephemeral}
         key-base64: ${MFA_SECRET_ENCRYPTION_KEY:}

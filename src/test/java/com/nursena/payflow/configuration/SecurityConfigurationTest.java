@@ -309,6 +309,25 @@ class SecurityConfigurationTest {
     }
 
     @Test
+    void shouldRejectAnonymousStepUpGrantIssuance() throws Exception {
+        mockMvc.perform(
+                post("/api/v1/users/me/step-up/grants")
+            )
+            .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shouldPermitAuthenticatedStepUpGrantMatcher() throws Exception {
+        mockDecodedJwt("user-token", "USER");
+
+        mockMvc.perform(
+                post("/api/v1/users/me/step-up/grants")
+                    .header(AUTHORIZATION, bearer("user-token"))
+            )
+            .andExpect(status().isNotFound());
+    }
+
+    @Test
     void shouldDenyUnknownEndpointForAuthenticatedAdmin()
         throws Exception {
 

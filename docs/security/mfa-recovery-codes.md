@@ -7,9 +7,10 @@ authenticator is already enabled. This increment covers code generation at MFA
 activation, digest-only PostgreSQL persistence, login-challenge consumption,
 replay resistance, concurrency, and observable-output boundaries.
 
-Explicit recovery-code rotation is not implemented here. Rotation, MFA disable,
-and authenticator replacement require the purpose-bound step-up capability from
-the following increment before public mutation endpoints are added.
+Explicit recovery-code rotation is not implemented here. The purpose-bound step-up capability
+is now available as a separate application policy, while rotation, MFA disable,
+and authenticator replacement remain in the following mutation increment before
+public mutation endpoints are added.
 
 ## Generation and one-time disclosure
 
@@ -82,6 +83,6 @@ This increment does not add:
 - recovery-code rotation;
 - MFA disable;
 - authenticator replacement;
-- step-up grant issuance or enforcement;
+- step-up enforcement on recovery-code rotation, MFA disable, or authenticator replacement;
 - recovery-code remaining-count disclosure;
 - generalized API-wide abuse protection.

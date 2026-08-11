@@ -90,7 +90,7 @@ operator. The Kafka dead-letter purposes are frozen as operator step-up
 candidates, but existing replay and discard behavior is not changed by this
 foundation increment.
 
-Future grants must be bound to one authenticated subject and one exact purpose;
+Step-up grants are bound to one authenticated subject and one exact purpose;
 a grant created for one purpose cannot satisfy another.
 
 ### Account-security refresh revocation

@@ -57,7 +57,7 @@ metadata.
 ### Application to PostgreSQL
 
 PostgreSQL is the system of record for durable MFA state, challenge state,
-recovery-code digests, and future step-up state when persistence is required.
+recovery-code digests, and digest-only step-up grant state.
 Database readers must not obtain a usable TOTP secret or plaintext recovery
 credential.
 

@@ -74,7 +74,7 @@ class RefreshSessionMigrationIntegrationTest {
         migrateToLatestVersion();
 
         assertThat(currentSchemaVersion())
-            .isEqualTo("20");
+            .isEqualTo("21");
 
         assertThat(migrationApplied("13"))
             .isTrue();

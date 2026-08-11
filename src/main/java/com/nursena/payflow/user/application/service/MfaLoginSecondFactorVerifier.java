@@ -17,7 +17,8 @@ import com.nursena.payflow.user.domain.model.MfaRecoveryCodeDigest;
 import org.springframework.stereotype.Component;
 
 @Component
-class MfaLoginSecondFactorVerifier {
+class MfaLoginSecondFactorVerifier
+    implements MfaSecondFactorVerifier {
 
     private static final String TOTP_PATTERN = "[0-9]{6}";
     private static final String RECOVERY_CODE_PATTERN =
@@ -40,7 +41,8 @@ class MfaLoginSecondFactorVerifier {
         this.recoveryCodeRepository = recoveryCodeRepository;
     }
 
-    boolean verifyAndConsume(
+    @Override
+    public boolean verifyAndConsume(
         UUID userId,
         MfaAuthenticator authenticator,
         String proof,

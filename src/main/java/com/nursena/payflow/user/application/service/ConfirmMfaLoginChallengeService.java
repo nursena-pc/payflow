@@ -32,7 +32,7 @@ public class ConfirmMfaLoginChallengeService
     private final MfaLoginChallengeRepositoryPort challengeRepository;
     private final UserRepositoryPort userRepository;
     private final MfaAuthenticatorRepositoryPort authenticatorRepository;
-    private final MfaLoginSecondFactorVerifier secondFactorVerifier;
+    private final MfaSecondFactorVerifier secondFactorVerifier;
     private final AuthenticationCredentialIssuer credentialIssuer;
     private final Clock clock;
 
@@ -41,7 +41,7 @@ public class ConfirmMfaLoginChallengeService
         MfaLoginChallengeRepositoryPort challengeRepository,
         UserRepositoryPort userRepository,
         MfaAuthenticatorRepositoryPort authenticatorRepository,
-        MfaLoginSecondFactorVerifier secondFactorVerifier,
+        MfaSecondFactorVerifier secondFactorVerifier,
         AuthenticationCredentialIssuer credentialIssuer,
         Clock clock
     ) {
