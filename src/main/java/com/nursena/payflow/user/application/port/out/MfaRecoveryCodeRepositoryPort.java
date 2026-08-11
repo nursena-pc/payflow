@@ -17,4 +17,6 @@ public interface MfaRecoveryCodeRepositoryPort {
         UUID userId,
         MfaRecoveryCodeDigest digest
     );
+
+    void deleteAllByUserId(UUID userId);
 }

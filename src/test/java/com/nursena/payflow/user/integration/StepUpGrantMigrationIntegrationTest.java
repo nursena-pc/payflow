@@ -49,7 +49,7 @@ class StepUpGrantMigrationIntegrationTest {
         migrateTo("20");
         assertThat(tableExists("step_up_grants")).isFalse();
         flyway().migrate();
-        assertThat(currentSchemaVersion()).isEqualTo("21");
+        assertThat(currentSchemaVersion()).isEqualTo("23");
         assertThat(tableExists("step_up_grants")).isTrue();
     }
 

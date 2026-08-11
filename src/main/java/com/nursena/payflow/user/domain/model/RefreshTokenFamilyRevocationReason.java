@@ -6,5 +6,6 @@ public enum RefreshTokenFamilyRevocationReason {
     REUSE_DETECTED,
     USER_ACCOUNT_UNAVAILABLE,
     PASSWORD_RECOVERY,
+    MFA_DISABLED,
     ADMINISTRATIVE_REVOCATION
 }
