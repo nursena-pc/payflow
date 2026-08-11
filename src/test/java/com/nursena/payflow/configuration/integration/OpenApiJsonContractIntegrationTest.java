@@ -82,6 +82,9 @@ class OpenApiJsonContractIntegrationTest {
     private static final String MFA_ENROLLMENT_CONFIRM_PATH =
         MFA_ENROLLMENT_PATH + "/confirm";
 
+    private static final String STEP_UP_GRANTS_PATH =
+        "/api/v1/users/me/step-up/grants";
+
     private static final String WALLETS_PATH =
         "/api/v1/wallets";
 
@@ -225,6 +228,7 @@ class OpenApiJsonContractIntegrationTest {
             MFA_STATUS_PATH,
             MFA_ENROLLMENT_PATH,
             MFA_ENROLLMENT_CONFIRM_PATH,
+            STEP_UP_GRANTS_PATH,
             WALLETS_PATH,
             CURRENT_WALLET_PATH,
             TOP_UP_PATH,
@@ -499,6 +503,27 @@ class OpenApiJsonContractIntegrationTest {
         );
 
         assertParameterNames(profile);
+
+        JsonNode stepUpGrant =
+            operation(
+                STEP_UP_GRANTS_PATH,
+                "post"
+            );
+
+        assertAuthenticatedOperation(
+            stepUpGrant,
+            "issueStepUpGrant",
+            new String[] {
+                "200",
+                "400",
+                "401",
+                "403",
+                "404",
+                "409",
+                "503"
+            }
+        );
+        assertParameterNames(stepUpGrant);
 
         JsonNode openWallet =
             operation(

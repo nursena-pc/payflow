@@ -72,6 +72,7 @@ public class SecurityConfiguration {
                     "/api/v1/auth/logout-all",
                     "/api/v1/users/me/mfa/enrollment",
                     "/api/v1/users/me/mfa/enrollment/confirm",
+                    "/api/v1/users/me/step-up/grants",
                     "/api/v1/wallets",
                     "/api/v1/wallets/me/top-ups",
                     "/api/v1/transfers"

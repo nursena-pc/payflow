@@ -74,7 +74,7 @@ class V014DevelopmentContractTest {
                 "application-facing step-up policy independent from controller annotations",
                 "Bind every step-up grant to one authenticated subject, purpose, issue time, and short expiration",
                 "Evaluate dead-letter replay and discard as explicit operator step-up candidates",
-                "Reject cross-purpose, expired, replayed, or wrong-subject grants",
+                "Reject cross-purpose, expired, superseded, replayed, or wrong-subject grants",
                 "SMS, voice-call, or email-delivered one-time passwords",
                 "WebAuthn, passkeys, FIDO2 security keys, or biometric authentication",
                 "generalized registration, refresh, recovery, or operations rate-limit policy; that remains a v0.15.0 concern",

@@ -609,13 +609,24 @@ step-up grants exist.
 
 ### Increment 5 — Step-up authentication
 
-- [ ] Introduce an application-facing step-up policy independent from controller annotations
-- [ ] Bind every step-up grant to one authenticated subject, purpose, issue time, and short expiration
-- [ ] Require a recent second-factor proof for MFA disable and recovery-code rotation
-- [ ] Evaluate dead-letter replay and discard as explicit operator step-up candidates
-- [ ] Reject cross-purpose, expired, replayed, or wrong-subject grants
-- [ ] Keep step-up grants out of logs, metric labels, audit payloads, and persistence plaintext
-- [ ] Document which operations remain bearer-only and which require step-up
+- [x] Introduce an application-facing step-up policy independent from controller annotations
+- [x] Bind every step-up grant to one authenticated subject, purpose, issue time, and short expiration
+- [x] Require a recent second-factor proof before issuing account-security step-up grants
+- [x] Evaluate dead-letter replay and discard as explicit operator step-up candidates
+- [x] Reject cross-purpose, expired, superseded, replayed, or wrong-subject grants
+- [x] Keep step-up grants out of logs, metric labels, audit payloads, and persistence plaintext
+- [x] Document which operations remain bearer-only and which require step-up
+
+The step-up implementation uses PostgreSQL V21 digest-only grant persistence,
+256-bit opaque Base64URL credentials, a five-minute default lifetime, exact
+`StepUpPurpose` binding, and pessimistic single-use consumption. Grant issuance
+requires an enabled authenticator and a valid TOTP or unused recovery code. A
+new grant supersedes the prior unconsumed grant for the same subject and purpose.
+`StepUpAuthorizationPolicy` owns subject, purpose, expiry, supersession, and
+replay checks without servlet or controller-annotation coupling. MFA disable,
+recovery-code rotation, and authenticator replacement consume these grants in
+the following increment; Kafka replay/discard remain documented operator
+step-up candidates without changing their current runtime authorization here.
 
 ### Increment 6 — MFA disable, recovery-code rotation, and replacement
 

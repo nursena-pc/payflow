@@ -166,6 +166,8 @@ Users with enabled MFA will complete password verification before receiving a sh
 
 The fourth increment implements recovery codes without weakening the step-up boundary reserved for later account-security mutations. Successful TOTP enrollment confirmation generates ten independent 128-bit canonical Base64URL recovery codes, returns that plaintext set once, and stores only SHA-256 digests in PostgreSQL V20. Login-challenge confirmation accepts either the existing six-digit TOTP proof or one unused recovery code; recovery-code consumption, challenge consumption, and credential issuance share one transaction. Explicit recovery-code rotation, MFA disable, and authenticator replacement remain deferred until purpose-bound step-up grants exist.
 
+The fifth increment implements the purpose-bound step-up capability. Authenticated users can prove the enabled second factor to obtain one short-lived 256-bit opaque grant for an exact typed purpose. PostgreSQL V21 stores only SHA-256 grant digests with subject, purpose, issue time, expiration, consumption, and supersession metadata. `StepUpAuthorizationPolicy` locks and consumes a matching grant exactly once and rejects wrong-subject, wrong-purpose, expired, superseded, malformed, unknown, and replayed credentials through the stable step-up boundary. MFA disable, recovery-code rotation, authenticator replacement, and Kafka operator enforcement remain separate mutation integrations rather than controller-owned policy.
+
 The first delivery increment now freezes the domain lifecycle, typed step-up purpose vocabulary, account-security refresh-family revocation reasons, stable public failure semantics, and concurrency/observable-output boundaries. The accepted design is recorded in [ADR 0014](docs/adr/0014-mfa-and-step-up-authentication.md) and the [MFA threat model](docs/security/mfa-threat-model.md). No MFA endpoint, authenticator persistence, TOTP verification, recovery-code implementation, or runtime step-up enforcement is introduced by this foundation increment. Generalized API-wide abuse protection, SMS or email OTP, WebAuthn/passkeys, external identity providers, device trust, and behavioral risk scoring remain outside v0.14.0.
 
 The second increment implemented authenticated TOTP enrollment before the login flow was gated by MFA. `POST /api/v1/users/me/mfa/enrollment` requires the current password, generates a 160-bit secret, returns the canonical Base32 secret and `otpauth://` URI once, and persists only AES-256-GCM-protected secret material. `POST /api/v1/users/me/mfa/enrollment/confirm` activates the pending authenticator only after a six-digit TOTP proof within the current ±1 30-second step. `DELETE /api/v1/users/me/mfa/enrollment` cancels only pending enrollment, while `GET /api/v1/users/me/mfa` exposes lifecycle metadata without secret material. PostgreSQL V18 enforces one effective authenticator row per user and production requires a dedicated MFA encryption key independent from JWT and mail keys. See the [TOTP enrollment security contract](docs/security/mfa-enrollment.md).
@@ -186,6 +188,7 @@ The third increment gates credential issuance for `ENABLED` MFA users. A correct
 | `GET` | `/api/v1/users/me/mfa` | Bearer | Returns the owning user's MFA lifecycle metadata without secret material. |
 | `POST` | `/api/v1/users/me/mfa/enrollment` | Bearer + current password | Starts one pending TOTP enrollment and returns the provisioning secret once. |
 | `POST` | `/api/v1/users/me/mfa/enrollment/confirm` | Bearer | Activates the pending authenticator after a valid six-digit TOTP proof and returns ten plaintext recovery codes once. |
+| `POST` | `/api/v1/users/me/step-up/grants` | Bearer + enabled MFA proof | Issues one short-lived purpose-bound opaque step-up grant after a valid TOTP or unused recovery code. |
 | `DELETE` | `/api/v1/users/me/mfa/enrollment` | Bearer | Cancels only a pending enrollment and deletes its protected secret row. |
 | `POST` | `/api/v1/auth/refresh` | Public | Atomically rotates an active opaque refresh credential. |
 | `POST` | `/api/v1/auth/logout` | Public | Idempotently revokes the refresh-token family represented by the submitted credential. |
@@ -494,6 +497,7 @@ Important database guarantees include:
 - one effective MFA authenticator per user
 - fixed-length and unique MFA login-challenge digests with one pending challenge per user
 - fixed-length recovery-code digests with single-use consumption and no durable plaintext recovery credential
+- fixed-length step-up grant digests with subject/purpose binding, short expiry, supersession, and single-use consumption
 - fixed-length and globally unique refresh-token digests
 - plaintext refresh tokens excluded from the persistence schema
 - same-family refresh-token successor lineage

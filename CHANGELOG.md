@@ -21,6 +21,8 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Ten 128-bit Base64URL MFA recovery codes returned once when enrollment is activated.
 - PostgreSQL V20 digest-only recovery-code persistence with pessimistic single-use consumption.
 - MFA login challenge completion with either the existing TOTP proof or one unused recovery code.
+- Purpose-bound, single-use opaque step-up grants with PostgreSQL V21 digest-only persistence and authenticated second-factor issuance.
+- Application-facing step-up authorization policy with subject, purpose, expiry, supersession, replay, and pessimistic-consumption checks.
 
 ### Security
 
@@ -34,6 +36,8 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Challenge plaintext, digests, TOTP values, and revealed authenticator secrets stay outside observable output; concurrent confirmation permits one credential-issuing winner.
 - Recovery-code plaintext and digests remain outside logs, metrics, traces, audit payloads, and exception messages; invalid, unknown, malformed, and consumed recovery proofs reuse `MFA_CHALLENGE_INVALID`.
 - Recovery-code consumption, challenge consumption, and credential issuance share one transaction so downstream credential failure cannot permanently consume a recovery code.
+- Step-up grants contain 256 bits of secure randomness, are stored only as SHA-256 digests, expire after a short configurable lifetime, and supersede older unused grants for the same subject and purpose.
+- Wrong-subject, wrong-purpose, expired, superseded, malformed, unknown, and replayed step-up grants share the stable `STEP_UP_INVALID` contract.
 
 ## [0.13.0] - 2026-08-06
 
