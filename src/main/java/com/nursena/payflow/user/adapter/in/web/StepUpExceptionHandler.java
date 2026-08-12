@@ -23,7 +23,10 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @Order(Ordered.HIGHEST_PRECEDENCE)
-@RestControllerAdvice(assignableTypes = StepUpGrantController.class)
+@RestControllerAdvice(assignableTypes = {
+    StepUpGrantController.class,
+    RotateMfaRecoveryCodesController.class
+})
 public class StepUpExceptionHandler {
 
     @ExceptionHandler(InvalidStepUpPurposeException.class)

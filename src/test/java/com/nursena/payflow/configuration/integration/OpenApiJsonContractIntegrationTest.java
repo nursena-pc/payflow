@@ -82,6 +82,8 @@ class OpenApiJsonContractIntegrationTest {
     private static final String MFA_ENROLLMENT_CONFIRM_PATH =
         MFA_ENROLLMENT_PATH + "/confirm";
 
+    private static final String MFA_RECOVERY_CODE_ROTATION_PATH =
+        "/api/v1/users/me/mfa/recovery-codes/rotation";
     private static final String STEP_UP_GRANTS_PATH =
         "/api/v1/users/me/step-up/grants";
 
@@ -228,6 +230,7 @@ class OpenApiJsonContractIntegrationTest {
             MFA_STATUS_PATH,
             MFA_ENROLLMENT_PATH,
             MFA_ENROLLMENT_CONFIRM_PATH,
+            MFA_RECOVERY_CODE_ROTATION_PATH,
             STEP_UP_GRANTS_PATH,
             WALLETS_PATH,
             CURRENT_WALLET_PATH,
