@@ -70,6 +70,7 @@ public class SecurityConfiguration {
                 .requestMatchers(
                     POST,
                     "/api/v1/auth/logout-all",
+                    "/api/v1/users/me/mfa",
                     "/api/v1/users/me/mfa/enrollment",
                     "/api/v1/users/me/mfa/enrollment/confirm",
                     "/api/v1/users/me/mfa/recovery-codes/rotation",
@@ -81,6 +82,7 @@ public class SecurityConfiguration {
                 .authenticated()
                 .requestMatchers(
                     DELETE,
+                    "/api/v1/users/me/mfa",
                     "/api/v1/users/me/mfa/enrollment"
                 )
                 .authenticated()
