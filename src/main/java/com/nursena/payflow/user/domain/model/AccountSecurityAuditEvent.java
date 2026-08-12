@@ -30,4 +30,17 @@ public record AccountSecurityAuditEvent(
             occurredAt
         );
     }
+
+    public static AccountSecurityAuditEvent recoveryCodesRotated(
+        UUID id,
+        UUID subjectUserId,
+        Instant occurredAt
+    ) {
+        return new AccountSecurityAuditEvent(
+            id,
+            subjectUserId,
+            AccountSecurityAuditAction.RECOVERY_CODES_ROTATED,
+            occurredAt
+        );
+    }
 }

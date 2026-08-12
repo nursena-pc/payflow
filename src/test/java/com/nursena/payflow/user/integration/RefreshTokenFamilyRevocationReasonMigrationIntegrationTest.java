@@ -70,7 +70,7 @@ class RefreshTokenFamilyRevocationReasonMigrationIntegrationTest {
             .migrate();
 
         assertThat(currentSchemaVersion())
-            .isEqualTo("23");
+            .isEqualTo("24");
 
         revoke(
             mfaDisabledFamilyId,

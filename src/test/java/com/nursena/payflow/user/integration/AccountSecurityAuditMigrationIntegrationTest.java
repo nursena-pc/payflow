@@ -65,9 +65,58 @@ class AccountSecurityAuditMigrationIntegrationTest {
         flyway().migrate();
 
         assertThat(currentSchemaVersion())
-            .isEqualTo("23");
+            .isEqualTo("24");
         assertThat(tableExists("account_security_audits"))
             .isTrue();
+    }
+
+    @Test
+    void shouldExpandSupportedAuditActionsInV24() {
+        migrateTo("23");
+
+        UUID userId = insertUser();
+
+        assertThatThrownBy(() -> insertAudit(
+            UUID.randomUUID(),
+            userId,
+            "RECOVERY_CODES_ROTATED",
+            OCCURRED_AT
+        )).isInstanceOf(DataIntegrityViolationException.class);
+
+        flyway().migrate();
+
+        assertThat(currentSchemaVersion()).isEqualTo("24");
+
+        insertAudit(
+            UUID.randomUUID(),
+            userId,
+            "MFA_DISABLED",
+            OCCURRED_AT
+        );
+        insertAudit(
+            UUID.randomUUID(),
+            userId,
+            "RECOVERY_CODES_ROTATED",
+            OCCURRED_AT
+        );
+
+        Integer storedRows = jdbcTemplate.queryForObject("""
+            SELECT COUNT(*)
+            FROM account_security_audits
+            WHERE subject_user_id = ?
+            """,
+            Integer.class,
+            userId
+        );
+
+        assertThat(storedRows).isEqualTo(2);
+
+        assertThatThrownBy(() -> insertAudit(
+            UUID.randomUUID(),
+            userId,
+            "UNKNOWN_ACTION",
+            OCCURRED_AT
+        )).isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
