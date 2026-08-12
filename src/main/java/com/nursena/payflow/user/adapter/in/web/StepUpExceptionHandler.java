@@ -25,7 +25,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @RestControllerAdvice(assignableTypes = {
     StepUpGrantController.class,
-    RotateMfaRecoveryCodesController.class
+    RotateMfaRecoveryCodesController.class,
+    DisableMfaController.class
 })
 public class StepUpExceptionHandler {
 
