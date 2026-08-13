@@ -22,7 +22,7 @@ class RoadmapContractTest {
         Path.of("docs", "roadmap.md");
 
     @Test
-    void shouldAlignRoadmapWithReleaseVersion()
+    void shouldAlignRoadmapWithPublishedRelease()
         throws Exception {
 
         String projectVersion = readProjectVersion();
@@ -34,20 +34,20 @@ class RoadmapContractTest {
 
         assertThat(roadmap)
             .contains(
-                "PayFlow v0.13.0 is the latest tagged release",
-                "the Maven version `" + projectVersion + "`",
+                "PayFlow v0.14.0 is the latest tagged release",
+                "The Maven version is `" + projectVersion + "`",
                 "## v0.10.0 — Released: Trusted Client Context",
                 "## v0.11.0 — Released: Structured Logging and Request Correlation",
                 "## v0.12.0 — Released: JWT Signing-Key Rotation",
                 "## v0.13.0 — Released: Account Recovery and Secure Mail Delivery",
-                "## v0.14.0 — Release Preparation: MFA and Step-Up Authentication",
-                "726f631a0de800870813ccb0c00b2676eb5d172b",
-                "31115952987"
+                "## v0.14.0 — Released: MFA and Step-Up Authentication",
+                "d65929b98bb66b22f208d26f75a764e1ade78b6a",
+                "31728977714"
             )
             .doesNotContain(
                 "0.13.0-SNAPSHOT",
                 "## v0.14.0 — Release Candidate",
-                "## v0.14.0 — Released"
+                "## v0.14.0 — Release Preparation"
             );
 
         assertThat(normalizedRoadmap)
@@ -59,7 +59,7 @@ class RoadmapContractTest {
     }
 
     @Test
-    void shouldFreezeV013PublicationAndOpenV014Boundaries()
+    void shouldFreezeV013AndV014PublicationBoundaries()
         throws IOException {
 
         assertThat(Files.readString(ROADMAP))
@@ -85,7 +85,10 @@ class RoadmapContractTest {
                 "Protect every pending or active TOTP secret before PostgreSQL persistence",
                 "Persist only fixed-length recovery-code digests",
                 "Introduce an application-facing step-up policy independent from controller annotations",
-                "generalized registration, refresh, recovery, or operations rate-limit policy; that remains a v0.15.0 concern"
+                "generalized registration, refresh, recovery, or operations rate-limit policy; that remains a v0.15.0 concern",
+                "- [x] protected feature and release-preparation pull requests are merged",
+                "- [x] the v0.14.0 tag, JAR, checksum, and GitHub Release are published",
+                "A6533039C5DDBE610D9DDB986DDBDAFE192DD56BE664E86B65A72AECF51F116E"
             );
     }
 

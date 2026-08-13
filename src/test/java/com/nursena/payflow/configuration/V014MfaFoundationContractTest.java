@@ -207,7 +207,7 @@ class V014MfaFoundationContractTest {
 
         assertThat(readme)
             .contains(
-                "The `0.14.0` release-preparation line delivers TOTP-based multi-factor authentication and purpose-bound step-up authentication",
+                "PayFlow v0.14.0 delivers TOTP-based multi-factor authentication and purpose-bound step-up authentication",
                 "Authenticator state, cryptographic policy, application use cases, persistence, and HTTP adapters remain separated by the existing modular-monolith boundaries"
             );
 
