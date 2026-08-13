@@ -112,11 +112,13 @@ Completed capabilities include:
 - operator-only, paginated command-audit queries and chronological command timelines
 - Prometheus metrics, Grafana dashboards, and alert rules for Kafka consumer failures
 
-OpenAPI documentation covers the implemented API, while executable Postman workflows remain aligned with released end-to-end flows. PayFlow v0.13.0 is the latest published release, and the current release-preparation line uses `0.14.0`. The v0.14.0 release delivers TOTP multi-factor authentication, digest-only single-use recovery codes, purpose-bound step-up grants, transactional MFA disable, and recovery-code rotation without changing the simulated-money boundary.
+OpenAPI documentation covers the implemented API, while executable Postman workflows remain aligned with released end-to-end flows. PayFlow v0.14.0 is the latest published release, and the Maven version is `0.14.0`. The release delivers TOTP multi-factor authentication, digest-only single-use recovery codes, purpose-bound step-up grants, transactional MFA disable, and recovery-code rotation without changing the simulated-money boundary.
 
-The immutable v0.13.0 publication record is anchored to annotated tag `v0.13.0`, merge commit `726f631a0de800870813ccb0c00b2676eb5d172b`, and successful release workflow run [31115952987](https://github.com/nursena-pc/payflow/actions/runs/31115952987). The published `payflow-0.13.0.jar` is 100015861 bytes and its independently verified SHA-256 is `78520B04BA3FDAF1BCEB3EAF29FCBE96C46265DF691C52C9048CEE6B5D58F4DA`.
+The immutable v0.14.0 publication record is anchored to annotated tag `v0.14.0`, merge commit `d65929b98bb66b22f208d26f75a764e1ade78b6a`, and successful release workflow run [31728977714](https://github.com/nursena-pc/payflow/actions/runs/31728977714). The published `payflow-0.14.0.jar` is 100200050 bytes and its independently verified SHA-256 is `A6533039C5DDBE610D9DDB986DDBDAFE192DD56BE664E86B65A72AECF51F116E`.
 
-See the [v0.13.0 release notes](docs/releases/v0.13.0.md), the [published GitHub Release](https://github.com/nursena-pc/payflow/releases/tag/v0.13.0), the [account-action mail-delivery operations guide](docs/operations/account-action-mail-delivery.md), [ADR 0013](docs/adr/0013-secure-mail-outbox-and-smtp-delivery.md), the [v0.12.0 release notes](docs/releases/v0.12.0.md), and the [roadmap](docs/roadmap.md).
+The immutable v0.13.0 publication record remains anchored to annotated tag `v0.13.0`, merge commit `726f631a0de800870813ccb0c00b2676eb5d172b`, and successful release workflow run [31115952987](https://github.com/nursena-pc/payflow/actions/runs/31115952987). The published `payflow-0.13.0.jar` is 100015861 bytes and its independently verified SHA-256 is `78520B04BA3FDAF1BCEB3EAF29FCBE96C46265DF691C52C9048CEE6B5D58F4DA`.
+
+See the [v0.14.0 release notes](docs/releases/v0.14.0.md), the [published GitHub Release](https://github.com/nursena-pc/payflow/releases/tag/v0.14.0), the [MFA operations guide](docs/operations/mfa-security.md), [ADR 0014](docs/adr/0014-mfa-and-step-up-authentication.md), the [v0.13.0 release notes](docs/releases/v0.13.0.md), and the [roadmap](docs/roadmap.md).
 
 ## Structured logging
 
@@ -156,9 +158,9 @@ Per-identity and per-client Redis quotas for account-action requests remain expl
 
 See the [v0.13.0 release notes](docs/releases/v0.13.0.md), [ADR 0013](docs/adr/0013-secure-mail-outbox-and-smtp-delivery.md), and the [mail-delivery operations guide](docs/operations/account-action-mail-delivery.md).
 
-## v0.14.0 release preparation
+## v0.14.0 release
 
-The `0.14.0` release-preparation line delivers TOTP-based multi-factor authentication and purpose-bound step-up authentication as a package-bounded identity-security capability. Authenticator state, cryptographic policy, application use cases, persistence, and HTTP adapters remain separated by the existing modular-monolith boundaries.
+PayFlow v0.14.0 delivers TOTP-based multi-factor authentication and purpose-bound step-up authentication as a package-bounded identity-security capability. Authenticator state, cryptographic policy, application use cases, persistence, and HTTP adapters remain separated by the existing modular-monolith boundaries.
 
 Authenticated enrollment creates a pending 160-bit TOTP secret, protects it with AES-256-GCM before PostgreSQL V18 persistence, and activates it only after a valid proof. The plaintext secret and `otpauth://` provisioning value cross only the response that created them. Production requires dedicated MFA encryption material independent from JWT and mail keys.
 

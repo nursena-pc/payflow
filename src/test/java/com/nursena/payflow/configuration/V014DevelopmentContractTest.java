@@ -19,13 +19,13 @@ class V014DevelopmentContractTest {
     private static final Path ROADMAP =
         Path.of("docs", "roadmap.md");
     @Test
-    void shouldExposeV014ReleasePreparationStatus()
+    void shouldExposeV014PublishedReleaseStatus()
         throws IOException {
         assertThat(Files.readString(README))
             .contains(
-                "PayFlow v0.13.0 is the latest published release",
-                "current release-preparation line uses `0.14.0`",
-                "## v0.14.0 release preparation",
+                "PayFlow v0.14.0 is the latest published release",
+                "the Maven version is `0.14.0`",
+                "## v0.14.0 release",
                 "TOTP-based multi-factor authentication",
                 "digest-only login challenge",
                 "single-use recovery codes",

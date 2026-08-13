@@ -2,15 +2,14 @@
 
 ## Current delivery focus
 
-PayFlow v0.13.0 is the latest tagged release. The active development line uses
-the Maven version `0.14.0`.
+PayFlow v0.14.0 is the latest tagged release. The Maven version is `0.14.0`.
 
-The v0.13.0 account-recovery and secure-mail-delivery release was published
-from verified merge commit `726f631a0de800870813ccb0c00b2676eb5d172b`
-through successful release workflow run `31115952987`. The v0.14.0 milestone
-adds TOTP multi-factor authentication, digest-only recovery codes, and bounded
-step-up authentication while preserving the existing anti-enumeration,
-refresh-session, and logging boundaries.
+The v0.14.0 MFA and step-up release was published from verified merge commit
+`d65929b98bb66b22f208d26f75a764e1ade78b6a` through successful release workflow run `31728977714`.
+The published `100200050`-byte JAR has independently verified SHA-256
+`A6533039C5DDBE610D9DDB986DDBDAFE192DD56BE664E86B65A72AECF51F116E`. The release adds TOTP multi-factor authentication, digest-only
+recovery codes, and bounded step-up authentication while preserving the
+existing anti-enumeration, refresh-session, and logging boundaries.
 
 PayFlow remains a modular monolith. PostgreSQL is the system of record; Redis is
 used only for bounded, explicitly expiring abuse-control state.
@@ -519,7 +518,7 @@ The release is ready only when:
 - release checksum verification: passed
 - publication-evidence JSON SHA-256: `4FDD37BC1BF5D058A391A23784CCF87DED3FADCC3F9DB564806A8A52DC1F7B51`
 
-## v0.14.0 — Release Preparation: MFA and Step-Up Authentication
+## v0.14.0 — Released: MFA and Step-Up Authentication
 
 ### Product outcome
 
@@ -648,7 +647,7 @@ candidates without changing their current runtime authorization.
 - [x] Add an MFA threat model, ADR, and operations guide
 - [x] Verify production startup fails safely without configured MFA secret-protection material
 - [x] Run the complete Maven verification suite and production Docker smoke
-- [ ] Pass protected `build-and-test` and `docker-smoke` checks for every increment
+- [x] Pass protected `build-and-test` and `docker-smoke` checks for every increment
 
 ## Explicit v0.14.0 non-goals
 
@@ -682,8 +681,20 @@ The release is ready only when:
 - [x] focused unit, PostgreSQL, HTTP, OpenAPI, and Postman tests pass
 - [x] the complete Maven suite and production Docker smoke pass
 - [x] threat model, ADR, operations guide, configuration, and implementation agree
-- [ ] protected feature and release-preparation pull requests are merged
-- [ ] the v0.14.0 tag, JAR, checksum, and GitHub Release are published
+- [x] protected feature and release-preparation pull requests are merged
+- [x] the v0.14.0 tag, JAR, checksum, and GitHub Release are published
+
+### Publication record
+
+- release-preparation PR: `#147`
+- release-candidate commit: `1fba2dacc239d8c43149cebdf192e3086be356c3`
+- published merge and tag commit: `d65929b98bb66b22f208d26f75a764e1ade78b6a`
+- annotated tag object: `826c77a724915c386c375c2cc227597ae0331dda`
+- release workflow run: [`31728977714`](https://github.com/nursena-pc/payflow/actions/runs/31728977714)
+- published at: `2026-08-13T18:13:33Z`
+- published JAR size: `100200050` bytes
+- published JAR SHA-256: `A6533039C5DDBE610D9DDB986DDBDAFE192DD56BE664E86B65A72AECF51F116E`
+- release checksum verification: passed
 
 ## Later v1.0 candidates
 
