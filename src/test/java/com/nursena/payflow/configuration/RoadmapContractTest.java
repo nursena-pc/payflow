@@ -22,7 +22,7 @@ class RoadmapContractTest {
         Path.of("docs", "roadmap.md");
 
     @Test
-    void shouldAlignRoadmapWithActiveDevelopmentVersion()
+    void shouldAlignRoadmapWithReleaseVersion()
         throws Exception {
 
         String projectVersion = readProjectVersion();
@@ -30,7 +30,7 @@ class RoadmapContractTest {
         String normalizedRoadmap = normalizeWhitespace(roadmap);
 
         assertThat(projectVersion)
-            .isEqualTo("0.14.0-SNAPSHOT");
+            .isEqualTo("0.14.0");
 
         assertThat(roadmap)
             .contains(
@@ -40,7 +40,7 @@ class RoadmapContractTest {
                 "## v0.11.0 — Released: Structured Logging and Request Correlation",
                 "## v0.12.0 — Released: JWT Signing-Key Rotation",
                 "## v0.13.0 — Released: Account Recovery and Secure Mail Delivery",
-                "## v0.14.0 — Active Development: MFA and Step-Up Authentication",
+                "## v0.14.0 — Release Preparation: MFA and Step-Up Authentication",
                 "726f631a0de800870813ccb0c00b2676eb5d172b",
                 "31115952987"
             )

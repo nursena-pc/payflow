@@ -2,11 +2,11 @@
 
 ## Scope
 
-This increment implements the reusable application policy that later v0.14.0
-account-security and selected operator operations use to require recent
-second-factor possession. It does not yet disable MFA, rotate recovery codes,
-replace an authenticator, or change Kafka dead-letter replay/discard runtime
-authorization.
+This release implements the reusable application policy used by account-security
+operations to require recent second-factor possession. MFA disable and
+recovery-code rotation consume exact purpose-bound grants. Authenticator
+replacement and Kafka dead-letter replay/discard step-up enforcement remain
+deferred.
 
 Spring Security still establishes the authenticated bearer subject. Controllers
 may pass that subject into a use case, but controller annotations do not decide
@@ -82,21 +82,25 @@ exception messages, or durable plaintext columns:
 Request, result, response, generated-grant, and digest value objects redact
 credential material from `toString()` output.
 
-## Bearer-only and future step-up operations
+## Protected and deferred operations
 
-This increment creates and validates purpose-bound grants but deliberately does
-not yet change existing operation behavior. The next account-security increment
-will require:
+The following public account-security operations require exact step-up purposes:
 
 - `mfa-disable` for MFA disable;
-- `recovery-code-rotation` for recovery-code replacement;
-- `mfa-authenticator-replacement` for active-authenticator replacement.
+- `recovery-code-rotation` for complete recovery-code replacement.
+
+Both integrations consume the grant inside the same transaction as the protected
+mutation. Missing grants use `403 STEP_UP_REQUIRED`; invalid or unusable grants
+use `403 STEP_UP_INVALID`.
+
+The `mfa-authenticator-replacement` purpose remains reserved, but active
+authenticator replacement is deferred until a safe two-stage lifecycle is
+designed and verified.
 
 Kafka dead-letter replay and discard remain bearer-plus-operator-authority
-operations in this increment. Their typed purposes are explicit candidates for
-a later policy integration; this increment does not silently change the
-operations API.
+operations. Their typed purposes remain explicit future policy candidates; this
+release does not silently change the operations API.
 
-Generalized API-wide abuse protection remains a v0.15.0 concern. Step-up grant
-credentials themselves are short-lived, single-use, purpose-bound, subject-bound,
-and superseding; the generalized request-rate policy is not introduced here.
+Generalized API-wide abuse protection remains a v0.15.0 concern. Step-up grants
+are already short-lived, single-use, purpose-bound, subject-bound, and
+superseding.

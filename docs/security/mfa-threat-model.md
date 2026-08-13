@@ -3,7 +3,7 @@
 - Status: Active v0.14.0 security contract
 - Scope: TOTP enrollment, MFA login completion, recovery codes, MFA disable,
   authenticator replacement, and selected step-up operations
-- Baseline: PayFlow `0.14.0-SNAPSHOT`
+- Baseline: PayFlow `0.14.0`
 
 ## Purpose
 

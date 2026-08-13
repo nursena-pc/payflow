@@ -71,8 +71,8 @@ class V014MfaLoginChallengeContractTest {
         assertThat(readme).contains(
             "202 MFA_REQUIRED",
             "`POST` | `/api/v1/auth/mfa/challenges/confirm`",
-            "creates no access token, refresh-token family, or refresh-token record",
-            "Concurrent confirmation has at most one successful credential-issuing winner"
+            "Enabled MFA users complete password verification before receiving a short-lived, digest-only login challenge",
+            "Recovery-code use, challenge consumption, and credential issuance share one transaction and preserve single-winner behavior under concurrency"
         );
     }
 

@@ -7,10 +7,10 @@ authenticator is already enabled. This increment covers code generation at MFA
 activation, digest-only PostgreSQL persistence, login-challenge consumption,
 replay resistance, concurrency, and observable-output boundaries.
 
-Explicit recovery-code rotation is not implemented here. The purpose-bound step-up capability
-is now available as a separate application policy, while rotation, MFA disable,
-and authenticator replacement remain in the following mutation increment before
-public mutation endpoints are added.
+Explicit recovery-code rotation is available through an authenticated public
+endpoint. It consumes an exact `recovery-code-rotation` step-up grant, replaces
+the complete digest set atomically, and returns replacement plaintext once.
+MFA disable is also integrated; authenticator replacement remains deferred.
 
 ## Generation and one-time disclosure
 
@@ -21,8 +21,8 @@ canonical unpadded Base64URL text, producing 22 characters from the alphabet
 
 The enrollment-confirmation response returns the plaintext set once. No
 plaintext recovery code is persisted. If a response is lost, the existing TOTP
-authenticator remains usable; replacement code issuance is reserved for the
-future step-up-protected rotation flow.
+authenticator remains usable; replacement code issuance requires the
+step-up-protected rotation flow.
 
 ## Digest-only persistence
 
@@ -73,16 +73,13 @@ code.
 Recovery-code plaintext and digests must not appear in logs, metric labels,
 traces, audit payloads, exception messages, or `toString()` output. The only
 intentional plaintext boundary is the successful enrollment-confirmation
-response that creates the initial code set and, in a later increment, the
-step-up-protected explicit rotation response.
+response that creates the initial code set or the successful step-up-protected
+rotation response.
 
 ## Deferred work
 
-This increment does not add:
+This release does not add:
 
-- recovery-code rotation;
-- MFA disable;
 - authenticator replacement;
-- step-up enforcement on recovery-code rotation, MFA disable, or authenticator replacement;
 - recovery-code remaining-count disclosure;
 - generalized API-wide abuse protection.

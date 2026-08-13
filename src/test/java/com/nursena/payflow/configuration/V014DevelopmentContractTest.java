@@ -19,21 +19,22 @@ class V014DevelopmentContractTest {
     private static final Path ROADMAP =
         Path.of("docs", "roadmap.md");
     @Test
-    void shouldExposeV014DevelopmentStatus()
+    void shouldExposeV014ReleasePreparationStatus()
         throws IOException {
         assertThat(Files.readString(README))
             .contains(
                 "PayFlow v0.13.0 is the latest published release",
-                "active development line uses `0.14.0-SNAPSHOT`",
-                "## v0.14.0 active development",
+                "current release-preparation line uses `0.14.0`",
+                "## v0.14.0 release preparation",
                 "TOTP-based multi-factor authentication",
                 "digest-only login challenge",
                 "single-use recovery codes",
-                "purpose-bound step-up grants"
+                "purpose-bound step-up grants",
+                "/api/v1/users/me/mfa/recovery-codes/rotation",
+                "`DELETE` | `/api/v1/users/me/mfa`"
             )
             .doesNotContain(
-                "Maven version remains `0.13.0`",
-                "## v0.14.0 release preparation"
+                "Maven version remains `0.13.0`"
             );
     }
     @Test
@@ -63,7 +64,7 @@ class V014DevelopmentContractTest {
                 "concurrent submissions have at most one successful winner",
                 "Persist only fixed-length recovery-code digests",
                 "Consume every recovery code atomically and at most once",
-                "Revoke active refresh-token families after MFA disable or authenticator replacement"
+                "Revoke active refresh-token families after MFA disable"
             );
     }
     @Test
@@ -82,7 +83,7 @@ class V014DevelopmentContractTest {
             );
     }
     @Test
-    void shouldRetainV013PublicationAndUnreleasedChangelog()
+    void shouldRetainV013PublicationAndAdvanceUnreleasedComparison()
         throws IOException {
         assertThat(Files.readString(ROADMAP))
             .contains(
@@ -96,7 +97,7 @@ class V014DevelopmentContractTest {
                 "## [Unreleased]",
                 "## [0.13.0] - 2026-08-06",
                 "[0.13.0]: https://github.com/nursena-pc/payflow/compare/v0.12.0...v0.13.0",
-                "[Unreleased]: https://github.com/nursena-pc/payflow/compare/v0.13.0...HEAD"
+                "[Unreleased]: https://github.com/nursena-pc/payflow/compare/v0.14.0...HEAD"
             );
     }
 }
