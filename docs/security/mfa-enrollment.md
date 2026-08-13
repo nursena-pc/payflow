@@ -1,7 +1,7 @@
 # TOTP Enrollment and Secret-Protection Contract
 
 - Status: Implemented v0.14.0 increment 2
-- Baseline: PayFlow `0.14.0-SNAPSHOT`
+- Baseline: PayFlow `0.14.0`
 - Migration: `V18__create_mfa_authenticators.sql`
 
 ## Enrollment profile

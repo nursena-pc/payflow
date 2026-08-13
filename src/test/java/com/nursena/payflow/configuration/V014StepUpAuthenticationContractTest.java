@@ -16,15 +16,15 @@ class V014StepUpAuthenticationContractTest {
     private static final Path MIGRATION = ROOT.resolve("src/main/resources/db/migration/V21__create_step_up_grants.sql");
 
     @Test
-    void shouldMarkPurposeBoundStepUpIncrementCompleteWithoutMutationIntegration() throws IOException {
+    void shouldMarkPurposeBoundStepUpCompleteWithAccountSecurityIntegration() throws IOException {
         String roadmap = Files.readString(ROADMAP);
         assertThat(roadmap).contains(
             "### Increment 5 — Step-up authentication",
             "- [x] Introduce an application-facing step-up policy independent from controller annotations",
             "- [x] Bind every step-up grant to one authenticated subject, purpose, issue time, and short expiration",
             "- [x] Reject cross-purpose, expired, superseded, replayed, or wrong-subject grants",
-            "### Increment 6 — MFA disable, recovery-code rotation, and replacement",
-            "- [ ] Disable the enabled authenticator only after `mfa-disable` step-up succeeds"
+            "### Increment 6 — MFA disable and recovery-code rotation",
+            "- [x] Disable the enabled authenticator only after `mfa-disable` step-up succeeds"
         );
     }
 
@@ -86,11 +86,12 @@ class V014StepUpAuthenticationContractTest {
     void shouldExposeStepUpCapabilityInReadmeWithoutClaimingFutureMutations() throws IOException {
         String readme = normalizeWhitespace(Files.readString(README));
         assertThat(readme).contains(
-            "fifth increment implements the purpose-bound step-up capability",
-            "PostgreSQL V21 stores only SHA-256 grant digests",
+            "purpose-bound step-up authentication",
+            "PostgreSQL V21 stores only grant digests",
             "StepUpAuthorizationPolicy",
             "/api/v1/users/me/step-up/grants",
-            "MFA disable, recovery-code rotation, authenticator replacement"
+            "MFA disable and recovery-code rotation consume exact step-up purposes",
+                "Active-authenticator replacement remains deferred"
         );
     }
 

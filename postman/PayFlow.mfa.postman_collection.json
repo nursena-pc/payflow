@@ -1,0 +1,656 @@
+{
+    "info":  {
+                 "_postman_id":  "8f882fed-98e5-4aa2-b4dc-aec4186d73ca",
+                 "name":  "PayFlow MFA Security Verification",
+                 "description":  "Manual local verification for TOTP enrollment, MFA login, purpose-bound step-up, recovery-code rotation, and destructive MFA disable. The workflow intentionally does not persist plaintext provisioning material, recovery codes, passwords, TOTP values, challenges, grants, or tokens in the committed collection.",
+                 "schema":  "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+             },
+    "item":  [
+                 {
+                     "name":  "Enrollment",
+                     "description":  "Start with an active, email-verified account whose MFA state is DISABLED.",
+                     "item":  [
+                                  {
+                                      "name":  "Get MFA Status",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "header":  [
+
+                                                                 ],
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{mfaAccessToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/api/v1/users/me/mfa",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "api",
+                                                                               "v1",
+                                                                               "users",
+                                                                               "me",
+                                                                               "mfa"
+                                                                           ]
+                                                              },
+                                                      "description":  "Returns MFA lifecycle metadata without secret material."
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "prerequest",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "const required = [\"baseUrl\",\"mfaAccessToken\"]; required.forEach(function (key) {     const value = pm.environment.get(key);     if (!value || !String(value).trim()) {         throw new Error(`Set ${key} in the active local environment before sending this request.`);     } });"
+                                                                                ]
+                                                                   }
+                                                    },
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code is 200\u0027, function () { pm.response.to.have.status(200); });",
+                                                                                    "const response = pm.response.json();",
+                                                                                    "pm.expect([\u0027DISABLED\u0027, \u0027PENDING\u0027, \u0027ENABLED\u0027]).to.include(response.state);",
+                                                                                    "pm.expect(response).not.to.have.property(\u0027secret\u0027);",
+                                                                                    "pm.expect(response).not.to.have.property(\u0027provisioningUri\u0027);",
+                                                                                    "pm.expect(response).not.to.have.property(\u0027recoveryCodes\u0027);"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  },
+                                  {
+                                      "name":  "Begin MFA Enrollment",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json",
+                                                                         "type":  "text"
+                                                                     }
+                                                                 ],
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{mfaAccessToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/api/v1/users/me/mfa/enrollment",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "api",
+                                                                               "v1",
+                                                                               "users",
+                                                                               "me",
+                                                                               "mfa",
+                                                                               "enrollment"
+                                                                           ]
+                                                              },
+                                                      "description":  "Begins enrollment for an active, email-verified account whose MFA state is DISABLED. Read the returned provisioning material directly from the response; the collection deliberately does not persist it.",
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"currentPassword\": \"{{mfaPassword}}\"\n}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               }
+                                                               }
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "prerequest",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "const required = [\"baseUrl\",\"mfaAccessToken\",\"mfaPassword\"]; required.forEach(function (key) {     const value = pm.environment.get(key);     if (!value || !String(value).trim()) {         throw new Error(`Set ${key} in the active local environment before sending this request.`);     } });"
+                                                                                ]
+                                                                   }
+                                                    },
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code is 200\u0027, function () { pm.response.to.have.status(200); });",
+                                                                                    "const response = pm.response.json();",
+                                                                                    "pm.expect(response.state).to.eql(\u0027PENDING\u0027);",
+                                                                                    "pm.expect(response.secret).to.be.a(\u0027string\u0027).and.not.empty;",
+                                                                                    "pm.expect(response.provisioningUri).to.match(/^otpauth:\\/\\/totp\\//);",
+                                                                                    "pm.expect(response.expiresAt).to.be.a(\u0027string\u0027).and.not.empty;",
+                                                                                    "pm.expect(pm.environment.get(\u0027mfaEnrollmentSecret\u0027)).to.be.undefined;"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  },
+                                  {
+                                      "name":  "Confirm MFA Enrollment",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json",
+                                                                         "type":  "text"
+                                                                     }
+                                                                 ],
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{mfaAccessToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/api/v1/users/me/mfa/enrollment/confirm",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "api",
+                                                                               "v1",
+                                                                               "users",
+                                                                               "me",
+                                                                               "mfa",
+                                                                               "enrollment",
+                                                                               "confirm"
+                                                                           ]
+                                                              },
+                                                      "description":  "Activates pending enrollment using the current six-digit authenticator code. The ten plaintext recovery codes are shown once and are deliberately not persisted by this collection.",
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"code\": \"{{mfaCode}}\"\n}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               }
+                                                               }
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "prerequest",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "const required = [\"baseUrl\",\"mfaAccessToken\",\"mfaCode\"]; required.forEach(function (key) {     const value = pm.environment.get(key);     if (!value || !String(value).trim()) {         throw new Error(`Set ${key} in the active local environment before sending this request.`);     } });"
+                                                                                ]
+                                                                   }
+                                                    },
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code is 200\u0027, function () { pm.response.to.have.status(200); });",
+                                                                                    "const response = pm.response.json();",
+                                                                                    "pm.expect(response.state).to.eql(\u0027ENABLED\u0027);",
+                                                                                    "pm.expect(response.recoveryCodes).to.be.an(\u0027array\u0027).with.lengthOf(10);",
+                                                                                    "response.recoveryCodes.forEach(code =\u003e pm.expect(code).to.match(/^[A-Za-z0-9_-]{22}$/));",
+                                                                                    "pm.expect(pm.environment.get(\u0027mfaRecoveryCodes\u0027)).to.be.undefined;"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  }
+                              ]
+                 },
+                 {
+                     "name":  "Login Challenge",
+                     "description":  "Run after enrollment is ENABLED. Set a fresh mfaCode before confirmation.",
+                     "item":  [
+                                  {
+                                      "name":  "Login With Enabled MFA",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json",
+                                                                         "type":  "text"
+                                                                     }
+                                                                 ],
+                                                      "auth":  {
+                                                                   "type":  "noauth"
+                                                               },
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/api/v1/auth/login",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "api",
+                                                                               "v1",
+                                                                               "auth",
+                                                                               "login"
+                                                                           ]
+                                                              },
+                                                      "description":  "Performs password authentication for an MFA-enabled account. It expects a challenge rather than access or refresh credentials.",
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"email\": \"{{mfaEmail}}\",\n  \"password\": \"{{mfaPassword}}\"\n}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               }
+                                                               }
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "prerequest",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "const required = [\"baseUrl\",\"mfaEmail\",\"mfaPassword\"]; required.forEach(function (key) {     const value = pm.environment.get(key);     if (!value || !String(value).trim()) {         throw new Error(`Set ${key} in the active local environment before sending this request.`);     } });"
+                                                                                ]
+                                                                   }
+                                                    },
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code is 202\u0027, function () { pm.response.to.have.status(202); });",
+                                                                                    "const response = pm.response.json();",
+                                                                                    "pm.expect(response.authenticationStatus).to.eql(\u0027MFA_REQUIRED\u0027);",
+                                                                                    "pm.expect(response.challengeToken).to.be.a(\u0027string\u0027).and.not.empty;",
+                                                                                    "pm.expect(response.expiresAt).to.be.a(\u0027string\u0027).and.not.empty;",
+                                                                                    "pm.expect(response).not.to.have.property(\u0027accessToken\u0027);",
+                                                                                    "pm.expect(response).not.to.have.property(\u0027refreshToken\u0027);",
+                                                                                    "pm.environment.set(\u0027mfaChallengeToken\u0027, response.challengeToken);"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  },
+                                  {
+                                      "name":  "Confirm MFA Login Challenge",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json",
+                                                                         "type":  "text"
+                                                                     }
+                                                                 ],
+                                                      "auth":  {
+                                                                   "type":  "noauth"
+                                                               },
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/api/v1/auth/mfa/challenges/confirm",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "api",
+                                                                               "v1",
+                                                                               "auth",
+                                                                               "mfa",
+                                                                               "challenges",
+                                                                               "confirm"
+                                                                           ]
+                                                              },
+                                                      "description":  "Consumes the pending login challenge using a fresh TOTP or one unused recovery code and stores the returned access token only in the active local environment.",
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"challengeToken\": \"{{mfaChallengeToken}}\",\n  \"code\": \"{{mfaCode}}\"\n}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               }
+                                                               }
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "prerequest",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "const required = [\"baseUrl\",\"mfaChallengeToken\",\"mfaCode\"]; required.forEach(function (key) {     const value = pm.environment.get(key);     if (!value || !String(value).trim()) {         throw new Error(`Set ${key} in the active local environment before sending this request.`);     } });"
+                                                                                ]
+                                                                   }
+                                                    },
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code is 200\u0027, function () { pm.response.to.have.status(200); });",
+                                                                                    "const response = pm.response.json();",
+                                                                                    "pm.expect(response.accessToken).to.be.a(\u0027string\u0027).and.not.empty;",
+                                                                                    "pm.expect(response.refreshToken).to.be.a(\u0027string\u0027).and.not.empty;",
+                                                                                    "pm.environment.set(\u0027mfaAccessToken\u0027, response.accessToken);",
+                                                                                    "pm.environment.unset(\u0027mfaChallengeToken\u0027);"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  }
+                              ]
+                 },
+                 {
+                     "name":  "Recovery-Code Rotation",
+                     "description":  "Run requests in order with a fresh factor proof. Copy returned replacement codes directly from the response.",
+                     "item":  [
+                                  {
+                                      "name":  "Issue Recovery-Code Rotation Grant",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json",
+                                                                         "type":  "text"
+                                                                     }
+                                                                 ],
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{mfaAccessToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/api/v1/users/me/step-up/grants",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "api",
+                                                                               "v1",
+                                                                               "users",
+                                                                               "me",
+                                                                               "step-up",
+                                                                               "grants"
+                                                                           ]
+                                                              },
+                                                      "description":  "Issues one short-lived grant for the exact recovery-code-rotation purpose. Use a fresh TOTP or one unused recovery code.",
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"purpose\": \"recovery-code-rotation\",\n  \"code\": \"{{mfaCode}}\"\n}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               }
+                                                               }
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "prerequest",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "const required = [\"baseUrl\",\"mfaAccessToken\",\"mfaCode\"]; required.forEach(function (key) {     const value = pm.environment.get(key);     if (!value || !String(value).trim()) {         throw new Error(`Set ${key} in the active local environment before sending this request.`);     } });"
+                                                                                ]
+                                                                   }
+                                                    },
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code is 200\u0027, function () { pm.response.to.have.status(200); });",
+                                                                                    "const response = pm.response.json();",
+                                                                                    "pm.expect(response.purpose).to.eql(\u0027recovery-code-rotation\u0027);",
+                                                                                    "pm.expect(response.grantToken).to.be.a(\u0027string\u0027).and.not.empty;",
+                                                                                    "pm.expect(response.expiresAt).to.be.a(\u0027string\u0027).and.not.empty;",
+                                                                                    "pm.environment.set(\u0027mfaStepUpGrant\u0027, response.grantToken);"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  },
+                                  {
+                                      "name":  "Rotate MFA Recovery Codes",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json",
+                                                                         "type":  "text"
+                                                                     }
+                                                                 ],
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{mfaAccessToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/api/v1/users/me/mfa/recovery-codes/rotation",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "api",
+                                                                               "v1",
+                                                                               "users",
+                                                                               "me",
+                                                                               "mfa",
+                                                                               "recovery-codes",
+                                                                               "rotation"
+                                                                           ]
+                                                              },
+                                                      "description":  "Consumes the exact step-up grant and replaces the complete recovery-code set atomically. Copy the returned plaintext codes directly from the response; they are not persisted by the collection.",
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"stepUpGrant\": \"{{mfaStepUpGrant}}\"\n}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               }
+                                                               }
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "prerequest",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "const required = [\"baseUrl\",\"mfaAccessToken\",\"mfaStepUpGrant\"]; required.forEach(function (key) {     const value = pm.environment.get(key);     if (!value || !String(value).trim()) {         throw new Error(`Set ${key} in the active local environment before sending this request.`);     } });"
+                                                                                ]
+                                                                   }
+                                                    },
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code is 200\u0027, function () { pm.response.to.have.status(200); });",
+                                                                                    "pm.test(\u0027Response is not cacheable\u0027, function () { pm.expect(pm.response.headers.get(\u0027Cache-Control\u0027)).to.include(\u0027no-store\u0027); });",
+                                                                                    "const response = pm.response.json();",
+                                                                                    "pm.expect(response.recoveryCodes).to.be.an(\u0027array\u0027).with.lengthOf(10);",
+                                                                                    "response.recoveryCodes.forEach(code =\u003e pm.expect(code).to.match(/^[A-Za-z0-9_-]{22}$/));",
+                                                                                    "pm.environment.unset(\u0027mfaStepUpGrant\u0027);",
+                                                                                    "pm.expect(pm.environment.get(\u0027mfaRecoveryCodes\u0027)).to.be.undefined;"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  }
+                              ]
+                 },
+                 {
+                     "name":  "MFA Disable",
+                     "description":  "Destructive workflow. Run requests in order only when MFA removal is intentional.",
+                     "item":  [
+                                  {
+                                      "name":  "Issue MFA Disable Grant",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json",
+                                                                         "type":  "text"
+                                                                     }
+                                                                 ],
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{mfaAccessToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/api/v1/users/me/step-up/grants",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "api",
+                                                                               "v1",
+                                                                               "users",
+                                                                               "me",
+                                                                               "step-up",
+                                                                               "grants"
+                                                                           ]
+                                                              },
+                                                      "description":  "Issues one short-lived grant for the exact mfa-disable purpose. Generate a fresh authenticator code before sending.",
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"purpose\": \"mfa-disable\",\n  \"code\": \"{{mfaCode}}\"\n}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               }
+                                                               }
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "prerequest",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "const required = [\"baseUrl\",\"mfaAccessToken\",\"mfaCode\"]; required.forEach(function (key) {     const value = pm.environment.get(key);     if (!value || !String(value).trim()) {         throw new Error(`Set ${key} in the active local environment before sending this request.`);     } });"
+                                                                                ]
+                                                                   }
+                                                    },
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code is 200\u0027, function () { pm.response.to.have.status(200); });",
+                                                                                    "const response = pm.response.json();",
+                                                                                    "pm.expect(response.purpose).to.eql(\u0027mfa-disable\u0027);",
+                                                                                    "pm.expect(response.grantToken).to.be.a(\u0027string\u0027).and.not.empty;",
+                                                                                    "pm.environment.set(\u0027mfaStepUpGrant\u0027, response.grantToken);"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  },
+                                  {
+                                      "name":  "Disable MFA (Destructive)",
+                                      "request":  {
+                                                      "method":  "DELETE",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json",
+                                                                         "type":  "text"
+                                                                     }
+                                                                 ],
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{mfaAccessToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/api/v1/users/me/mfa",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "api",
+                                                                               "v1",
+                                                                               "users",
+                                                                               "me",
+                                                                               "mfa"
+                                                                           ]
+                                                              },
+                                                      "description":  "DESTRUCTIVE: consumes the mfa-disable grant, removes authenticator and recovery-code state, and revokes active refresh-token families. Run only after reviewing the account and response expectations.",
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"stepUpGrant\": \"{{mfaStepUpGrant}}\"\n}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               }
+                                                               }
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "prerequest",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "const required = [\"baseUrl\",\"mfaAccessToken\",\"mfaStepUpGrant\"]; required.forEach(function (key) {     const value = pm.environment.get(key);     if (!value || !String(value).trim()) {         throw new Error(`Set ${key} in the active local environment before sending this request.`);     } });"
+                                                                                ]
+                                                                   }
+                                                    },
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code is 204\u0027, function () { pm.response.to.have.status(204); });",
+                                                                                    "pm.expect(pm.response.text()).to.eql(\u0027\u0027);",
+                                                                                    "pm.environment.unset(\u0027mfaStepUpGrant\u0027);",
+                                                                                    "pm.environment.unset(\u0027mfaChallengeToken\u0027);",
+                                                                                    "pm.environment.unset(\u0027mfaCode\u0027);",
+                                                                                    "pm.environment.unset(\u0027mfaAccessToken\u0027);"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  }
+                              ]
+                 }
+             ]
+}

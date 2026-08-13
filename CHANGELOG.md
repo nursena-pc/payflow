@@ -8,37 +8,49 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-08-12
+
 ### Added
 
-- Domain-only MFA lifecycle foundation with explicit `DISABLED`, `PENDING`, and `ENABLED` transitions.
-- Typed step-up purpose vocabulary for user account-security changes and explicit Kafka dead-letter operator candidates.
-- ADR 0014 and a versioned MFA threat model covering enrollment, login challenge, recovery, disable, replay, concurrency, and observable-output boundaries.
+- Package-bounded MFA lifecycle with explicit `DISABLED`, `PENDING`, and `ENABLED` transitions.
 - Authenticated TOTP enrollment, status, confirmation, and pending-cancellation endpoints.
-- PostgreSQL V18 authenticator persistence with one-row-per-user serialization and protected secret storage.
-- Standards-compatible 160-bit Base32 TOTP provisioning with HMAC-SHA1, six digits, 30-second steps, and a bounded ±1 verification window.
-- Password-first MFA login challenges with `202 MFA_REQUIRED` for enabled authenticators and a dedicated confirmation endpoint.
-- PostgreSQL V19 digest-only challenge persistence with expiration, attempt budget, terminal state, supersession, and pessimistic consumption locking.
-- Ten 128-bit Base64URL MFA recovery codes returned once when enrollment is activated.
-- PostgreSQL V20 digest-only recovery-code persistence with pessimistic single-use consumption.
-- MFA login challenge completion with either the existing TOTP proof or one unused recovery code.
-- Purpose-bound, single-use opaque step-up grants with PostgreSQL V21 digest-only persistence and authenticated second-factor issuance.
-- Application-facing step-up authorization policy with subject, purpose, expiry, supersession, replay, and pessimistic-consumption checks.
+- AES-256-GCM-protected TOTP secret persistence through PostgreSQL V18.
+- Password-first, digest-only MFA login challenges through PostgreSQL V19.
+- Ten one-time 128-bit Base64URL recovery codes stored only as SHA-256 digests through PostgreSQL V20.
+- Purpose-bound, single-use step-up grants stored only as digests through PostgreSQL V21.
+- Transactional MFA disable with refresh-session revocation and append-only audit evidence.
+- Transactional recovery-code rotation with one-time replacement-code disclosure.
+- Authenticated REST endpoints for step-up issuance, MFA disable, and recovery-code rotation.
 
 ### Security
 
-- Dedicated `MFA_DISABLED` and `MFA_AUTHENTICATOR_REPLACED` refresh-family revocation reasons reserved before mutation workflows are implemented.
-- Stable coarse public failure semantics prevent future MFA endpoints from exposing internal challenge, TOTP, recovery-code, or step-up state.
-- MFA lifecycle policy remains independent from `UserStatus`, email-verification state, Spring Security, JWT adapters, and JPA entities.
-- TOTP secrets are AES-256-GCM protected before persistence with user-bound authenticated data and a production-only configured key boundary separate from JWT and mail keys.
-- Enrollment requires the authenticated user's current password, rejects overlapping pending or enabled authenticators, and returns plaintext provisioning material only in the response that creates it.
-- MFA-enabled password login creates no access token, refresh-token family, or refresh-token record until a TOTP challenge is consumed successfully.
-- Unknown, malformed, expired, exhausted, superseded, replayed, and invalid-proof challenge outcomes share the stable `MFA_CHALLENGE_INVALID` contract.
-- Challenge plaintext, digests, TOTP values, and revealed authenticator secrets stay outside observable output; concurrent confirmation permits one credential-issuing winner.
-- Recovery-code plaintext and digests remain outside logs, metrics, traces, audit payloads, and exception messages; invalid, unknown, malformed, and consumed recovery proofs reuse `MFA_CHALLENGE_INVALID`.
-- Recovery-code consumption, challenge consumption, and credential issuance share one transaction so downstream credential failure cannot permanently consume a recovery code.
-- Step-up grants contain 256 bits of secure randomness, are stored only as SHA-256 digests, expire after a short configurable lifetime, and supersede older unused grants for the same subject and purpose.
-- Wrong-subject, wrong-purpose, expired, superseded, malformed, unknown, and replayed step-up grants share the stable `STEP_UP_INVALID` contract.
+- Enabled MFA prevents access and refresh credential issuance until a valid TOTP or unused recovery code consumes the login challenge.
+- TOTP secrets, recovery codes, challenge tokens, step-up grants, and their digests remain outside logs, metrics, traces, errors, and audit payloads.
+- Wrong-subject, wrong-purpose, expired, superseded, malformed, unknown, and replayed step-up grants share stable coarse failure contracts.
+- MFA disable consumes an exact `mfa-disable` grant, deletes authenticator and recovery-code state, revokes active refresh-token families, and appends audit evidence atomically.
+- Recovery-code rotation consumes an exact `recovery-code-rotation` grant and replaces the complete digest set atomically.
+- Plaintext provisioning material and recovery codes cross the API boundary only in the response that creates them.
+- Active-authenticator replacement remains explicitly deferred until a safe two-stage replacement lifecycle is designed and verified.
 
+### Database
+
+- V18 adds protected MFA authenticator persistence.
+- V19 adds digest-only MFA login challenges.
+- V20 adds digest-only, single-use recovery codes.
+- V21 adds purpose-bound step-up grants.
+- V22 and V24 add constrained account-security audit support.
+- V23 adds the `MFA_DISABLED` refresh-family revocation reason.
+
+### Completed milestone work
+
+- [#133](https://github.com/nursena-pc/payflow/pull/133) — MFA lifecycle foundation
+- [#135](https://github.com/nursena-pc/payflow/pull/135) — TOTP enrollment and secret protection
+- [#138](https://github.com/nursena-pc/payflow/pull/138) — MFA login challenge
+- [#140](https://github.com/nursena-pc/payflow/pull/140) — recovery codes
+- [#142](https://github.com/nursena-pc/payflow/pull/142) — purpose-bound step-up authentication
+- [#144](https://github.com/nursena-pc/payflow/pull/144) — transactional MFA disable
+- [#145](https://github.com/nursena-pc/payflow/pull/145) — recovery-code rotation
+- [#146](https://github.com/nursena-pc/payflow/pull/146) — MFA disable HTTP adapter
 ## [0.13.0] - 2026-08-06
 
 
@@ -207,4 +219,5 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 [0.11.0]: https://github.com/nursena-pc/payflow/compare/v0.10.0...v0.11.0
 [0.12.0]: https://github.com/nursena-pc/payflow/compare/v0.11.0...v0.12.0
 [0.13.0]: https://github.com/nursena-pc/payflow/compare/v0.12.0...v0.13.0
-[Unreleased]: https://github.com/nursena-pc/payflow/compare/v0.13.0...HEAD
+[0.14.0]: https://github.com/nursena-pc/payflow/compare/v0.13.0...v0.14.0
+[Unreleased]: https://github.com/nursena-pc/payflow/compare/v0.14.0...HEAD

@@ -3,7 +3,7 @@
 ## Current delivery focus
 
 PayFlow v0.13.0 is the latest tagged release. The active development line uses
-the Maven version `0.14.0-SNAPSHOT`.
+the Maven version `0.14.0`.
 
 The v0.13.0 account-recovery and secure-mail-delivery release was published
 from verified merge commit `726f631a0de800870813ccb0c00b2676eb5d172b`
@@ -519,7 +519,7 @@ The release is ready only when:
 - release checksum verification: passed
 - publication-evidence JSON SHA-256: `4FDD37BC1BF5D058A391A23784CCF87DED3FADCC3F9DB564806A8A52DC1F7B51`
 
-## v0.14.0 — Active Development: MFA and Step-Up Authentication
+## v0.14.0 — Release Preparation: MFA and Step-Up Authentication
 
 ### Product outcome
 
@@ -594,7 +594,7 @@ superseded, replayed, and invalid-proof outcomes share the stable
 - [x] Consume every recovery code atomically and at most once
 - [x] Make recovery-code and TOTP challenge failures indistinguishable at the public boundary
 - [x] Keep recovery-code plaintext and digests out of observable output
-- [ ] Rotate recovery codes only after a recent purpose-bound step-up proof exists
+- [x] Rotate recovery codes only after a recent purpose-bound step-up proof exists
 
 The recovery-code implementation generates ten independent 128-bit opaque
 Base64URL values when pending TOTP enrollment becomes `ENABLED`. The activation
@@ -604,8 +604,9 @@ existing six-digit TOTP proof or one unused recovery code. The matching recovery
 row is pessimistically locked and consumed in the same transaction as challenge
 consumption and credential issuance. Invalid, unknown, malformed, and already
 consumed recovery proofs share `401 MFA_CHALLENGE_INVALID` with invalid TOTP.
-Explicit recovery-code rotation is intentionally deferred until purpose-bound
-step-up grants exist.
+Explicit recovery-code rotation now consumes an exact purpose-bound grant,
+atomically replaces the complete digest set, and returns replacement plaintext
+once.
 
 ### Increment 5 — Step-up authentication
 
@@ -623,29 +624,30 @@ The step-up implementation uses PostgreSQL V21 digest-only grant persistence,
 requires an enabled authenticator and a valid TOTP or unused recovery code. A
 new grant supersedes the prior unconsumed grant for the same subject and purpose.
 `StepUpAuthorizationPolicy` owns subject, purpose, expiry, supersession, and
-replay checks without servlet or controller-annotation coupling. MFA disable,
-recovery-code rotation, and authenticator replacement consume these grants in
-the following increment; Kafka replay/discard remain documented operator
-step-up candidates without changing their current runtime authorization here.
+replay checks without servlet or controller-annotation coupling. MFA disable and recovery-code rotation now consume exact grants through their
+application services and authenticated HTTP adapters. Authenticator replacement
+remains deferred; Kafka replay/discard remain documented operator step-up
+candidates without changing their current runtime authorization.
 
-### Increment 6 — MFA disable, recovery-code rotation, and replacement
+### Increment 6 — MFA disable and recovery-code rotation
 
-- [ ] Require the exact recent step-up purpose before MFA disable or recovery-code rotation
-- [ ] Rotate the complete recovery-code set atomically and return replacement plaintext once
-- [ ] Disable the enabled authenticator only after `mfa-disable` step-up succeeds
-- [ ] Require `mfa-authenticator-replacement` step-up before replacing an enabled authenticator
-- [ ] Revoke active refresh-token families after MFA disable or authenticator replacement
-- [ ] Preserve append-only, credential-free account-security audit evidence
+- [x] Require the exact recent step-up purpose before MFA disable or recovery-code rotation
+- [x] Rotate the complete recovery-code set atomically and return replacement plaintext once
+- [x] Disable the enabled authenticator only after `mfa-disable` step-up succeeds
+- [ ] Implement safe two-stage authenticator replacement after v0.14.0
+- [x] Revoke active refresh-token families after MFA disable
+- [ ] Revoke active refresh-token families after future authenticator replacement
+- [x] Preserve append-only, credential-free account-security audit evidence
 
 ### Increment 7 — Verification and public contracts
 
-- [ ] Unit-test TOTP vectors, clock skew, lifecycle transitions, protection, digesting, and redaction
-- [ ] Verify clean Flyway installation and upgrades from the v0.13.0 schema with PostgreSQL
-- [ ] Verify enrollment replacement, challenge consumption, recovery-code use, and disable races
-- [ ] Add real endpoint-to-database, MockMvc, OpenAPI, and Postman contracts
-- [ ] Add an MFA threat model, ADR, and operations guide
-- [ ] Verify production startup fails safely without configured MFA secret-protection material
-- [ ] Run the complete Maven verification suite and production Docker smoke
+- [x] Unit-test TOTP vectors, clock skew, lifecycle transitions, protection, digesting, and redaction
+- [x] Verify clean Flyway installation and upgrades from the v0.13.0 schema with PostgreSQL
+- [x] Verify enrollment replacement, challenge consumption, recovery-code use, and disable races
+- [x] Add real endpoint-to-database, MockMvc, OpenAPI, and Postman contracts
+- [x] Add an MFA threat model, ADR, and operations guide
+- [x] Verify production startup fails safely without configured MFA secret-protection material
+- [x] Run the complete Maven verification suite and production Docker smoke
 - [ ] Pass protected `build-and-test` and `docker-smoke` checks for every increment
 
 ## Explicit v0.14.0 non-goals
@@ -662,23 +664,24 @@ step-up candidates without changing their current runtime authorization here.
 
 These concerns require separate threat models and versioned contracts. v0.14.0
 is limited to TOTP enrollment, MFA login completion, single-use recovery codes,
-selected step-up policies, and the evidence needed to trust those boundaries.
+purpose-bound step-up, MFA disable, recovery-code rotation, and the evidence
+needed to trust those boundaries.
 
 ## v0.14.0 release exit criteria
 
 The release is ready only when:
 
-- [ ] TOTP secrets are never stored or emitted as durable plaintext
-- [ ] enabled MFA prevents access and refresh issuance until the second factor succeeds
-- [ ] login challenges are short-lived, digest-only, attempt-bounded, and single-use
-- [ ] recovery codes are returned once, stored only as digests, and consumed once
-- [ ] concurrent enrollment, challenge, recovery, rotation, and disable operations preserve one valid outcome
-- [ ] account-security changes revoke active refresh-token families as documented
-- [ ] selected step-up operations reject wrong-subject, wrong-purpose, expired, and replayed grants
-- [ ] errors, logs, metrics, traces, and audits expose no MFA credentials or protected secret material
-- [ ] focused unit, PostgreSQL, HTTP, OpenAPI, and Postman tests pass
-- [ ] the complete Maven suite and production Docker smoke pass
-- [ ] threat model, ADR, operations guide, configuration, and implementation agree
+- [x] TOTP secrets are never stored or emitted as durable plaintext
+- [x] enabled MFA prevents access and refresh issuance until the second factor succeeds
+- [x] login challenges are short-lived, digest-only, attempt-bounded, and single-use
+- [x] recovery codes are returned once, stored only as digests, and consumed once
+- [x] concurrent enrollment, challenge, recovery, rotation, and disable operations preserve one valid outcome
+- [x] account-security changes revoke active refresh-token families as documented
+- [x] selected step-up operations reject wrong-subject, wrong-purpose, expired, and replayed grants
+- [x] errors, logs, metrics, traces, and audits expose no MFA credentials or protected secret material
+- [x] focused unit, PostgreSQL, HTTP, OpenAPI, and Postman tests pass
+- [x] the complete Maven suite and production Docker smoke pass
+- [x] threat model, ADR, operations guide, configuration, and implementation agree
 - [ ] protected feature and release-preparation pull requests are merged
 - [ ] the v0.14.0 tag, JAR, checksum, and GitHub Release are published
 

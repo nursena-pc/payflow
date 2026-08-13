@@ -193,7 +193,7 @@ class V014MfaFoundationContractTest {
     }
 
     @Test
-    void shouldExposeFoundationWithoutClaimingRuntimeMfa()
+    void shouldExposeDeliveredMfaArchitectureBoundary()
         throws IOException {
 
         String readme =
@@ -207,15 +207,15 @@ class V014MfaFoundationContractTest {
 
         assertThat(readme)
             .contains(
-                "The first delivery increment now freezes the domain lifecycle, typed step-up purpose vocabulary, account-security refresh-family revocation reasons",
-                "No MFA endpoint, authenticator persistence, TOTP verification, recovery-code implementation, or runtime step-up enforcement is introduced by this foundation increment"
+                "The `0.14.0` release-preparation line delivers TOTP-based multi-factor authentication and purpose-bound step-up authentication",
+                "Authenticator state, cryptographic policy, application use cases, persistence, and HTTP adapters remain separated by the existing modular-monolith boundaries"
             );
 
         assertThat(changelog)
             .contains(
-                "Domain-only MFA lifecycle foundation",
-                "Typed step-up purpose vocabulary",
-                "ADR 0014 and a versioned MFA threat model"
+                "Package-bounded MFA lifecycle with explicit `DISABLED`, `PENDING`, and `ENABLED` transitions",
+                "Purpose-bound, single-use step-up grants stored only as digests through PostgreSQL V21",
+                "Active-authenticator replacement remains explicitly deferred until a safe two-stage replacement lifecycle is designed and verified"
             );
     }
 

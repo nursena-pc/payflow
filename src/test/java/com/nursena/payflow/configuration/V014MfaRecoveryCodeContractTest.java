@@ -32,7 +32,7 @@ class V014MfaRecoveryCodeContractTest {
             "- [x] Persist only fixed-length recovery-code digests",
             "- [x] Consume every recovery code atomically and at most once",
             "- [x] Make recovery-code and TOTP challenge failures indistinguishable at the public boundary",
-            "- [ ] Rotate recovery codes only after a recent purpose-bound step-up proof exists"
+            "- [x] Rotate recovery codes only after a recent purpose-bound step-up proof exists"
         );
     }
 
@@ -89,7 +89,7 @@ class V014MfaRecoveryCodeContractTest {
     }
 
     @Test
-    void shouldKeepRotationDisableAndReplacementBehindFutureStepUp()
+    void shouldExposeStepUpProtectedRotationAndDeferReplacement()
         throws IOException {
         String roadmap = Files.readString(ROADMAP);
         String security = normalizeWhitespace(
@@ -98,12 +98,12 @@ class V014MfaRecoveryCodeContractTest {
 
         assertThat(roadmap).contains(
             "### Increment 5 — Step-up authentication",
-            "### Increment 6 — MFA disable, recovery-code rotation, and replacement",
-            "- [ ] Require the exact recent step-up purpose before MFA disable or recovery-code rotation"
+            "### Increment 6 — MFA disable and recovery-code rotation",
+            "- [x] Require the exact recent step-up purpose before MFA disable or recovery-code rotation"
         );
         assertThat(security).contains(
-            "Explicit recovery-code rotation is not implemented here",
-            "purpose-bound step-up capability"
+            "Explicit recovery-code rotation is available through an authenticated public",
+            "`recovery-code-rotation` step-up grant"
         );
     }
 
@@ -116,9 +116,9 @@ class V014MfaRecoveryCodeContractTest {
 
         assertThat(readme).contains(
             "ten independent 128-bit canonical Base64URL recovery codes",
-            "stores only SHA-256 digests in PostgreSQL V20",
+            "PostgreSQL V20 stores only SHA-256 digests",
             "unused recovery code",
-            "recovery-code security contract"
+            "recovery-code contract"
         );
     }
 

@@ -15,6 +15,11 @@ Import `PayFlow.login-rate-limit.postman_collection.json` separately when
 verifying the Redis-backed identity threshold. The dedicated collection has its
 own safe collection variables and does not require committed credentials.
 
+Import `PayFlow.mfa.postman_collection.json` separately for the manual MFA
+security workflow. It uses the shared local environment but requires
+`mfaEmail`, `mfaPassword`, `mfaAccessToken`, and fresh `mfaCode` values to be
+supplied locally. Committed MFA credential variables are empty.
+
 ## Prerequisites
 
 ```bash
@@ -105,6 +110,34 @@ Run `Create Transfer`, then run `Replay Last Transfer` without rerunning the fir
 The repository contains no real JWTs, password-recovery credentials, privileged operator credentials, personal credentials, or production secrets. `operatorAccessToken`, `deadLetterRecordId`, `auditCommandId`, and `auditOperatorId` are intentionally empty in the committed environment.
 
 Never commit a Postman environment exported after it contains a live user or admin token. Treat an admin JWT as a privileged credential and keep it in a local environment or another trusted secret store.
+
+
+## MFA security workflow
+
+Run **PayFlow MFA Security Verification** separately from the standard wallet
+workflow. Use an active, email-verified account and never export or commit the
+environment after supplying credentials.
+
+1. Set `mfaEmail`, `mfaPassword`, and a valid `mfaAccessToken` locally.
+2. Run **Enrollment / Get MFA Status** and confirm the state is `DISABLED`.
+3. Run **Begin MFA Enrollment** and import the returned provisioning value into
+   an authenticator without storing it in collection variables.
+4. Set a fresh six-digit `mfaCode`, then run **Confirm MFA Enrollment**.
+5. Copy the returned recovery codes directly to an appropriate secure store;
+   the collection intentionally does not retain them.
+6. Run the login-challenge folder in order, updating `mfaCode` before challenge
+   confirmation.
+7. Run recovery-code rotation only after setting a fresh proof. Copy the
+   replacement codes from the response because the collection clears the
+   consumed grant and does not persist plaintext codes.
+8. Run the MFA-disable folder only when account MFA removal is intentional.
+   Disable is destructive: it removes authenticator and recovery-code state and
+   revokes active refresh-token families.
+
+`mfaPassword`, `mfaAccessToken`, `mfaCode`, `mfaChallengeToken`, and
+`mfaStepUpGrant` are secret environment variables with empty committed values.
+The workflow never creates variables for provisioning secrets or plaintext
+recovery-code sets.
 
 ## API documentation
 
