@@ -112,7 +112,7 @@ Completed capabilities include:
 - operator-only, paginated command-audit queries and chronological command timelines
 - Prometheus metrics, Grafana dashboards, and alert rules for Kafka consumer failures
 
-OpenAPI documentation covers the implemented API, while executable Postman workflows remain aligned with released end-to-end flows. PayFlow v0.14.0 is the latest published release, and the Maven version is `0.14.0`. The release delivers TOTP multi-factor authentication, digest-only single-use recovery codes, purpose-bound step-up grants, transactional MFA disable, and recovery-code rotation without changing the simulated-money boundary.
+OpenAPI documentation covers the implemented API, while executable Postman workflows remain aligned with released end-to-end flows. PayFlow v0.14.0 is the latest published release, and the active development line uses `0.15.0-SNAPSHOT`. The v0.15.0 milestone targets generalized abuse protection, reproducible load and performance evidence, and operational dashboards and alerts without changing the simulated-money boundary.
 
 The immutable v0.14.0 publication record is anchored to annotated tag `v0.14.0`, merge commit `d65929b98bb66b22f208d26f75a764e1ade78b6a`, and successful release workflow run [31728977714](https://github.com/nursena-pc/payflow/actions/runs/31728977714). The published `payflow-0.14.0.jar` is 100200050 bytes and its independently verified SHA-256 is `A6533039C5DDBE610D9DDB986DDBDAFE192DD56BE664E86B65A72AECF51F116E`.
 
@@ -173,6 +173,13 @@ Authenticated users can obtain a short-lived, subject-bound, purpose-bound step-
 MFA disable and recovery-code rotation consume exact step-up purposes. MFA disable removes authenticator and recovery-code state, revokes active refresh-token families, and appends credential-free audit evidence atomically. Recovery-code rotation atomically replaces the complete digest set and returns replacement plaintext once. Active-authenticator replacement remains deferred until a safe two-stage replacement lifecycle is designed and verified.
 
 See the [v0.14.0 release notes](docs/releases/v0.14.0.md), [ADR 0014](docs/adr/0014-mfa-and-step-up-authentication.md), the [MFA threat model](docs/security/mfa-threat-model.md), the [MFA operations guide](docs/operations/mfa-security.md), the [TOTP enrollment contract](docs/security/mfa-enrollment.md), the [MFA login challenge contract](docs/security/mfa-login-challenge.md), the [recovery-code contract](docs/security/mfa-recovery-codes.md), and the [step-up contract](docs/security/step-up-authentication.md).
+## v0.15.0 active development
+
+The active `0.15.0-SNAPSHOT` line introduces generalized abuse protection for sensitive identity workflows through an application-facing policy independent from controllers and servlet APIs. The design reuses the trusted effective-client-address boundary, supports bounded per-identity and per-client decisions, and keeps Redis state atomic, explicitly expiring, and free of credential material.
+
+The milestone also defines reproducible latency, throughput, concurrency, and overload evidence. Low-cardinality metrics, provisioned Grafana dashboards, actionable alert rules, and documented investigation procedures must remain free of email addresses, raw client addresses, credentials, Redis keys, and counter contents.
+
+Development is tracked by [issue #149](https://github.com/nursena-pc/payflow/issues/149). Active-authenticator replacement, CAPTCHA services, external bot detection, WAF or API-gateway deployment, and adaptive risk scoring remain outside the v0.15.0 scope.
 ## Implemented API
 
 | Method | Endpoint | Authentication | Description |

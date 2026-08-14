@@ -2,7 +2,7 @@
 
 ## Current delivery focus
 
-PayFlow v0.14.0 is the latest tagged release. The Maven version is `0.14.0`.
+PayFlow v0.14.0 is the latest tagged release. The Maven version is `0.15.0-SNAPSHOT`.
 
 The v0.14.0 MFA and step-up release was published from verified merge commit
 `d65929b98bb66b22f208d26f75a764e1ade78b6a` through successful release workflow run `31728977714`.
@@ -11,6 +11,11 @@ The published `100200050`-byte JAR has independently verified SHA-256
 recovery codes, and bounded step-up authentication while preserving the
 existing anti-enumeration, refresh-session, and logging boundaries.
 
+The active v0.15.0 development line delivers generalized abuse protection,
+reproducible load and performance evidence, and operational dashboards and
+alerts. The milestone is tracked by issue `#149` and preserves the existing
+anti-enumeration, trusted-client, credential-redaction, and modular-monolith
+boundaries.
 PayFlow remains a modular monolith. PostgreSQL is the system of record; Redis is
 used only for bounded, explicitly expiring abuse-control state.
 
@@ -696,8 +701,91 @@ The release is ready only when:
 - published JAR SHA-256: `A6533039C5DDBE610D9DDB986DDBDAFE192DD56BE664E86B65A72AECF51F116E`
 - release checksum verification: passed
 
+## v0.15.0 — Active Development: Generalized Abuse Protection and Performance Evidence
+
+Tracking issue: [#149](https://github.com/nursena-pc/payflow/issues/149)
+
+### Increment 1 — Threat model, policy contract, and configuration
+
+- [ ] Define protected workflows, attacker capabilities, bypass risks, and trust boundaries
+- [ ] Introduce an application-facing abuse-protection policy independent from controllers and servlet APIs
+- [ ] Define endpoint-specific per-identity and per-client limits through validated configuration
+- [ ] Reuse the trusted effective-client-address boundary without trusting attacker-controlled forwarding headers
+- [ ] Specify deterministic fail-closed or fail-open behavior for every protected workflow
+- [ ] Preserve generic public responses and anti-enumeration behavior under quota decisions and dependency failures
+- [ ] Add executable development contracts for the approved v0.15.0 scope
+
+### Increment 2 — Shared Redis enforcement foundation
+
+- [ ] Implement atomic Redis decisions with explicit expiration and bounded key cardinality
+- [ ] Keep raw identities, email addresses, client addresses, credentials, and proofs out of Redis keys and values
+- [ ] Define collision-resistant bounded identifiers for identity and client quota dimensions
+- [ ] Verify window boundaries, expiration, concurrency, timeout, and Redis-unavailable behavior
+- [ ] Preserve existing login-rate-limit behavior while sharing only approved infrastructure
+
+### Increment 3 — Account-action request protection
+
+- [ ] Protect email-verification requests with per-identity and per-client decisions
+- [ ] Protect password-recovery requests with the same anti-enumeration response shape
+- [ ] Evaluate registration protection from documented threat and performance evidence
+- [ ] Verify unknown, closed, verified, and eligible accounts expose no distinguishable quota behavior
+- [ ] Verify concurrent requests cannot exceed the documented bounded outcome
+
+### Increment 4 — MFA challenge and step-up protection
+
+- [ ] Protect MFA login-challenge confirmation without exposing challenge or account validity
+- [ ] Protect step-up grant issuance without weakening subject, purpose, expiry, or single-use semantics
+- [ ] Keep TOTP values, recovery codes, challenge tokens, and step-up grants outside quota state and observable output
+- [ ] Verify abuse decisions do not consume valid single-use credentials unless the protected workflow executes
+
+### Increment 5 — Metrics, dashboards, alerts, and operations
+
+- [ ] Expose bounded decision and Redis-failure metrics without identity or client labels
+- [ ] Provision Grafana dashboards for quota outcomes, dependency failures, and protected-workflow health
+- [ ] Provision actionable alert rules with documented thresholds, duration, severity, and response guidance
+- [ ] Document investigation, safe mitigation, rollback, and false-positive handling
+- [ ] Verify logs, metrics, traces, dashboards, and alerts contain no sensitive material
+
+### Increment 6 — Reproducible load and performance evidence
+
+- [ ] Define latency, throughput, concurrency, saturation, and overload budgets
+- [ ] Add reproducible load scenarios for representative protected workflows
+- [ ] Record environment, dataset, duration, warm-up, measurement method, and limitations
+- [ ] Verify abuse protection remains effective under concurrent and overload conditions
+- [ ] Keep load tooling outside the normal unit-test lifecycle while retaining repeatable commands
+
+### Increment 7 — Contract alignment and release preparation
+
+- [ ] Align OpenAPI, Postman, README, changelog, ADRs, threat model, and operations guidance
+- [ ] Add focused unit, Redis, HTTP, concurrency, redaction, and dependency-failure tests
+- [ ] Run the complete Maven verification suite and production Docker smoke
+- [ ] Pass protected `build-and-test` and `docker-smoke` checks for every increment
+- [ ] Prepare versioned release notes and immutable publication evidence
+
+## Explicit v0.15.0 non-goals
+
+- Active-authenticator replacement
+- CAPTCHA or third-party bot-detection services
+- CDN, WAF, API-gateway, or Kubernetes deployment
+- Adaptive machine-learning risk scoring
+- Frontend implementation
+- Real-money operation or regulatory certification
+
+## v0.15.0 release exit criteria
+
+- [ ] selected identity workflows enforce documented per-identity and per-client limits
+- [ ] anti-enumeration behavior remains stable under quota and dependency failures
+- [ ] Redis operations are atomic, expiring, bounded, and concurrency-tested
+- [ ] observable output contains no sensitive identity or credential material
+- [ ] latency, throughput, concurrency, and overload budgets are documented
+- [ ] reproducible load-test evidence satisfies the approved budgets
+- [ ] dashboards and actionable alerts are provisioned and verified
+- [ ] focused unit, Redis, HTTP, concurrency, and failure-path tests pass
+- [ ] the complete Maven suite and production Docker smoke pass
+- [ ] protected feature and release-preparation pull requests are merged
+- [ ] the v0.15.0 tag, JAR, checksum, and GitHub Release are published
+
 ## Later v1.0 candidates
 
-Later v1.0 candidates include generalized abuse protection, load/performance
-evidence, backup/restore rehearsal, API freeze, SBOM generation, and release
-stabilization.
+Later v1.0 candidates include backup/restore rehearsal, API freeze, SBOM
+generation, and release stabilization.

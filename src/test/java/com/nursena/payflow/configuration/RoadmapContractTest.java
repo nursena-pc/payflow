@@ -22,7 +22,7 @@ class RoadmapContractTest {
         Path.of("docs", "roadmap.md");
 
     @Test
-    void shouldAlignRoadmapWithPublishedRelease()
+    void shouldAlignRoadmapWithActiveDevelopmentVersion()
         throws Exception {
 
         String projectVersion = readProjectVersion();
@@ -30,7 +30,7 @@ class RoadmapContractTest {
         String normalizedRoadmap = normalizeWhitespace(roadmap);
 
         assertThat(projectVersion)
-            .isEqualTo("0.14.0");
+            .isEqualTo("0.15.0-SNAPSHOT");
 
         assertThat(roadmap)
             .contains(
@@ -41,11 +41,12 @@ class RoadmapContractTest {
                 "## v0.12.0 — Released: JWT Signing-Key Rotation",
                 "## v0.13.0 — Released: Account Recovery and Secure Mail Delivery",
                 "## v0.14.0 — Released: MFA and Step-Up Authentication",
+                "## v0.15.0 — Active Development: Generalized Abuse Protection and Performance Evidence",
                 "d65929b98bb66b22f208d26f75a764e1ade78b6a",
                 "31728977714"
             )
             .doesNotContain(
-                "0.13.0-SNAPSHOT",
+                "0.14.0-SNAPSHOT",
                 "## v0.14.0 — Release Candidate",
                 "## v0.14.0 — Release Preparation"
             );
@@ -54,7 +55,10 @@ class RoadmapContractTest {
             .contains(
                 "TOTP multi-factor authentication",
                 "digest-only recovery codes",
-                "bounded step-up authentication"
+                "bounded step-up authentication",
+                "generalized abuse protection",
+                "load and performance evidence",
+                "operational dashboards and alerts"
             );
     }
 

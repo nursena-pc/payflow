@@ -24,12 +24,12 @@ class V014DevelopmentContractTest {
         assertThat(Files.readString(README))
             .contains(
                 "PayFlow v0.14.0 is the latest published release",
-                "the Maven version is `0.14.0`",
+                "The immutable v0.14.0 publication record is anchored to annotated tag `v0.14.0`",
                 "## v0.14.0 release",
                 "TOTP-based multi-factor authentication",
                 "digest-only login challenge",
-                "single-use recovery codes",
-                "purpose-bound step-up grants",
+                "ten independent 128-bit canonical Base64URL recovery codes",
+                "purpose-bound step-up authentication",
                 "/api/v1/users/me/mfa/recovery-codes/rotation",
                 "`DELETE` | `/api/v1/users/me/mfa`"
             )
