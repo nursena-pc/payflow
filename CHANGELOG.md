@@ -8,6 +8,12 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Application-facing generalized abuse-protection policy with five bounded workflow identifiers and no controller, servlet, HTTP, or Redis coupling.
+- Validated endpoint-specific windows, identity/client limits, and explicit dependency-failure modes under `payflow.security.abuse-protection`.
+- ADR 0015, generalized abuse-protection threat model, configuration guidance, and executable Increment 1 contracts tracked by issue #151.
+
 ### Changed
 
 - Advanced the active development version to `0.15.0-SNAPSHOT`.

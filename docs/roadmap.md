@@ -707,13 +707,15 @@ Tracking issue: [#149](https://github.com/nursena-pc/payflow/issues/149)
 
 ### Increment 1 — Threat model, policy contract, and configuration
 
-- [ ] Define protected workflows, attacker capabilities, bypass risks, and trust boundaries
-- [ ] Introduce an application-facing abuse-protection policy independent from controllers and servlet APIs
-- [ ] Define endpoint-specific per-identity and per-client limits through validated configuration
-- [ ] Reuse the trusted effective-client-address boundary without trusting attacker-controlled forwarding headers
-- [ ] Specify deterministic fail-closed or fail-open behavior for every protected workflow
-- [ ] Preserve generic public responses and anti-enumeration behavior under quota decisions and dependency failures
-- [ ] Add executable development contracts for the approved v0.15.0 scope
+- [x] Define protected workflows, attacker capabilities, bypass risks, and trust boundaries
+- [x] Introduce an application-facing abuse-protection policy independent from controllers and servlet APIs
+- [x] Define endpoint-specific per-identity and per-client limits through validated configuration
+- [x] Reuse the trusted effective-client-address boundary without trusting attacker-controlled forwarding headers
+- [x] Specify deterministic fail-closed or fail-open behavior for every protected workflow
+- [x] Preserve generic public responses and anti-enumeration behavior under quota decisions and dependency failures
+- [x] Add executable development contracts for the approved v0.15.0 scope
+
+The accepted Increment 1 foundation is tracked by [#151](https://github.com/nursena-pc/payflow/issues/151) and documented in [ADR 0015](adr/0015-generalized-abuse-protection.md), the [generalized abuse-protection threat model](security/abuse-protection-threat-model.md), and the [policy configuration guide](abuse-protection.md). Generalized enforcement remains disabled until the shared Redis and endpoint integration increments are delivered; the existing login limiter remains unchanged.
 
 ### Increment 2 — Shared Redis enforcement foundation
 
