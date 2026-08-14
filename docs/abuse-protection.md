@@ -2,9 +2,12 @@
 
 ## Current delivery state
 
-Increment 1 defines and validates policy configuration. Generalized Redis
-enforcement is not active yet: `ABUSE_PROTECTION_ENABLED` defaults to `false`.
-The existing login limiter remains independently active and unchanged.
+Increment 2 provides the shared Redis enforcement foundation. One atomic Lua
+operation evaluates identity and client quotas, establishes or repairs bounded
+expiration, and returns the longest applicable positive retry delay. Endpoint
+wiring remains deferred. Generalized Redis enforcement is not active yet at
+protected endpoints, so `ABUSE_PROTECTION_ENABLED` continues to default to
+`false`. The existing login limiter remains independently active and unchanged.
 
 ## Policy contract
 
@@ -56,8 +59,21 @@ observable output.
 ## Compatibility
 
 `payflow.security.login-rate-limit` and the corresponding
-`LOGIN_RATE_LIMIT_*` variables remain unchanged. Increment 1 does not replace,
-adapt, disable, or reset the login limiter.
+`LOGIN_RATE_LIMIT_*` variables remain unchanged. Increment 2 adds a separate
+adapter and script; it does not replace, adapt, disable, or reset the login
+limiter.
+
+## Redis state contract
+
+- one Lua invocation increments identity and client counters atomically
+- every new key receives expiration and a missing expiration is repaired
+- key prefixes contain only bounded workflow and dimension identifiers
+- key suffixes are domain-separated 64-character SHA-256 digests
+- values contain counters only
+- malformed results, timeouts, and connection failures follow the workflow's
+  explicit dependency-failure mode
+- `FAIL_OPEN` permits work only when selected explicitly; `FAIL_CLOSED` raises a
+  coarse dependency-unavailable outcome without sensitive detail
 
 See [ADR 0015](adr/0015-generalized-abuse-protection.md), the
 [threat model](security/abuse-protection-threat-model.md),

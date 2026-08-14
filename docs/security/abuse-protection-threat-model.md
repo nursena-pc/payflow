@@ -43,8 +43,8 @@ read server-side digests, or directly choose the resolved effective address.
    evaluation.
 4. The application-facing policy contains only bounded workflow and policy
    types; it has no servlet or Redis dependency.
-5. A later Redis adapter will digest sensitive dimensions and own atomic,
-   expiring counter state.
+5. The Increment 2 Redis adapter digests sensitive dimensions and owns atomic,
+   expiring counter state without exposing raw inputs.
 6. Logs, metrics, traces, errors, and audits are disclosure boundaries and may
    contain only bounded coarse classifications.
 
@@ -95,8 +95,9 @@ must map failures to the workflow-specific public behavior above.
 
 Missing expiration can create durable personal-data-derived state, while
 attacker-selected metric labels can exhaust monitoring systems. Configuration
-bounds windows and limits. Increment 2 must use one atomic operation with
-explicit expiration and finite workflow, dimension, outcome, and failure tags.
+bounds windows and limits. Increment 2 uses one atomic operation, creates or
+repairs explicit expiration, and limits keys to finite workflow and dimension
+prefixes plus fixed-length domain-separated digests.
 
 ### Credential disclosure
 

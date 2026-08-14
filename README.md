@@ -183,6 +183,8 @@ Increment 1 freezes five bounded workflow identifiers, an application-facing `Ab
 
 See [ADR 0015](docs/adr/0015-generalized-abuse-protection.md), the [generalized abuse-protection threat model](docs/security/abuse-protection-threat-model.md), and the [policy configuration guide](docs/abuse-protection.md). Increment 1 is tracked by [issue #151](https://github.com/nursena-pc/payflow/issues/151).
 
+Increment 2 adds a separate atomic Redis enforcement foundation tracked by [issue #153](https://github.com/nursena-pc/payflow/issues/153). It evaluates identity and trusted-client quotas in one operation, uses expiring digest-only keys, follows explicit dependency-failure policy, and leaves endpoint wiring and the existing login limiter unchanged.
+
 Development is tracked by [issue #149](https://github.com/nursena-pc/payflow/issues/149). Active-authenticator replacement, CAPTCHA services, external bot detection, WAF or API-gateway deployment, and adaptive risk scoring remain outside the v0.15.0 scope.
 ## Implemented API
 
