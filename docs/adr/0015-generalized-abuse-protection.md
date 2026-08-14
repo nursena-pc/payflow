@@ -16,8 +16,8 @@ controller, or servlet behavior.
 
 The policy must preserve anti-enumeration responses and must not expose email
 addresses, client addresses, credentials, proofs, Redis keys, or counter state.
-The first increment freezes policy and configuration only. Redis enforcement
-and endpoint wiring remain later increments.
+The first increment froze policy and configuration. Increment 2 adds a separate
+atomic Redis enforcement adapter while endpoint wiring remains deferred.
 
 ## Decision
 
@@ -98,7 +98,7 @@ decision.
 
 ## Non-goals
 
-This ADR does not implement Redis counters, endpoint interception, public error
-changes, dashboards, alerts, load tests, CAPTCHA, third-party bot detection,
-WAF or API-gateway deployment, adaptive scoring, or active-authenticator
-replacement.
+Increment 2 implements Redis counters but does not implement endpoint
+interception, public error changes, dashboards, alerts, load tests, CAPTCHA,
+third-party bot detection, WAF or API-gateway deployment, adaptive scoring, or
+active-authenticator replacement.

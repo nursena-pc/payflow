@@ -719,11 +719,13 @@ The accepted Increment 1 foundation is tracked by [#151](https://github.com/nurs
 
 ### Increment 2 — Shared Redis enforcement foundation
 
-- [ ] Implement atomic Redis decisions with explicit expiration and bounded key cardinality
-- [ ] Keep raw identities, email addresses, client addresses, credentials, and proofs out of Redis keys and values
-- [ ] Define collision-resistant bounded identifiers for identity and client quota dimensions
-- [ ] Verify window boundaries, expiration, concurrency, timeout, and Redis-unavailable behavior
-- [ ] Preserve existing login-rate-limit behavior while sharing only approved infrastructure
+- [x] Implement atomic Redis decisions with explicit expiration and bounded key cardinality
+- [x] Keep raw identities, email addresses, client addresses, credentials, and proofs out of Redis keys and values
+- [x] Define collision-resistant bounded identifiers for identity and client quota dimensions
+- [x] Verify window boundaries, expiration, concurrency, timeout, and Redis-unavailable behavior
+- [x] Preserve existing login-rate-limit behavior while sharing only approved infrastructure
+
+Increment 2 is implemented by issue [#153](https://github.com/nursena-pc/payflow/issues/153). One Lua operation evaluates both quota dimensions, creates or repairs positive expiration, and returns the longest applicable retry delay. Redis keys contain bounded workflow and dimension prefixes plus domain-separated fixed-length digests; values contain counters only. Endpoint wiring remains deferred to later increments, and the existing login limiter remains unchanged.
 
 ### Increment 3 — Account-action request protection
 

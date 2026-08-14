@@ -10,6 +10,12 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Shared atomic Redis abuse-enforcement foundation with expiring, domain-separated digest-only identity and client quota keys ([#153](https://github.com/nursena-pc/payflow/issues/153)).
+- Typed generalized abuse-protection request, decision, dimension, dependency-failure, and enforcement-port contracts.
+- Real Redis verification for window boundaries, TTL repair, concurrency, and combined quota decisions while preserving the existing login limiter.
+
+### Added
+
 - Application-facing generalized abuse-protection policy with five bounded workflow identifiers and no controller, servlet, HTTP, or Redis coupling.
 - Validated endpoint-specific windows, identity/client limits, and explicit dependency-failure modes under `payflow.security.abuse-protection`.
 - ADR 0015, generalized abuse-protection threat model, configuration guidance, and executable Increment 1 contracts tracked by issue #151.
