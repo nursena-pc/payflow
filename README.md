@@ -179,6 +179,10 @@ The active `0.15.0-SNAPSHOT` line introduces generalized abuse protection for se
 
 The milestone also defines reproducible latency, throughput, concurrency, and overload evidence. Low-cardinality metrics, provisioned Grafana dashboards, actionable alert rules, and documented investigation procedures must remain free of email addresses, raw client addresses, credentials, Redis keys, and counter contents.
 
+Increment 1 freezes five bounded workflow identifiers, an application-facing `AbuseProtectionPolicyProvider`, explicit `FAIL_CLOSED` or `FAIL_OPEN` dependency behavior, and validated endpoint-specific windows and identity/client limits. The global generalized policy switch defaults off until the shared Redis enforcement and endpoint-wiring increments are delivered; the existing login limiter remains unchanged.
+
+See [ADR 0015](docs/adr/0015-generalized-abuse-protection.md), the [generalized abuse-protection threat model](docs/security/abuse-protection-threat-model.md), and the [policy configuration guide](docs/abuse-protection.md). Increment 1 is tracked by [issue #151](https://github.com/nursena-pc/payflow/issues/151).
+
 Development is tracked by [issue #149](https://github.com/nursena-pc/payflow/issues/149). Active-authenticator replacement, CAPTCHA services, external bot detection, WAF or API-gateway deployment, and adaptive risk scoring remain outside the v0.15.0 scope.
 ## Implemented API
 

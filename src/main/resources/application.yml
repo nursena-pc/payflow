@@ -114,6 +114,38 @@ payflow:
       secret-protection:
         provider-mode: ${MFA_SECRET_PROTECTION_MODE:ephemeral}
         key-base64: ${MFA_SECRET_ENCRYPTION_KEY:}
+    abuse-protection:
+      enabled: ${ABUSE_PROTECTION_ENABLED:false}
+      registration:
+        enabled: ${ABUSE_PROTECTION_REGISTRATION_ENABLED:true}
+        window: ${ABUSE_PROTECTION_REGISTRATION_WINDOW:15m}
+        identity-limit: ${ABUSE_PROTECTION_REGISTRATION_IDENTITY_LIMIT:5}
+        client-limit: ${ABUSE_PROTECTION_REGISTRATION_CLIENT_LIMIT:20}
+        dependency-failure-mode: ${ABUSE_PROTECTION_REGISTRATION_FAILURE_MODE:FAIL_CLOSED}
+      email-verification-request:
+        enabled: ${ABUSE_PROTECTION_EMAIL_VERIFICATION_ENABLED:true}
+        window: ${ABUSE_PROTECTION_EMAIL_VERIFICATION_WINDOW:15m}
+        identity-limit: ${ABUSE_PROTECTION_EMAIL_VERIFICATION_IDENTITY_LIMIT:3}
+        client-limit: ${ABUSE_PROTECTION_EMAIL_VERIFICATION_CLIENT_LIMIT:20}
+        dependency-failure-mode: ${ABUSE_PROTECTION_EMAIL_VERIFICATION_FAILURE_MODE:FAIL_CLOSED}
+      password-recovery-request:
+        enabled: ${ABUSE_PROTECTION_PASSWORD_RECOVERY_ENABLED:true}
+        window: ${ABUSE_PROTECTION_PASSWORD_RECOVERY_WINDOW:15m}
+        identity-limit: ${ABUSE_PROTECTION_PASSWORD_RECOVERY_IDENTITY_LIMIT:3}
+        client-limit: ${ABUSE_PROTECTION_PASSWORD_RECOVERY_CLIENT_LIMIT:20}
+        dependency-failure-mode: ${ABUSE_PROTECTION_PASSWORD_RECOVERY_FAILURE_MODE:FAIL_CLOSED}
+      mfa-login-challenge-confirmation:
+        enabled: ${ABUSE_PROTECTION_MFA_CHALLENGE_ENABLED:true}
+        window: ${ABUSE_PROTECTION_MFA_CHALLENGE_WINDOW:5m}
+        identity-limit: ${ABUSE_PROTECTION_MFA_CHALLENGE_IDENTITY_LIMIT:5}
+        client-limit: ${ABUSE_PROTECTION_MFA_CHALLENGE_CLIENT_LIMIT:20}
+        dependency-failure-mode: ${ABUSE_PROTECTION_MFA_CHALLENGE_FAILURE_MODE:FAIL_CLOSED}
+      step-up-grant-issuance:
+        enabled: ${ABUSE_PROTECTION_STEP_UP_ENABLED:true}
+        window: ${ABUSE_PROTECTION_STEP_UP_WINDOW:5m}
+        identity-limit: ${ABUSE_PROTECTION_STEP_UP_IDENTITY_LIMIT:5}
+        client-limit: ${ABUSE_PROTECTION_STEP_UP_CLIENT_LIMIT:20}
+        dependency-failure-mode: ${ABUSE_PROTECTION_STEP_UP_FAILURE_MODE:FAIL_CLOSED}
     login-rate-limit:
       enabled: ${LOGIN_RATE_LIMIT_ENABLED:true}
       window: ${LOGIN_RATE_LIMIT_WINDOW:15m}
