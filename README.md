@@ -35,9 +35,9 @@ PayFlow starts as a **modular monolith**. Business modules use inward-facing dep
 
 ```text
 HTTP / Persistence / Messaging adapters
-                 ↓
+                 â†“
          Application use cases
-                 ↓
+                 â†“
              Domain model
 ```
 
@@ -583,13 +583,14 @@ Broker unavailability after the database commit does not roll back the completed
 
 ## Git workflow
 
-- Work begins from the latest `develop` branch.
-- Branches use `feat/<short-name>`, `fix/<short-name>`, `docs/<short-name>`, or `chore/<short-name>`.
-- Features are divided into small, testable checkpoints.
+- Work begins from the latest protected `main` branch.
+- Branches use `feat/<short-name>`, `fix/<short-name>`, `docs/<short-name>`, `chore/<short-name>`, or `release/<version>-<purpose>`.
+- Features are divided into small, testable checkpoints and remain scoped to a linked issue.
 - Commits follow Conventional Commits.
-- Pull requests represent complete and reviewable value increments.
-- CI must pass and conflicts must be resolved before merging.
-- Squash merge is preferred for a readable `develop` history.
+- Pull requests represent complete and reviewable value increments and target `main`.
+- Required CI checks must pass, the reviewed PR HEAD must match the expected commit, and conflicts must be resolved before merging.
+- Merge commits are retained to preserve pull-request and release provenance; published history is never rewritten.
+- Merged feature and release branches are removed after merge verification so `main` and published tags remain the durable history.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
 
