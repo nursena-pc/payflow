@@ -118,8 +118,9 @@ class V015RedisAbuseEnforcementContractTest {
         assertThat(Files.readString(
             Path.of("docs", "abuse-protection.md")
         )).contains(
-            "Increment 2 provides the shared Redis enforcement foundation",
-            "wiring remains deferred"
+            "Increment 3 wires the shared Redis foundation",
+            "trusted effective client address before account lookup",
+            "ABUSE_PROTECTION_ENABLED` remains `false` by default"
         );
     }
 }

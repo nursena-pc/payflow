@@ -186,6 +186,8 @@ See [ADR 0015](docs/adr/0015-generalized-abuse-protection.md), the [generalized 
 Increment 2 adds a separate atomic Redis enforcement foundation tracked by [issue #153](https://github.com/nursena-pc/payflow/issues/153). It evaluates identity and trusted-client quotas in one operation, uses expiring digest-only keys, follows explicit dependency-failure policy, and leaves endpoint wiring and the existing login limiter unchanged.
 
 Development is tracked by [issue #149](https://github.com/nursena-pc/payflow/issues/149). Active-authenticator replacement, CAPTCHA services, external bot detection, WAF or API-gateway deployment, and adaptive risk scoring remain outside the v0.15.0 scope.
+
+Increment 3 protects email-verification and password-recovery requests before account lookup with normalized-identity and trusted-client Redis quotas. Limited, dependency-failed, unknown, closed, verified, eligible, and otherwise ineligible requests retain the same empty `202` response; blocked work creates no account-action credential or delivery side effect. Registration enforcement remains deferred until reproducible performance and overload evidence is available.
 ## Implemented API
 
 | Method | Endpoint | Authentication | Description |

@@ -1,5 +1,7 @@
 package com.nursena.payflow.user.application.service;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -8,6 +10,9 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.nursena.payflow.abuseprotection.application.port.out.AbuseProtectionDecision;
+import com.nursena.payflow.abuseprotection.application.port.out.AbuseProtectionEnforcementPort;
+import com.nursena.payflow.clientcontext.domain.IpAddress;
 import com.nursena.payflow.user.application.port.in
     .RequestEmailVerificationCommand;
 import com.nursena.payflow.user.application.port.out
@@ -37,6 +42,9 @@ class RequestEmailVerificationServiceTest {
         EmailAddress.of("nursena@example.com");
 
     @Mock
+    private AbuseProtectionEnforcementPort abuseProtection;
+
+    @Mock
     private UserRepositoryPort userRepository;
 
     @Mock
@@ -47,7 +55,10 @@ class RequestEmailVerificationServiceTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(abuseProtection.evaluate(any()))
+            .thenReturn(AbuseProtectionDecision.allowed());
         service = new RequestEmailVerificationService(
+            abuseProtection,
             userRepository,
             preparationService
         );
@@ -59,7 +70,7 @@ class RequestEmailVerificationServiceTest {
             .thenReturn(Optional.of(unverifiedUser()));
 
         service.request(
-            new RequestEmailVerificationCommand(
+            emailCommand(
                 "  Nursena@Example.COM  "
             )
         );
@@ -73,7 +84,7 @@ class RequestEmailVerificationServiceTest {
             .thenReturn(Optional.empty());
 
         service.request(
-            new RequestEmailVerificationCommand(
+            emailCommand(
                 EMAIL.value()
             )
         );
@@ -87,7 +98,7 @@ class RequestEmailVerificationServiceTest {
             .thenReturn(Optional.of(verifiedUser()));
 
         service.request(
-            new RequestEmailVerificationCommand(
+            emailCommand(
                 EMAIL.value()
             )
         );
@@ -101,7 +112,7 @@ class RequestEmailVerificationServiceTest {
             .thenReturn(Optional.of(closedUser()));
 
         service.request(
-            new RequestEmailVerificationCommand(
+            emailCommand(
                 EMAIL.value()
             )
         );
@@ -147,4 +158,12 @@ class RequestEmailVerificationServiceTest {
             NOW
         );
     }
-}
+
+    private static RequestEmailVerificationCommand emailCommand(
+        String email
+    ) {
+        return new RequestEmailVerificationCommand(
+            email,
+            IpAddress.parse("203.0.113.10")
+        );
+    }}

@@ -10,6 +10,16 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Generalized per-identity and trusted-client Redis enforcement for email-verification and password-recovery requests before account lookup.
+- Real-Redis HTTP concurrency and anti-enumeration evidence for bounded account-action side effects.
+
+### Security
+
+- Blocked and fail-closed account-action requests preserve the empty `202` response while suppressing credential and delivery work.
+- Registration enforcement remains deferred until reproducible performance and overload evidence supports its public failure contract.
+
+### Added
+
 - Shared atomic Redis abuse-enforcement foundation with expiring, domain-separated digest-only identity and client quota keys ([#153](https://github.com/nursena-pc/payflow/issues/153)).
 - Typed generalized abuse-protection request, decision, dimension, dependency-failure, and enforcement-port contracts.
 - Real Redis verification for window boundaries, TTL repair, concurrency, and combined quota decisions while preserving the existing login limiter.

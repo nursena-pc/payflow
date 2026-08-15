@@ -112,6 +112,22 @@ Missing workflow policy, sub-second or greater-than-one-day windows, non-positiv
 limits, limits above one million, and absent failure modes fail application
 startup. The global policy switch defaults off until enforcement is wired.
 
+## Increment 3 account-action decision
+
+Email-verification and password-recovery request policy runs before account
+lookup, eligibility inspection, credential creation, and mail-outbox work.
+Every allowed, blocked, dependency-failed, unknown, closed, verified, or
+otherwise ineligible request retains the same empty `202` public response.
+Real-Redis HTTP concurrency tests prove that accepted response volume cannot
+increase protected side effects beyond the configured bound.
+
+Registration protection remains deferred pending Increment 6 evidence. Unlike
+the two generic account-action request endpoints, registration already has
+distinct `201` and duplicate-account `409` behavior and performs BCrypt plus
+initial verification preparation. Latency, overload, and false-positive data
+must be recorded before choosing its public failure contract and activation
+policy.
+
 ## Verification obligations
 
 - unit-test policy bounds and complete workflow configuration

@@ -4,7 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request
     .MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result
@@ -12,6 +14,9 @@ import static org.springframework.test.web.servlet.result
 import static org.springframework.test.web.servlet.result
     .MockMvcResultMatchers.status;
 
+import com.nursena.payflow.clientcontext.adapter.in.web.ClientAddressResolver;
+import com.nursena.payflow.clientcontext.domain.IpAddress;
+import com.nursena.payflow.clientcontext.domain.ResolvedClientAddress;
 import com.nursena.payflow.configuration
     .SecurityConfiguration;
 import com.nursena.payflow.observability.adapter.in.web
@@ -27,6 +32,7 @@ import com.nursena.payflow.user.application.port.in
 import com.nursena.payflow.user.domain.exception
     .InvalidAccountActionCredentialException;
 import jakarta.validation.constraints.Size;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation
     .Autowired;
@@ -67,6 +73,20 @@ class PasswordRecoveryControllerTest {
     @MockitoBean
     private JwtDecoder jwtDecoder;
 
+    @MockitoBean
+    private ClientAddressResolver clientAddressResolver;
+
+    @BeforeEach
+    void setUpClientAddress() {
+        ResolvedClientAddress resolved =
+            mock(ResolvedClientAddress.class);
+        when(resolved.address()).thenReturn(
+            IpAddress.parse("203.0.113.10")
+        );
+        when(clientAddressResolver.resolve(any()))
+            .thenReturn(resolved);
+    }
+
     @Test
     void shouldAcceptRequestWithoutDisclosingEligibility()
         throws Exception {
@@ -91,6 +111,9 @@ class PasswordRecoveryControllerTest {
                 command.email().equals(
                     "Nursena@Example.COM"
                 )
+                    && command.effectiveClientAddress().equals(
+                        IpAddress.parse("203.0.113.10")
+                    )
             )
         );
     }
@@ -253,7 +276,10 @@ class PasswordRecoveryControllerTest {
         PasswordRecoveryRequest request =
             new PasswordRecoveryRequest(email);
         RequestPasswordRecoveryCommand requestCommand =
-            new RequestPasswordRecoveryCommand(email);
+            new RequestPasswordRecoveryCommand(
+                email,
+                IpAddress.parse("203.0.113.10")
+            );
         PasswordRecoveryConfirmRequest confirmRequest =
             new PasswordRecoveryConfirmRequest(
                 CREDENTIAL,
