@@ -25,6 +25,23 @@ class AbuseProtectionRequestTest {
     }
 
     @Test
+    void shouldRedactSensitiveInputsFromToString() {
+        AbuseProtectionRequest request =
+            new AbuseProtectionRequest(
+                AbuseProtectionWorkflow.REGISTRATION,
+                "nursena@example.com",
+                IpAddress.parse("203.0.113.10")
+            );
+
+        assertThat(request.toString())
+            .isEqualTo("AbuseProtectionRequest[redacted]")
+            .doesNotContain(
+                "nursena@example.com",
+                "203.0.113.10"
+            );
+    }
+
+    @Test
     void shouldRejectBlankOrUntrimmedIdentity() {
         assertThatThrownBy(() -> request(" "))
             .isInstanceOf(IllegalArgumentException.class);

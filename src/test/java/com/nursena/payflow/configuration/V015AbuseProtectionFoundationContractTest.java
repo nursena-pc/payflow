@@ -177,10 +177,10 @@ class V015AbuseProtectionFoundationContractTest {
 
         assertThat(guide)
             .contains(
-                "Increment 3 wires the shared Redis foundation",
+                "Policy code contains no controller, servlet, HTTP, Spring, or Redis dependency.",
                 "windows range from one second through one day",
                 "limits range from one through one million",
-                "The login limiter remains unchanged"
+                "`LOGIN_RATE_LIMIT_*` variables remain unchanged"
             );
     }
 

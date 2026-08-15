@@ -4,16 +4,20 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 import java.util.Objects;
 
+import com.nursena.payflow.clientcontext.adapter.in.web.ClientAddressResolver;
+import com.nursena.payflow.clientcontext.domain.ResolvedClientAddress;
 import com.nursena.payflow.common.api.ApiError;
 import com.nursena.payflow.user.application.port.in.AuthenticatedUserResult;
 import com.nursena.payflow.user.application.port.in.ConfirmMfaLoginChallengeCommand;
 import com.nursena.payflow.user.application.port.in.ConfirmMfaLoginChallengeUseCase;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,11 +31,20 @@ public class ConfirmMfaLoginChallengeController {
 
     private static final String TOKEN_TYPE = "Bearer";
     private final ConfirmMfaLoginChallengeUseCase useCase;
+    private final ClientAddressResolver clientAddressResolver;
 
     public ConfirmMfaLoginChallengeController(
-        ConfirmMfaLoginChallengeUseCase useCase
+        ConfirmMfaLoginChallengeUseCase useCase,
+        ClientAddressResolver clientAddressResolver
     ) {
-        this.useCase = Objects.requireNonNull(useCase, "useCase must not be null");
+        this.useCase = Objects.requireNonNull(
+            useCase,
+            "useCase must not be null"
+        );
+        this.clientAddressResolver = Objects.requireNonNull(
+            clientAddressResolver,
+            "clientAddressResolver must not be null"
+        );
     }
 
     @Operation(
@@ -70,12 +83,17 @@ public class ConfirmMfaLoginChallengeController {
     })
     @PostMapping("/confirm")
     public ResponseEntity<AuthenticateUserResponse> confirm(
-        @RequestBody(required = false) ConfirmMfaLoginChallengeRequest request
+        @RequestBody(required = false) ConfirmMfaLoginChallengeRequest request,
+        @Parameter(hidden = true) HttpServletRequest servletRequest
     ) {
+        ResolvedClientAddress clientAddress =
+            clientAddressResolver.resolve(servletRequest);
+
         AuthenticatedUserResult result = useCase.confirm(
             new ConfirmMfaLoginChallengeCommand(
                 request == null ? null : request.challengeToken(),
-                request == null ? null : request.code()
+                request == null ? null : request.code(),
+                clientAddress.address()
             )
         );
         return ResponseEntity.ok(toResponse(result));

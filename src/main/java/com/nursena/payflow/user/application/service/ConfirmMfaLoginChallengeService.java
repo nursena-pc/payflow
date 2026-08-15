@@ -3,9 +3,17 @@ package com.nursena.payflow.user.application.service;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.HexFormat;
 import java.util.Objects;
 import java.util.UUID;
 
+import com.nursena.payflow.abuseprotection.application.exception.AbuseProtectionUnavailableException;
+import com.nursena.payflow.abuseprotection.application.policy.AbuseProtectionWorkflow;
+import com.nursena.payflow.abuseprotection.application.port.out.AbuseProtectionDecision;
+import com.nursena.payflow.abuseprotection.application.port.out.AbuseProtectionEnforcementPort;
+import com.nursena.payflow.abuseprotection.application.port.out.AbuseProtectionRequest;
+import com.nursena.payflow.clientcontext.domain.IpAddress;
+import com.nursena.payflow.user.application.exception.MfaSecurityUnavailableException;
 import com.nursena.payflow.user.application.port.in.AuthenticatedUserResult;
 import com.nursena.payflow.user.application.port.in.ConfirmMfaLoginChallengeCommand;
 import com.nursena.payflow.user.application.port.in.ConfirmMfaLoginChallengeUseCase;
@@ -28,7 +36,14 @@ import org.springframework.transaction.annotation.Transactional;
 public class ConfirmMfaLoginChallengeService
     implements ConfirmMfaLoginChallengeUseCase {
 
+    private static final MfaLoginChallengeDigest
+        MALFORMED_CHALLENGE_ABUSE_DIGEST =
+            MfaLoginChallengeDigest.of(
+                HexFormat.of().parseHex("f".repeat(64))
+            );
+
     private final MfaLoginChallengeDigestPort digestPort;
+    private final AbuseProtectionEnforcementPort abuseProtection;
     private final MfaLoginChallengeRepositoryPort challengeRepository;
     private final UserRepositoryPort userRepository;
     private final MfaAuthenticatorRepositoryPort authenticatorRepository;
@@ -38,6 +53,7 @@ public class ConfirmMfaLoginChallengeService
 
     public ConfirmMfaLoginChallengeService(
         MfaLoginChallengeDigestPort digestPort,
+        AbuseProtectionEnforcementPort abuseProtection,
         MfaLoginChallengeRepositoryPort challengeRepository,
         UserRepositoryPort userRepository,
         MfaAuthenticatorRepositoryPort authenticatorRepository,
@@ -46,6 +62,7 @@ public class ConfirmMfaLoginChallengeService
         Clock clock
     ) {
         this.digestPort = digestPort;
+        this.abuseProtection = abuseProtection;
         this.challengeRepository = challengeRepository;
         this.userRepository = userRepository;
         this.authenticatorRepository = authenticatorRepository;
@@ -61,9 +78,20 @@ public class ConfirmMfaLoginChallengeService
     ) {
         ConfirmMfaLoginChallengeCommand checkedCommand =
             Objects.requireNonNull(command, "command must not be null");
-        MfaLoginChallengeDigest digest = digestSafely(
-            checkedCommand.challengeToken()
+        ChallengeDigestResolution digestResolution =
+            resolveChallengeDigest(
+                checkedCommand.challengeToken()
+            );
+        enforceAbuseProtection(
+            digestResolution.digest(),
+            checkedCommand.effectiveClientAddress()
         );
+        if (!digestResolution.usableForLookup()) {
+            throw new InvalidMfaLoginChallengeException();
+        }
+
+        MfaLoginChallengeDigest digest =
+            digestResolution.digest();
         UUID candidateUserId = challengeRepository
             .findUserIdByDigest(digest)
             .orElseThrow(InvalidMfaLoginChallengeException::new);
@@ -107,19 +135,71 @@ public class ConfirmMfaLoginChallengeService
         return credentialIssuer.issue(user, now);
     }
 
-    private MfaLoginChallengeDigest digestSafely(String value) {
+    private void enforceAbuseProtection(
+        MfaLoginChallengeDigest digest,
+        IpAddress effectiveClientAddress
+    ) {
+        try {
+            AbuseProtectionDecision decision =
+                abuseProtection.evaluate(
+                    new AbuseProtectionRequest(
+                        AbuseProtectionWorkflow
+                            .MFA_LOGIN_CHALLENGE_CONFIRMATION,
+                        HexFormat.of().formatHex(digest.value()),
+                        effectiveClientAddress
+                    )
+                );
+
+            if (!decision.isAllowed()) {
+                throw new InvalidMfaLoginChallengeException();
+            }
+        }
+        catch (AbuseProtectionUnavailableException exception) {
+            throw new MfaSecurityUnavailableException();
+        }
+    }
+
+    private ChallengeDigestResolution resolveChallengeDigest(
+        String value
+    ) {
         if (value == null || value.isBlank() || value.length() > 256) {
-            throw new InvalidMfaLoginChallengeException();
+            return ChallengeDigestResolution.malformed();
         }
         try {
-            return digestPort.digest(value);
+            return ChallengeDigestResolution.usable(
+                digestPort.digest(value)
+            );
         }
         catch (IllegalArgumentException exception) {
-            throw new InvalidMfaLoginChallengeException();
+            return ChallengeDigestResolution.malformed();
         }
     }
 
     private static boolean isEligible(User user) {
         return user.status() == UserStatus.ACTIVE && user.isEmailVerified();
+    }
+
+    private record ChallengeDigestResolution(
+        MfaLoginChallengeDigest digest,
+        boolean usableForLookup
+    ) {
+        private static ChallengeDigestResolution usable(
+            MfaLoginChallengeDigest digest
+        ) {
+            return new ChallengeDigestResolution(
+                Objects.requireNonNull(
+                    digest,
+                    "digest must not be null"
+                ),
+                true
+            );
+        }
+
+        private static ChallengeDigestResolution malformed() {
+            return new ChallengeDigestResolution(
+                MALFORMED_CHALLENGE_ABUSE_DIGEST,
+                false
+            );
+        }
     }
 }

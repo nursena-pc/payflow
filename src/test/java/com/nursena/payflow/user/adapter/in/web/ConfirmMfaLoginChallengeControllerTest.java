@@ -3,6 +3,7 @@ package com.nursena.payflow.user.adapter.in.web;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -11,6 +12,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.Instant;
 
+import com.nursena.payflow.clientcontext.adapter.in.web.ClientAddressResolver;
+import com.nursena.payflow.clientcontext.domain.IpAddress;
+import com.nursena.payflow.clientcontext.domain.ResolvedClientAddress;
 import com.nursena.payflow.observability.adapter.in.web.RequestCorrelationConfiguration;
 import com.nursena.payflow.configuration.SecurityConfiguration;
 import com.nursena.payflow.user.application.exception.MfaSecurityUnavailableException;
@@ -18,6 +22,7 @@ import com.nursena.payflow.user.application.port.in.AuthenticatedUserResult;
 import com.nursena.payflow.user.application.port.in.ConfirmMfaLoginChallengeCommand;
 import com.nursena.payflow.user.application.port.in.ConfirmMfaLoginChallengeUseCase;
 import com.nursena.payflow.user.domain.exception.InvalidMfaLoginChallengeException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -38,6 +43,18 @@ class ConfirmMfaLoginChallengeControllerTest {
     @Autowired MockMvc mockMvc;
     @MockitoBean ConfirmMfaLoginChallengeUseCase useCase;
     @MockitoBean JwtDecoder jwtDecoder;
+    @MockitoBean ClientAddressResolver clientAddressResolver;
+
+    @BeforeEach
+    void setUpClientAddress() {
+        ResolvedClientAddress resolved =
+            mock(ResolvedClientAddress.class);
+        when(resolved.address()).thenReturn(
+            IpAddress.parse("203.0.113.10")
+        );
+        when(clientAddressResolver.resolve(any()))
+            .thenReturn(resolved);
+    }
 
     @Test
     void shouldIssueCredentialsOnlyAfterChallengeConfirmation() throws Exception {
@@ -59,6 +76,9 @@ class ConfirmMfaLoginChallengeControllerTest {
         verify(useCase).confirm(argThat(command ->
             command.challengeToken().equals("challenge")
                 && command.code().equals("123456")
+                && command.effectiveClientAddress().equals(
+                    IpAddress.parse("203.0.113.10")
+                )
         ));
     }
 
@@ -102,6 +122,9 @@ class ConfirmMfaLoginChallengeControllerTest {
         verify(useCase).confirm(argThat(command ->
             command.challengeToken().equals("challenge")
                 && command.code().equals(recoveryCode)
+                && command.effectiveClientAddress().equals(
+                    IpAddress.parse("203.0.113.10")
+                )
         ));
     }
 
@@ -128,7 +151,11 @@ class ConfirmMfaLoginChallengeControllerTest {
             .andExpect(jsonPath("$.code").value("MFA_CHALLENGE_INVALID"));
 
         verify(useCase).confirm(argThat(command ->
-            command.challengeToken() == null && command.code() == null
+            command.challengeToken() == null
+                && command.code() == null
+                && command.effectiveClientAddress().equals(
+                    IpAddress.parse("203.0.113.10")
+                )
         ));
     }
 

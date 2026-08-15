@@ -2,17 +2,30 @@ package com.nursena.payflow.user.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Method;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.nursena.payflow.abuseprotection.application.exception.AbuseProtectionUnavailableException;
+import com.nursena.payflow.abuseprotection.application.policy.AbuseProtectionFailureMode;
+import com.nursena.payflow.abuseprotection.application.policy.AbuseProtectionWorkflow;
+import com.nursena.payflow.abuseprotection.application.port.out.AbuseProtectionDecision;
+import com.nursena.payflow.abuseprotection.application.port.out.AbuseProtectionDimension;
+import com.nursena.payflow.abuseprotection.application.port.out.AbuseProtectionEnforcementPort;
+import com.nursena.payflow.clientcontext.domain.IpAddress;
+import com.nursena.payflow.user.application.exception.MfaSecurityUnavailableException;
 import com.nursena.payflow.user.application.port.in.AuthenticatedUserResult;
 import com.nursena.payflow.user.application.port.in.ConfirmMfaLoginChallengeCommand;
 import com.nursena.payflow.user.application.port.out.MfaAuthenticatorRepositoryPort;
@@ -33,6 +46,7 @@ import com.nursena.payflow.user.domain.model.UserStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,8 +62,12 @@ class ConfirmMfaLoginChallengeServiceTest {
         Instant.parse("2026-08-08T12:00:00Z");
     private static final MfaLoginChallengeDigest DIGEST =
         MfaLoginChallengeDigest.of(new byte[32]);
+    private static final String ABUSE_IDENTITY = "0".repeat(64);
+    private static final String MALFORMED_ABUSE_IDENTITY =
+        "f".repeat(64);
 
     @Mock MfaLoginChallengeDigestPort digestPort;
+    @Mock AbuseProtectionEnforcementPort abuseProtection;
     @Mock MfaLoginChallengeRepositoryPort challengeRepository;
     @Mock UserRepositoryPort userRepository;
     @Mock MfaAuthenticatorRepositoryPort authenticatorRepository;
@@ -61,8 +79,11 @@ class ConfirmMfaLoginChallengeServiceTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(abuseProtection.evaluate(any()))
+            .thenReturn(AbuseProtectionDecision.allowed());
         service = new ConfirmMfaLoginChallengeService(
             digestPort,
+            abuseProtection,
             challengeRepository,
             userRepository,
             authenticatorRepository,
@@ -79,6 +100,73 @@ class ConfirmMfaLoginChallengeServiceTest {
             NOW,
             NOW.minusSeconds(60),
             NOW.minusSeconds(60)
+        );
+    }
+
+    @Test
+    void shouldEnforceAbuseProtectionBeforeChallengeLookup() {
+        when(digestPort.digest("unknown")).thenReturn(DIGEST);
+        when(challengeRepository.findUserIdByDigest(DIGEST))
+            .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.confirm(
+            command("unknown", "123456")
+        )).isInstanceOf(InvalidMfaLoginChallengeException.class);
+
+        InOrder order = inOrder(abuseProtection, challengeRepository);
+        order.verify(abuseProtection).evaluate(argThat(request ->
+            request.workflow()
+                    == AbuseProtectionWorkflow.MFA_LOGIN_CHALLENGE_CONFIRMATION
+                && request.normalizedIdentity().equals(ABUSE_IDENTITY)
+                && request.effectiveClientAddress().equals(
+                    IpAddress.parse("203.0.113.10")
+                )
+        ));
+        order.verify(challengeRepository).findUserIdByDigest(DIGEST);
+    }
+
+    @Test
+    void shouldRejectBlockedChallengeBeforeSensitiveStateAccess() {
+        when(digestPort.digest("challenge")).thenReturn(DIGEST);
+        when(abuseProtection.evaluate(any()))
+            .thenReturn(AbuseProtectionDecision.blocked(
+                AbuseProtectionDimension.IDENTITY,
+                Duration.ofSeconds(30)
+            ));
+
+        assertThatThrownBy(() -> service.confirm(
+            command("challenge", "123456")
+        )).isInstanceOf(InvalidMfaLoginChallengeException.class);
+
+        verifyNoInteractions(
+            challengeRepository,
+            userRepository,
+            authenticatorRepository,
+            secondFactorVerifier,
+            credentialIssuer
+        );
+    }
+
+    @Test
+    void shouldFailClosedBeforeSensitiveStateAccessWhenAbuseProtectionIsUnavailable() {
+        when(digestPort.digest("challenge")).thenReturn(DIGEST);
+        when(abuseProtection.evaluate(any()))
+            .thenThrow(new AbuseProtectionUnavailableException(
+                AbuseProtectionWorkflow.MFA_LOGIN_CHALLENGE_CONFIRMATION,
+                AbuseProtectionFailureMode.FAIL_CLOSED,
+                new IllegalStateException("redis unavailable")
+            ));
+
+        assertThatThrownBy(() -> service.confirm(
+            command("challenge", "123456")
+        )).isInstanceOf(MfaSecurityUnavailableException.class);
+
+        verifyNoInteractions(
+            challengeRepository,
+            userRepository,
+            authenticatorRepository,
+            secondFactorVerifier,
+            credentialIssuer
         );
     }
 
@@ -230,9 +318,42 @@ class ConfirmMfaLoginChallengeServiceTest {
         assertThatThrownBy(() -> service.confirm(
             command(" ", "123456")
         )).isInstanceOf(InvalidMfaLoginChallengeException.class);
+
+        verify(abuseProtection).evaluate(argThat(request ->
+            request.workflow()
+                    == AbuseProtectionWorkflow.MFA_LOGIN_CHALLENGE_CONFIRMATION
+                && request.normalizedIdentity().equals(
+                    MALFORMED_ABUSE_IDENTITY
+                )
+        ));
         verifyNoInteractions(
+            digestPort,
             challengeRepository,
             userRepository,
+            authenticatorRepository,
+            secondFactorVerifier,
+            credentialIssuer
+        );
+    }
+
+    @Test
+    void shouldFailClosedForMalformedChallengeBeforeStateAccess() {
+        when(abuseProtection.evaluate(any()))
+            .thenThrow(new AbuseProtectionUnavailableException(
+                AbuseProtectionWorkflow.MFA_LOGIN_CHALLENGE_CONFIRMATION,
+                AbuseProtectionFailureMode.FAIL_CLOSED,
+                new IllegalStateException("redis unavailable")
+            ));
+
+        assertThatThrownBy(() -> service.confirm(
+            command(" ", "123456")
+        )).isInstanceOf(MfaSecurityUnavailableException.class);
+
+        verifyNoInteractions(
+            digestPort,
+            challengeRepository,
+            userRepository,
+            authenticatorRepository,
             secondFactorVerifier,
             credentialIssuer
         );
@@ -297,7 +418,11 @@ class ConfirmMfaLoginChallengeServiceTest {
         String token,
         String code
     ) {
-        return new ConfirmMfaLoginChallengeCommand(token, code);
+        return new ConfirmMfaLoginChallengeCommand(
+            token,
+            code,
+            IpAddress.parse("203.0.113.10")
+        );
     }
 
     private static MfaLoginChallenge pending(

@@ -49,4 +49,9 @@ public record AbuseProtectionRequest(
             );
         }
     }
+
+    @Override
+    public String toString() {
+        return "AbuseProtectionRequest[redacted]";
+    }
 }

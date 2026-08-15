@@ -2,8 +2,11 @@ package com.nursena.payflow.user.adapter.in.web;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
+import java.util.Objects;
 import java.util.UUID;
 
+import com.nursena.payflow.clientcontext.adapter.in.web.ClientAddressResolver;
+import com.nursena.payflow.clientcontext.domain.ResolvedClientAddress;
 import com.nursena.payflow.common.api.ApiError;
 import com.nursena.payflow.configuration.OpenApiConfiguration;
 import com.nursena.payflow.user.application.port.in.IssueStepUpGrantCommand;
@@ -17,6 +20,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -35,9 +39,20 @@ import org.springframework.web.bind.annotation.RestController;
 public class StepUpGrantController {
 
     private final IssueStepUpGrantUseCase issueUseCase;
+    private final ClientAddressResolver clientAddressResolver;
 
-    public StepUpGrantController(IssueStepUpGrantUseCase issueUseCase) {
-        this.issueUseCase = issueUseCase;
+    public StepUpGrantController(
+        IssueStepUpGrantUseCase issueUseCase,
+        ClientAddressResolver clientAddressResolver
+    ) {
+        this.issueUseCase = Objects.requireNonNull(
+            issueUseCase,
+            "issueUseCase must not be null"
+        );
+        this.clientAddressResolver = Objects.requireNonNull(
+            clientAddressResolver,
+            "clientAddressResolver must not be null"
+        );
     }
 
     @Operation(
@@ -75,13 +90,18 @@ public class StepUpGrantController {
     public ResponseEntity<StepUpGrantResponse> issue(
         @Parameter(hidden = true)
         @AuthenticationPrincipal Jwt jwt,
-        @Valid @RequestBody IssueStepUpGrantRequest request
+        @Valid @RequestBody IssueStepUpGrantRequest request,
+        @Parameter(hidden = true) HttpServletRequest servletRequest
     ) {
+        ResolvedClientAddress clientAddress =
+            clientAddressResolver.resolve(servletRequest);
+
         IssueStepUpGrantResult result = issueUseCase.issue(
             new IssueStepUpGrantCommand(
                 UUID.fromString(jwt.getSubject()),
                 request.purpose(),
-                request.code()
+                request.code(),
+                clientAddress.address()
             )
         );
         return ResponseEntity.ok(StepUpGrantResponse.from(result));
