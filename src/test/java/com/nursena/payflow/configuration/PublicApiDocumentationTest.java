@@ -99,7 +99,8 @@ class PublicApiDocumentationTest {
             EmailVerificationController.class
                 .getDeclaredMethod(
                     "request",
-                    EmailVerificationRequest.class
+                    EmailVerificationRequest.class,
+                    jakarta.servlet.http.HttpServletRequest.class
                 );
 
         assertDocumentation(
@@ -143,7 +144,8 @@ class PublicApiDocumentationTest {
             PasswordRecoveryController.class
                 .getDeclaredMethod(
                     "request",
-                    PasswordRecoveryRequest.class
+                    PasswordRecoveryRequest.class,
+                    jakarta.servlet.http.HttpServletRequest.class
                 );
 
         assertDocumentation(

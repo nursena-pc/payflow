@@ -1,5 +1,7 @@
 package com.nursena.payflow.user.application.service;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -8,6 +10,9 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.nursena.payflow.abuseprotection.application.port.out.AbuseProtectionDecision;
+import com.nursena.payflow.abuseprotection.application.port.out.AbuseProtectionEnforcementPort;
+import com.nursena.payflow.clientcontext.domain.IpAddress;
 import com.nursena.payflow.user.application.port.in
     .RequestPasswordRecoveryCommand;
 import com.nursena.payflow.user.application.port.out
@@ -37,6 +42,9 @@ class RequestPasswordRecoveryServiceTest {
         EmailAddress.of("nursena@example.com");
 
     @Mock
+    private AbuseProtectionEnforcementPort abuseProtection;
+
+    @Mock
     private UserRepositoryPort userRepository;
 
     @Mock
@@ -47,7 +55,10 @@ class RequestPasswordRecoveryServiceTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(abuseProtection.evaluate(any()))
+            .thenReturn(AbuseProtectionDecision.allowed());
         service = new RequestPasswordRecoveryService(
+            abuseProtection,
             userRepository,
             preparationService
         );
@@ -61,7 +72,7 @@ class RequestPasswordRecoveryServiceTest {
             )));
 
         service.request(
-            new RequestPasswordRecoveryCommand(
+            recoveryCommand(
                 "  Nursena@Example.COM  "
             )
         );
@@ -75,7 +86,7 @@ class RequestPasswordRecoveryServiceTest {
             .thenReturn(Optional.empty());
 
         service.request(
-            new RequestPasswordRecoveryCommand(
+            recoveryCommand(
                 EMAIL.value()
             )
         );
@@ -89,7 +100,7 @@ class RequestPasswordRecoveryServiceTest {
             .thenReturn(Optional.of(unverifiedUser()));
 
         service.request(
-            new RequestPasswordRecoveryCommand(
+            recoveryCommand(
                 EMAIL.value()
             )
         );
@@ -105,7 +116,7 @@ class RequestPasswordRecoveryServiceTest {
             )));
 
         service.request(
-            new RequestPasswordRecoveryCommand(
+            recoveryCommand(
                 EMAIL.value()
             )
         );
@@ -138,4 +149,12 @@ class RequestPasswordRecoveryServiceTest {
             NOW
         );
     }
-}
+
+    private static RequestPasswordRecoveryCommand recoveryCommand(
+        String email
+    ) {
+        return new RequestPasswordRecoveryCommand(
+            email,
+            IpAddress.parse("203.0.113.10")
+        );
+    }}

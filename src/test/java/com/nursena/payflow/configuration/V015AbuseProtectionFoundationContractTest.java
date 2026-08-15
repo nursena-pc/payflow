@@ -177,10 +177,10 @@ class V015AbuseProtectionFoundationContractTest {
 
         assertThat(guide)
             .contains(
-                "Generalized Redis enforcement is not active yet",
+                "Increment 3 wires the shared Redis foundation",
                 "windows range from one second through one day",
                 "limits range from one through one million",
-                "The existing login limiter remains independently active and unchanged"
+                "The login limiter remains unchanged"
             );
     }
 

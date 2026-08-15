@@ -96,6 +96,19 @@ decision.
   semantics into unrelated workflows
 - silent fail-open behavior: turns Redis failure into an abuse-control bypass
 
+## Increment 3 endpoint integration
+
+Email-verification and password-recovery request controllers reuse the trusted
+client-address resolver and pass its typed result into application commands.
+The application service normalizes email and evaluates the shared enforcement
+port before repository lookup. A blocked decision or fail-closed dependency
+outcome returns normally to preserve the existing empty `202` response and
+prevents credential or delivery side effects.
+
+Registration is evaluated and deferred until reproducible load evidence is
+available. Increment 3 does not change its `201`/`409` contract or add partial
+enforcement without an approved performance and failure-mode decision.
+
 ## Non-goals
 
 Increment 2 implements Redis counters but does not implement endpoint

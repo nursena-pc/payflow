@@ -729,11 +729,13 @@ Increment 2 is implemented by issue [#153](https://github.com/nursena-pc/payflow
 
 ### Increment 3 — Account-action request protection
 
-- [ ] Protect email-verification requests with per-identity and per-client decisions
-- [ ] Protect password-recovery requests with the same anti-enumeration response shape
-- [ ] Evaluate registration protection from documented threat and performance evidence
-- [ ] Verify unknown, closed, verified, and eligible accounts expose no distinguishable quota behavior
-- [ ] Verify concurrent requests cannot exceed the documented bounded outcome
+- [x] Protect email-verification requests with per-identity and per-client decisions
+- [x] Protect password-recovery requests with the same anti-enumeration response shape
+- [x] Evaluate registration protection from documented threat and performance evidence
+- [x] Verify unknown, closed, verified, and eligible accounts expose no distinguishable quota behavior
+- [x] Verify concurrent requests cannot exceed the documented bounded outcome
+
+Increment 3 is implemented by issue [#155](https://github.com/nursena-pc/payflow/issues/155). Email-verification and password-recovery requests now evaluate normalized identity and trusted client quotas before account lookup while preserving an empty `202` response for every eligibility, quota, and fail-closed outcome. Real-Redis HTTP concurrency tests bound credential and delivery side effects. Registration was evaluated and remains deferred pending Increment 6 performance evidence.
 
 ### Increment 4 — MFA challenge and step-up protection
 

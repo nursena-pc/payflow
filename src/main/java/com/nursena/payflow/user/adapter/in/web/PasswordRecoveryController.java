@@ -5,6 +5,8 @@ import static org.springframework.http.MediaType
 
 import java.util.Objects;
 
+import com.nursena.payflow.clientcontext.adapter.in.web.ClientAddressResolver;
+import com.nursena.payflow.clientcontext.domain.ResolvedClientAddress;
 import com.nursena.payflow.common.api.ApiError;
 import com.nursena.payflow.configuration.OpenApiExamples;
 import com.nursena.payflow.user.application.port.in
@@ -16,6 +18,7 @@ import com.nursena.payflow.user.application.port.in
 import com.nursena.payflow.user.application.port.in
     .RequestPasswordRecoveryUseCase;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -24,6 +27,7 @@ import io.swagger.v3.oas.annotations.responses
 import io.swagger.v3.oas.annotations.responses
     .ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -48,12 +52,14 @@ public class PasswordRecoveryController {
         requestPasswordRecovery;
     private final ConfirmPasswordRecoveryUseCase
         confirmPasswordRecovery;
+    private final ClientAddressResolver clientAddressResolver;
 
     public PasswordRecoveryController(
         RequestPasswordRecoveryUseCase
             requestPasswordRecovery,
         ConfirmPasswordRecoveryUseCase
-            confirmPasswordRecovery
+            confirmPasswordRecovery,
+        ClientAddressResolver clientAddressResolver
     ) {
         this.requestPasswordRecovery =
             Objects.requireNonNull(
@@ -64,6 +70,11 @@ public class PasswordRecoveryController {
             Objects.requireNonNull(
                 confirmPasswordRecovery,
                 "confirmPasswordRecovery must not be null"
+            );
+        this.clientAddressResolver =
+            Objects.requireNonNull(
+                clientAddressResolver,
+                "clientAddressResolver must not be null"
             );
     }
 
@@ -99,11 +110,17 @@ public class PasswordRecoveryController {
     @PostMapping("/requests")
     public ResponseEntity<Void> request(
         @Valid @RequestBody
-        PasswordRecoveryRequest request
+        PasswordRecoveryRequest request,
+        @Parameter(hidden = true)
+        HttpServletRequest servletRequest
     ) {
+        ResolvedClientAddress clientAddress =
+            clientAddressResolver.resolve(servletRequest);
+
         requestPasswordRecovery.request(
             new RequestPasswordRecoveryCommand(
-                request.email()
+                request.email(),
+                clientAddress.address()
             )
         );
 
