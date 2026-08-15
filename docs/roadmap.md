@@ -739,10 +739,19 @@ Increment 3 is implemented by issue [#155](https://github.com/nursena-pc/payflow
 
 ### Increment 4 — MFA challenge and step-up protection
 
-- [ ] Protect MFA login-challenge confirmation without exposing challenge or account validity
-- [ ] Protect step-up grant issuance without weakening subject, purpose, expiry, or single-use semantics
-- [ ] Keep TOTP values, recovery codes, challenge tokens, and step-up grants outside quota state and observable output
-- [ ] Verify abuse decisions do not consume valid single-use credentials unless the protected workflow executes
+- [x] Protect MFA login-challenge confirmation without exposing challenge or account validity
+- [x] Protect step-up grant issuance without weakening subject, purpose, expiry, or single-use semantics
+- [x] Keep TOTP values, recovery codes, challenge tokens, and step-up grants outside quota state and observable output
+- [x] Verify abuse decisions do not consume valid single-use credentials unless the protected workflow executes
+
+Increment 4 is implemented by issue [#159](https://github.com/nursena-pc/payflow/issues/159)
+and protected pull request [#160](https://github.com/nursena-pc/payflow/pull/160).
+MFA challenge confirmation now enforces fixed-length non-reversible challenge
+identity and trusted-client quotas before challenge state access. Step-up grant
+issuance enforces authenticated-subject and trusted-client quotas before
+second-factor or grant mutation. Real-Redis HTTP/concurrency coverage proves
+bounded side effects, forwarding-header resistance, Redis-key privacy, and
+fail-closed dependency behavior.
 
 ### Increment 5 — Metrics, dashboards, alerts, and operations
 

@@ -55,7 +55,7 @@ read server-side digests, or directly choose the resolved effective address.
 | Registration | normalized proposed email | trusted effective address | fail closed | stable coarse rejection |
 | Email-verification request | normalized email | trusted effective address | fail closed | generic accepted response; no side effect |
 | Password-recovery request | normalized email | trusted effective address | fail closed | generic accepted response; no side effect |
-| MFA challenge confirmation | challenge subject | trusted effective address | fail closed | stable coarse rejection |
+| MFA challenge confirmation | fixed-length non-reversible challenge identifier | trusted effective address | fail closed | stable coarse rejection |
 | Step-up grant issuance | authenticated subject | trusted effective address | fail closed | stable coarse rejection |
 
 The table defines policy intent, not active endpoint enforcement in Increment 1.
@@ -127,6 +127,25 @@ distinct `201` and duplicate-account `409` behavior and performs BCrypt plus
 initial verification preparation. Latency, overload, and false-positive data
 must be recorded before choosing its public failure contract and activation
 policy.
+
+## Increment 4 MFA and step-up decision
+
+MFA login-challenge confirmation derives a fixed-length non-reversible identity
+before generalized enforcement and evaluates policy before challenge lookup,
+row locking, attempt mutation, recovery-code consumption, challenge
+consumption, or credential issuance. Malformed challenge input also enters the
+enforcement boundary without exposing plaintext challenge material.
+
+Step-up grant issuance uses the authenticated JWT subject as its identity
+dimension and the trusted effective client as its client dimension. Enforcement
+runs before user or authenticator locking, TOTP or recovery-code consumption,
+and grant creation or supersession. Purpose parsing remains application-owned.
+
+Real-Redis HTTP and concurrency tests prove configured identity and client
+limits bound protected side effects. Untrusted forwarding headers cannot change
+the client quota. Redis-unavailable tests prove both workflows fail closed with
+the coarse `MFA_SECURITY_UNAVAILABLE` contract while challenge attempts,
+recovery codes, credentials, and grants remain untouched.
 
 ## Verification obligations
 

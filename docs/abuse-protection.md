@@ -2,13 +2,16 @@
 
 ## Current delivery state
 
-Increment 3 wires the shared Redis foundation into email-verification and
-password-recovery request workflows. Both evaluate normalized identity and the
-trusted effective client address before account lookup. Allowed requests retain
-their existing eligibility rules; blocked and fail-closed requests suppress
-credential and mail-outbox side effects while returning the same empty `202`
-response. `ABUSE_PROTECTION_ENABLED` remains `false` by default so activation
-is an explicit deployment decision. The login limiter remains unchanged.
+Increment 4 extends the shared Redis foundation across email-verification,
+password-recovery, MFA login-challenge confirmation, and step-up grant issuance.
+Account-action requests evaluate normalized email and the trusted effective
+client before account lookup. MFA challenge confirmation evaluates a
+fixed-length, non-reversible challenge identifier and the trusted effective
+client before challenge lookup or sensitive state mutation. Step-up issuance
+evaluates the authenticated JWT subject and trusted effective client before user
+or authenticator locking, second-factor consumption, or grant creation.
+`ABUSE_PROTECTION_ENABLED` remains `false` by default so activation is an
+explicit deployment decision. The login limiter remains unchanged.
 
 ## Policy contract
 
@@ -67,6 +70,23 @@ Registration was evaluated but is not wired in Increment 3. Its existing
 require the reproducible performance and overload evidence planned for
 Increment 6 before an activation decision. This is a documented deferral, not
 an implicit exemption from later review.
+
+## MFA and step-up HTTP contract
+
+- MFA challenge confirmation derives its identity quota from a fixed-length,
+  non-reversible challenge identifier rather than plaintext challenge material
+- malformed challenge input participates in the same fail-closed enforcement
+  boundary before any challenge repository access
+- challenge quota rejection does not decrement attempts, consume recovery
+  codes, consume challenge state, or issue access/refresh credentials
+- step-up grant issuance uses only the authenticated JWT subject as its identity
+  dimension; account identity is never accepted from the request body
+- step-up quota rejection runs before user/authenticator locking, second-factor
+  consumption, and grant creation or supersession
+- only `ClientAddressResolver` supplies the effective client dimension for both
+  workflows, so untrusted forwarding headers cannot rotate client quota
+- Redis dependency failure remains fail closed and maps to the existing coarse
+  `MFA_SECURITY_UNAVAILABLE` public contract without sensitive mutation
 
 ## Privacy and observability
 
