@@ -3,6 +3,7 @@ package com.nursena.payflow.user.adapter.in.web;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
@@ -12,6 +13,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.Instant;
 
+import com.nursena.payflow.clientcontext.adapter.in.web.ClientAddressResolver;
+import com.nursena.payflow.clientcontext.domain.IpAddress;
+import com.nursena.payflow.clientcontext.domain.ResolvedClientAddress;
 import com.nursena.payflow.configuration.SecurityConfiguration;
 import com.nursena.payflow.observability.adapter.in.web.RequestCorrelationConfiguration;
 import com.nursena.payflow.user.application.exception.MfaSecurityUnavailableException;
@@ -22,6 +26,7 @@ import com.nursena.payflow.user.domain.exception.InvalidStepUpGrantException;
 import com.nursena.payflow.user.domain.exception.InvalidStepUpPurposeException;
 import com.nursena.payflow.user.domain.exception.MfaStateConflictException;
 import com.nursena.payflow.user.domain.exception.MfaVerificationFailedException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -46,6 +51,18 @@ class StepUpGrantControllerTest {
     @Autowired MockMvc mockMvc;
     @MockitoBean IssueStepUpGrantUseCase useCase;
     @MockitoBean JwtDecoder jwtDecoder;
+    @MockitoBean ClientAddressResolver clientAddressResolver;
+
+    @BeforeEach
+    void setUpClientAddress() {
+        ResolvedClientAddress resolved =
+            mock(ResolvedClientAddress.class);
+        when(resolved.address()).thenReturn(
+            IpAddress.parse("203.0.113.10")
+        );
+        when(clientAddressResolver.resolve(any()))
+            .thenReturn(resolved);
+    }
 
     @Test
     void shouldRequireBearerAuthentication() throws Exception {
@@ -77,6 +94,9 @@ class StepUpGrantControllerTest {
             command.subjectId().toString().equals(SUBJECT)
                 && command.purpose().equals("mfa-disable")
                 && command.code().equals("123456")
+                && command.effectiveClientAddress().equals(
+                    IpAddress.parse("203.0.113.10")
+                )
         ));
     }
 
@@ -129,7 +149,20 @@ class StepUpGrantControllerTest {
         StepUpGrantResponse response = new StepUpGrantResponse(
             "opaque-grant", "mfa-disable", Instant.parse("2026-08-10T10:05:00Z")
         );
+        IssueStepUpGrantCommand command =
+            new IssueStepUpGrantCommand(
+                java.util.UUID.fromString(SUBJECT),
+                "mfa-disable",
+                "123456",
+                IpAddress.parse("203.0.113.10")
+            );
         assertThat(request.toString()).doesNotContain("123456");
+        assertThat(command.toString()).doesNotContain(
+            SUBJECT,
+            "mfa-disable",
+            "123456",
+            "203.0.113.10"
+        );
         assertThat(response.toString()).doesNotContain("opaque-grant");
     }
 

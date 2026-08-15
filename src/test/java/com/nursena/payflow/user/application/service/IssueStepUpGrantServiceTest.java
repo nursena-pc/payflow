@@ -14,6 +14,7 @@ import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.nursena.payflow.clientcontext.domain.IpAddress;
 import com.nursena.payflow.user.application.port.in.IssueStepUpGrantCommand;
 import com.nursena.payflow.user.application.port.in.IssueStepUpGrantResult;
 import com.nursena.payflow.user.application.port.out.MfaAuthenticatorRepositoryPort;
@@ -144,7 +145,12 @@ class IssueStepUpGrantServiceTest {
     }
 
     private static IssueStepUpGrantCommand command(String purpose, String code) {
-        return new IssueStepUpGrantCommand(USER_ID, purpose, code);
+        return new IssueStepUpGrantCommand(
+            USER_ID,
+            purpose,
+            code,
+            IpAddress.parse("203.0.113.10")
+        );
     }
 
     private static User user(UserRole role, UserStatus status, boolean verified) {

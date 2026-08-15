@@ -13,6 +13,7 @@ import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.nursena.payflow.clientcontext.domain.IpAddress;
 import com.nursena.payflow.user.application.port.in.AuthenticatedUserResult;
 import com.nursena.payflow.user.application.port.in.ConfirmMfaLoginChallengeCommand;
 import com.nursena.payflow.user.application.port.out.MfaAuthenticatorRepositoryPort;
@@ -297,7 +298,11 @@ class ConfirmMfaLoginChallengeServiceTest {
         String token,
         String code
     ) {
-        return new ConfirmMfaLoginChallengeCommand(token, code);
+        return new ConfirmMfaLoginChallengeCommand(
+            token,
+            code,
+            IpAddress.parse("203.0.113.10")
+        );
     }
 
     private static MfaLoginChallenge pending(
