@@ -5,6 +5,12 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 
+import com.nursena.payflow.abuseprotection.application.exception.AbuseProtectionUnavailableException;
+import com.nursena.payflow.abuseprotection.application.policy.AbuseProtectionWorkflow;
+import com.nursena.payflow.abuseprotection.application.port.out.AbuseProtectionDecision;
+import com.nursena.payflow.abuseprotection.application.port.out.AbuseProtectionEnforcementPort;
+import com.nursena.payflow.abuseprotection.application.port.out.AbuseProtectionRequest;
+import com.nursena.payflow.user.application.exception.MfaSecurityUnavailableException;
 import com.nursena.payflow.user.application.port.in.IssueStepUpGrantCommand;
 import com.nursena.payflow.user.application.port.in.IssueStepUpGrantResult;
 import com.nursena.payflow.user.application.port.in.IssueStepUpGrantUseCase;
@@ -28,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class IssueStepUpGrantService implements IssueStepUpGrantUseCase {
 
+    private final AbuseProtectionEnforcementPort abuseProtection;
     private final UserRepositoryPort userRepository;
     private final MfaAuthenticatorRepositoryPort authenticatorRepository;
     private final MfaSecondFactorVerifier secondFactorVerifier;
@@ -35,12 +42,14 @@ public class IssueStepUpGrantService implements IssueStepUpGrantUseCase {
     private final Clock clock;
 
     public IssueStepUpGrantService(
+        AbuseProtectionEnforcementPort abuseProtection,
         UserRepositoryPort userRepository,
         MfaAuthenticatorRepositoryPort authenticatorRepository,
         MfaSecondFactorVerifier secondFactorVerifier,
         StepUpGrantIssuer grantIssuer,
         Clock clock
     ) {
+        this.abuseProtection = abuseProtection;
         this.userRepository = userRepository;
         this.authenticatorRepository = authenticatorRepository;
         this.secondFactorVerifier = secondFactorVerifier;
@@ -56,6 +65,8 @@ public class IssueStepUpGrantService implements IssueStepUpGrantUseCase {
             "command must not be null"
         );
         StepUpPurpose purpose = parsePurpose(checked.purpose());
+        enforceAbuseProtection(checked);
+
         User user = userRepository.findByIdForUpdate(checked.subjectId())
             .orElseThrow(UserNotFoundException::new);
 
@@ -82,6 +93,29 @@ public class IssueStepUpGrantService implements IssueStepUpGrantUseCase {
         }
 
         return grantIssuer.issue(user.id(), purpose, now);
+    }
+
+    private void enforceAbuseProtection(
+        IssueStepUpGrantCommand command
+    ) {
+        try {
+            AbuseProtectionDecision decision =
+                abuseProtection.evaluate(
+                    new AbuseProtectionRequest(
+                        AbuseProtectionWorkflow
+                            .STEP_UP_GRANT_ISSUANCE,
+                        command.subjectId().toString(),
+                        command.effectiveClientAddress()
+                    )
+                );
+
+            if (!decision.isAllowed()) {
+                throw new InvalidStepUpGrantException();
+            }
+        }
+        catch (AbuseProtectionUnavailableException exception) {
+            throw new MfaSecurityUnavailableException();
+        }
     }
 
     private static StepUpPurpose parsePurpose(String value) {
