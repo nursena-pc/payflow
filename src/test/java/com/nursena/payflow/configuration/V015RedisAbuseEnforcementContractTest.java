@@ -118,8 +118,8 @@ class V015RedisAbuseEnforcementContractTest {
         assertThat(Files.readString(
             Path.of("docs", "abuse-protection.md")
         )).contains(
-            "Increment 3 wires the shared Redis foundation",
-            "trusted effective client address before account lookup",
+            "## Redis state contract",
+            "key suffixes are domain-separated 64-character SHA-256 digests",
             "ABUSE_PROTECTION_ENABLED` remains `false` by default"
         );
     }
