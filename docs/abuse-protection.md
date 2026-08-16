@@ -14,8 +14,9 @@ authenticator locking, second-factor consumption, or grant creation.
 
 Bounded Micrometer decisions, Redis-failure metrics, a dedicated Grafana
 dashboard, Prometheus alerts, and an operations runbook now cover these
-workflows without changing enforcement semantics. `ABUSE_PROTECTION_ENABLED`
-remains `false` by default so activation is an explicit deployment decision.
+workflows without changing enforcement semantics.
+`ABUSE_PROTECTION_ENABLED` remains `false` by default so activation is an
+explicit deployment decision.
 The login limiter remains unchanged.
 
 ## Policy contract
