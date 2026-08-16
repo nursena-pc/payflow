@@ -14,6 +14,7 @@ import com.nursena.payflow.abuseprotection.application.port.out.AbuseProtectionD
 import com.nursena.payflow.abuseprotection.application.port.out.AbuseProtectionDimension;
 import com.nursena.payflow.abuseprotection.application.port.out.AbuseProtectionRequest;
 import com.nursena.payflow.clientcontext.domain.IpAddress;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -23,10 +24,12 @@ import org.springframework.data.redis.core.script.RedisScript;
 class RedisAbuseProtectionAdapterTest {
 
     private RecordingRedisTemplate redisTemplate;
+    private SimpleMeterRegistry meterRegistry;
 
     @BeforeEach
     void setUp() {
         redisTemplate = new RecordingRedisTemplate();
+        meterRegistry = new SimpleMeterRegistry();
     }
 
     @Test
@@ -49,6 +52,11 @@ class RedisAbuseProtectionAdapterTest {
             );
         assertThat(redisTemplate.arguments)
             .containsExactly("900", "5", "20");
+        assertDecisionMetric(
+            "allowed",
+            "none",
+            1.0
+        );
     }
 
     @Test
@@ -78,6 +86,11 @@ class RedisAbuseProtectionAdapterTest {
 
         assertThat(decision.isAllowed()).isTrue();
         assertThat(redisTemplate.executions).isZero();
+        assertDecisionMetric(
+            "disabled",
+            "none",
+            1.0
+        );
     }
 
     @Test
@@ -103,6 +116,16 @@ class RedisAbuseProtectionAdapterTest {
                 assertThat(unavailable.failureMode())
                     .isEqualTo(AbuseProtectionFailureMode.FAIL_CLOSED);
             });
+
+        assertRedisFailureMetric(
+            "fail_closed",
+            1.0
+        );
+        assertThat(
+            meterRegistry.find(
+                AbuseProtectionMetrics.DECISIONS_METRIC
+            ).counters()
+        ).isEmpty();
     }
 
     @Test
@@ -113,6 +136,22 @@ class RedisAbuseProtectionAdapterTest {
         assertThat(adapter(
             policy(true, AbuseProtectionFailureMode.FAIL_OPEN)
         ).evaluate(request()).isAllowed()).isTrue();
+
+        assertRedisFailureMetric(
+            "fail_open",
+            1.0
+        );
+        assertDecisionMetric(
+            "dependency_bypass",
+            "dependency_failure",
+            1.0
+        );
+        assertThat(
+            meterRegistry.find(
+                AbuseProtectionMetrics.DECISIONS_METRIC
+            ).tag("outcome", "allowed")
+            .counters()
+        ).isEmpty();
     }
 
     @Test
@@ -125,13 +164,44 @@ class RedisAbuseProtectionAdapterTest {
             .isInstanceOf(AbuseProtectionUnavailableException.class);
     }
 
+    private void assertDecisionMetric(
+        String outcome,
+        String reason,
+        double expectedCount
+    ) {
+        assertThat(
+            meterRegistry
+                .get(AbuseProtectionMetrics.DECISIONS_METRIC)
+                .tag("workflow", "registration")
+                .tag("outcome", outcome)
+                .tag("reason", reason)
+                .counter()
+                .count()
+        ).isEqualTo(expectedCount);
+    }
+
+    private void assertRedisFailureMetric(
+        String failureMode,
+        double expectedCount
+    ) {
+        assertThat(
+            meterRegistry
+                .get(AbuseProtectionMetrics.REDIS_FAILURES_METRIC)
+                .tag("workflow", "registration")
+                .tag("failure_mode", failureMode)
+                .counter()
+                .count()
+        ).isEqualTo(expectedCount);
+    }
+
     private RedisAbuseProtectionAdapter adapter(
         AbuseProtectionPolicy policy
     ) {
         return new RedisAbuseProtectionAdapter(
             redisTemplate,
             script(),
-            workflow -> policy
+            workflow -> policy,
+            new AbuseProtectionMetrics(meterRegistry)
         );
     }
 

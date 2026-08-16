@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.nursena.payflow.abuseprotection.application.policy.AbuseProtectionPolicyProvider;
 import com.nursena.payflow.abuseprotection.application.port.out.AbuseProtectionEnforcementPort;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -77,16 +78,27 @@ class AbuseProtectionRedisConfiguration {
     }
 
     @Bean
+    AbuseProtectionMetrics abuseProtectionMetrics(
+        MeterRegistry meterRegistry
+    ) {
+        return new AbuseProtectionMetrics(
+            meterRegistry
+        );
+    }
+
+    @Bean
     AbuseProtectionEnforcementPort abuseProtectionEnforcementPort(
         StringRedisTemplate redisTemplate,
         @Qualifier("abuseProtectionRedisScript")
         RedisScript<List<Long>> script,
-        AbuseProtectionPolicyProvider policyProvider
+        AbuseProtectionPolicyProvider policyProvider,
+        AbuseProtectionMetrics metrics
     ) {
         return new RedisAbuseProtectionAdapter(
             redisTemplate,
             script,
-            policyProvider
+            policyProvider,
+            metrics
         );
     }
 }
