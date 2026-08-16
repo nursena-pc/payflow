@@ -1,0 +1,491 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "description": "Operational overview of bounded PayFlow generalized abuse-protection decisions and Redis dependency health. No identity, client address, credential, Redis key, or request-level dimensions are exposed.",
+  "editable": false,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "payflow-prometheus"
+      },
+      "description": "Blocked generalized abuse-protection decisions during the last ten minutes, aggregated across bounded workflows.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 10
+              },
+              {
+                "color": "red",
+                "value": 25
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "sum(increase(payflow_security_abuse_protection_decisions_total{outcome=\"blocked\"}[10m]))",
+          "instant": true,
+          "legendFormat": "Blocked Decisions \u2014 10m",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Blocked Decisions \u2014 10m",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "payflow-prometheus"
+      },
+      "description": "Redis dependency failures observed while evaluating generalized abuse protection during the last five minutes.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "sum(increase(payflow_security_abuse_protection_redis_failures_total[5m]))",
+          "instant": true,
+          "legendFormat": "Redis Failures \u2014 5m",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Redis Failures \u2014 5m",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "payflow-prometheus"
+      },
+      "description": "Fail-open dependency bypass decisions during the last five minutes. Current default workflow configuration is fail closed.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "sum(increase(payflow_security_abuse_protection_decisions_total{outcome=\"dependency_bypass\"}[5m]))",
+          "instant": true,
+          "legendFormat": "Dependency Bypass \u2014 5m",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Dependency Bypass \u2014 5m",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "payflow-prometheus"
+      },
+      "description": "Requests observed while generalized abuse protection was disabled, grouped only in the detailed panel below.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "sum(increase(payflow_security_abuse_protection_decisions_total{outcome=\"disabled\"}[15m]))",
+          "instant": true,
+          "legendFormat": "Disabled Decisions \u2014 15m",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Disabled Decisions \u2014 15m",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "payflow-prometheus"
+      },
+      "description": "Decision throughput grouped only by the finite application-owned workflow and outcome vocabularies.",
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 5
+      },
+      "id": 5,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "sum by (workflow, outcome) (rate(payflow_security_abuse_protection_decisions_total[5m]))",
+          "legendFormat": "{{workflow}} \u2014 {{outcome}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Decision Rate by Workflow and Outcome",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "payflow-prometheus"
+      },
+      "description": "Blocked decision throughput grouped only by bounded workflow and reason labels.",
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 13
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "sum by (workflow, reason) (rate(payflow_security_abuse_protection_decisions_total{outcome=\"blocked\"}[5m]))",
+          "legendFormat": "{{workflow}} \u2014 {{reason}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Blocked Decisions by Workflow and Reason",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "payflow-prometheus"
+      },
+      "description": "Redis failure throughput grouped by bounded workflow and configured failure mode.",
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 21
+      },
+      "id": 7,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "sum by (workflow, failure_mode) (rate(payflow_security_abuse_protection_redis_failures_total[5m]))",
+          "legendFormat": "{{workflow}} \u2014 {{failure_mode}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Redis Dependency Failures by Workflow and Failure Mode",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "payflow-prometheus"
+      },
+      "description": "Operational visibility for disabled enforcement and fail-open dependency bypass using bounded workflow and outcome dimensions.",
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 29
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "sum by (workflow, outcome) (rate(payflow_security_abuse_protection_decisions_total{outcome=~\"disabled|dependency_bypass\"}[5m]))",
+          "legendFormat": "{{workflow}} \u2014 {{outcome}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Disabled and Dependency-Bypass Decisions",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "15s",
+  "schemaVersion": 41,
+  "tags": [
+    "payflow",
+    "security",
+    "abuse-protection",
+    "observability"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "PayFlow Abuse Protection",
+  "uid": "payflow-abuse-protection",
+  "version": 1,
+  "weekStart": ""
+}
