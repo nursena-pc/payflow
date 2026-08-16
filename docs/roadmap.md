@@ -755,11 +755,18 @@ fail-closed dependency behavior.
 
 ### Increment 5 — Metrics, dashboards, alerts, and operations
 
-- [ ] Expose bounded decision and Redis-failure metrics without identity or client labels
-- [ ] Provision Grafana dashboards for quota outcomes, dependency failures, and protected-workflow health
-- [ ] Provision actionable alert rules with documented thresholds, duration, severity, and response guidance
-- [ ] Document investigation, safe mitigation, rollback, and false-positive handling
-- [ ] Verify logs, metrics, traces, dashboards, and alerts contain no sensitive material
+- [x] Expose bounded decision and Redis-failure metrics without identity or client labels
+- [x] Provision Grafana dashboards for quota outcomes, dependency failures, and protected-workflow health
+- [x] Provision actionable alert rules with documented thresholds, duration, severity, and response guidance
+- [x] Document investigation, safe mitigation, rollback, and false-positive handling
+- [x] Verify logs, metrics, traces, dashboards, and alerts contain no sensitive material
+
+Increment 5 is implemented by issue [#162](https://github.com/nursena-pc/payflow/issues/162)
+and pull request [#163](https://github.com/nursena-pc/payflow/pull/163).
+The delivered contract keeps Micrometer concerns adapter-side, exposes only
+bounded workflow/outcome/reason/failure-mode dimensions, provisions a dedicated
+abuse-protection dashboard and three actionable alerts, and documents safe
+operations without weakening fail-closed defaults or the existing login limiter.
 
 ### Increment 6 — Reproducible load and performance evidence
 

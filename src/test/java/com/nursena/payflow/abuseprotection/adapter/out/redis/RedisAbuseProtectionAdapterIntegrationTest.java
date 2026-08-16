@@ -18,6 +18,7 @@ import com.nursena.payflow.abuseprotection.application.port.out.AbuseProtectionD
 import com.nursena.payflow.abuseprotection.application.port.out.AbuseProtectionDimension;
 import com.nursena.payflow.abuseprotection.application.port.out.AbuseProtectionRequest;
 import com.nursena.payflow.clientcontext.domain.IpAddress;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,6 +44,7 @@ class RedisAbuseProtectionAdapterIntegrationTest {
 
     private LettuceConnectionFactory connectionFactory;
     private StringRedisTemplate redisTemplate;
+    private SimpleMeterRegistry meterRegistry;
 
     @BeforeEach
     void setUp() {
@@ -60,11 +62,16 @@ class RedisAbuseProtectionAdapterIntegrationTest {
         redisTemplate =
             new StringRedisTemplate(connectionFactory);
         redisTemplate.afterPropertiesSet();
+        meterRegistry = new SimpleMeterRegistry();
         flushRedis();
     }
 
     @AfterEach
     void tearDown() {
+        if (meterRegistry != null) {
+            meterRegistry.close();
+        }
+
         if (connectionFactory != null) {
             connectionFactory.destroy();
         }
@@ -241,7 +248,8 @@ class RedisAbuseProtectionAdapterIntegrationTest {
             redisTemplate,
             new AbuseProtectionRedisConfiguration()
                 .abuseProtectionRedisScript(),
-            workflow -> policy
+            workflow -> policy,
+            new AbuseProtectionMetrics(meterRegistry)
         );
     }
 

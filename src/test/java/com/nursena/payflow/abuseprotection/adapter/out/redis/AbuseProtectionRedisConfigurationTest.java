@@ -5,6 +5,8 @@ import static org.mockito.Mockito.mock;
 
 import com.nursena.payflow.abuseprotection.application.policy.AbuseProtectionPolicyProvider;
 import com.nursena.payflow.abuseprotection.application.port.out.AbuseProtectionEnforcementPort;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -17,6 +19,10 @@ class AbuseProtectionRedisConfigurationTest {
             .withBean(
                 StringRedisTemplate.class,
                 () -> mock(StringRedisTemplate.class)
+            )
+            .withBean(
+                MeterRegistry.class,
+                SimpleMeterRegistry::new
             )
             .withBean(
                 AbuseProtectionPolicyProvider.class,
@@ -34,6 +40,7 @@ class AbuseProtectionRedisConfigurationTest {
                 .hasSingleBean(
                     AbuseProtectionEnforcementPort.class
                 )
+                .hasSingleBean(AbuseProtectionMetrics.class)
                 .hasSingleBean(RedisScript.class);
 
             RedisScript<?> script =

@@ -26,11 +26,13 @@ final class RedisAbuseProtectionAdapter
     private final StringRedisTemplate redisTemplate;
     private final RedisScript<List<Long>> script;
     private final AbuseProtectionPolicyProvider policyProvider;
+    private final AbuseProtectionMetrics metrics;
 
     RedisAbuseProtectionAdapter(
         StringRedisTemplate redisTemplate,
         RedisScript<List<Long>> script,
-        AbuseProtectionPolicyProvider policyProvider
+        AbuseProtectionPolicyProvider policyProvider,
+        AbuseProtectionMetrics metrics
     ) {
         this.redisTemplate = Objects.requireNonNull(
             redisTemplate,
@@ -45,6 +47,11 @@ final class RedisAbuseProtectionAdapter
         this.policyProvider = Objects.requireNonNull(
             policyProvider,
             "policyProvider must not be null"
+        );
+
+        this.metrics = Objects.requireNonNull(
+            metrics,
+            "metrics must not be null"
         );
     }
 
@@ -67,6 +74,9 @@ final class RedisAbuseProtectionAdapter
             );
 
         if (!policy.enabled()) {
+            metrics.recordDisabled(
+                validatedRequest.workflow()
+            );
             return AbuseProtectionDecision.allowed();
         }
 
@@ -83,6 +93,8 @@ final class RedisAbuseProtectionAdapter
             )
         );
 
+        AbuseProtectionDecision decision;
+
         try {
             List<Long> result = redisTemplate.execute(
                 script,
@@ -94,12 +106,20 @@ final class RedisAbuseProtectionAdapter
                 Integer.toString(policy.clientLimit())
             );
 
-            return parseDecision(result);
+            decision = parseDecision(result);
         } catch (RuntimeException exception) {
+            metrics.recordRedisFailure(
+                validatedRequest.workflow(),
+                policy.dependencyFailureMode()
+            );
+
             if (
                 policy.dependencyFailureMode()
                     == AbuseProtectionFailureMode.FAIL_OPEN
             ) {
+                metrics.recordDependencyBypass(
+                    validatedRequest.workflow()
+                );
                 return AbuseProtectionDecision.allowed();
             }
 
@@ -109,6 +129,13 @@ final class RedisAbuseProtectionAdapter
                 exception
             );
         }
+
+        metrics.recordDecision(
+            validatedRequest.workflow(),
+            decision
+        );
+
+        return decision;
     }
 
     private static long expirationSeconds(Duration window) {

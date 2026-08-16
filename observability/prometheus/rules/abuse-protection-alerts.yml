@@ -1,0 +1,36 @@
+groups:
+  - name: payflow-abuse-protection
+    interval: 15s
+    rules:
+      - alert: PayFlowAbuseProtectionRedisFailures
+        expr: sum by (workflow, failure_mode) (increase(payflow_security_abuse_protection_redis_failures_total[5m])) > 0
+        for: 1m
+        labels:
+          severity: critical
+          service: payflow
+          component: abuse-protection
+        annotations:
+          summary: Generalized abuse-protection Redis failures detected
+          description: Redis dependency failures have affected generalized abuse-protection decisions during the last five minutes.
+
+      - alert: PayFlowAbuseProtectionBlockingPressure
+        expr: sum by (workflow) (increase(payflow_security_abuse_protection_decisions_total{outcome="blocked"}[10m])) >= 25
+        for: 5m
+        labels:
+          severity: warning
+          service: payflow
+          component: abuse-protection
+        annotations:
+          summary: Generalized abuse-protection blocking pressure is elevated
+          description: A bounded workflow has produced at least 25 blocked decisions during a ten-minute window and the condition has remained active for five minutes.
+
+      - alert: PayFlowAbuseProtectionDependencyBypass
+        expr: sum by (workflow) (increase(payflow_security_abuse_protection_decisions_total{outcome="dependency_bypass"}[5m])) > 0
+        for: 1m
+        labels:
+          severity: critical
+          service: payflow
+          component: abuse-protection
+        annotations:
+          summary: Generalized abuse protection bypassed a failed dependency
+          description: At least one fail-open generalized abuse-protection decision bypassed Redis enforcement during the last five minutes.
