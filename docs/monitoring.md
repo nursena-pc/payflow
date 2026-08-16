@@ -1,13 +1,16 @@
 # Local Monitoring
 
-PayFlow includes a local observability stack for monitoring the transactional outbox publisher.
+PayFlow includes a local observability stack for application health, transactional
+outbox delivery, Kafka consumer failures, and generalized abuse protection.
 
 The stack consists of:
 
 - Spring Boot Actuator and Micrometer
 - Prometheus
-- Grafana
 - Prometheus alerting rules
+- Alertmanager
+- Grafana
+- Mailpit for local notification capture
 
 ## Architecture
 
@@ -17,13 +20,21 @@ The stack consists of:
       v
     Prometheus
       |
-      +-- Metrics and PromQL queries
-      +-- Transactional outbox alert rules
+      +-- Metrics and bounded PromQL queries
+      +-- Outbox, Kafka-consumer, and abuse-protection rules
+      |
+      +------> Alertmanager ------> Mailpit
       |
       v
     Grafana
       |
-      +-- PayFlow Transactional Outbox dashboard
+      +-- Transactional Outbox dashboard
+      +-- Kafka Consumer Failures dashboard
+      +-- Abuse Protection dashboard
+
+Prometheus loads every committed rule file from
+`observability/prometheus/rules/*.yml` and forwards firing alerts to the
+repository-provisioned Alertmanager service.
 
 ## Prerequisites
 
@@ -80,51 +91,58 @@ docker compose `
 | Prometheus | http://localhost:9090 |
 | Prometheus targets | http://localhost:9090/targets |
 | Prometheus alerts | http://localhost:9090/alerts |
+| Alertmanager | http://localhost:9093 |
 | Grafana | http://localhost:3000 |
+| Mailpit | http://localhost:8025 |
 | Outbox dashboard | http://localhost:3000/d/payflow-outbox-overview/payflow-transactional-outbox |
+| Kafka failures dashboard | http://localhost:3000/d/payflow-kafka-consumer-failures/payflow-kafka-consumer-failures |
+| Abuse-protection dashboard | http://localhost:3000/d/payflow-abuse-protection/payflow-abuse-protection |
 
 Grafana credentials are read from the local `.env` file.
 
-## Grafana dashboard
+## Grafana dashboards
 
-Grafana automatically provisions the `PayFlow Transactional Outbox` dashboard from:
+Grafana provisions repository-owned, read-only dashboards from:
 
-    observability/grafana/dashboards/outbox-overview.json
+    observability/grafana/dashboards/
+
+The current dashboards are:
+
+- `outbox-overview.json` — transactional outbox backlog, age, polling, and outcomes
+- `kafka-consumer-failures.json` — bounded consumer failure, retry, and recovery signals
+- `abuse-protection.json` — bounded workflow decisions, rejection reasons, disabled
+  enforcement, dependency bypass, and Redis dependency failures
 
 Dashboard provisioning is configured in:
 
     observability/grafana/provisioning/dashboards/dashboards.yml
 
-The dashboard includes:
-
-- Active outbox backlog
-- Age of the oldest active event
-- Terminal publishing outcomes
-- Polling success ratio
-- Event outcome throughput
-- Average polling duration
-- Backlog history
-- Oldest-event age history
-
-The provisioned dashboard is read-only. Repository files remain the source of truth.
+Repository JSON files remain the source of truth. Dashboard queries must stay
+bounded and must not introduce identity, credential, raw client, Redis-key,
+request-URI, or raw exception dimensions.
 
 ## Prometheus alert rules
 
-Transactional outbox rules are stored in:
+Prometheus loads the committed rule directory:
 
-    observability/prometheus/rules/outbox-alerts.yml
+    observability/prometheus/rules/
+
+Current rule files cover transactional outbox, Kafka consumer failures, and
+generalized abuse protection. Increment 5 adds:
+
+    observability/prometheus/rules/abuse-protection-alerts.yml
 
 | Alert | Severity | Condition |
 |---|---|---|
-| `PayFlowMetricsTargetDown` | Critical | PayFlow cannot be scraped for one minute |
-| `PayFlowOutboxPollingFailures` | Warning | A polling cycle fails within five minutes |
-| `PayFlowOutboxBacklogHigh` | Warning | Backlog remains at or above 100 for five minutes |
-| `PayFlowOutboxOldestEventStale` | Critical | Oldest active event remains at least 120 seconds old |
-| `PayFlowOutboxTerminalFailures` | Critical | A failed or unresolved outcome occurs within ten minutes |
+| `PayFlowAbuseProtectionRedisFailures` | Critical | At least one Redis dependency failure is observed in a five-minute window and remains firing for one minute |
+| `PayFlowAbuseProtectionBlockingPressure` | Warning | A bounded workflow records at least 25 blocked decisions in ten minutes and the condition remains active for five minutes |
+| `PayFlowAbuseProtectionDependencyBypass` | Critical | At least one fail-open dependency-bypass decision is observed in five minutes and remains firing for one minute |
 
-Prometheus evaluates these rules locally.
-
-Alertmanager is not currently part of the PayFlow stack. Alerts are visible in Prometheus, but they are not delivered to external notification channels.
+Alertmanager is part of the monitoring profile. Prometheus forwards firing
+alerts to `alertmanager:9093`; Alertmanager routes warning and critical alerts
+to Mailpit-backed local email receivers. See [Local Alert
+Notifications](alerting.md) and the [Abuse-Protection Operations
+Runbook](operations/abuse-protection-observability.md).
 
 ## Configuration validation
 
@@ -152,7 +170,7 @@ docker compose `
     /etc/prometheus/prometheus.yml
 ~~~
 
-Validate only the transactional outbox rules:
+Validate the generalized abuse-protection rules:
 
 ~~~powershell
 docker compose `
@@ -163,8 +181,11 @@ docker compose `
     --entrypoint /bin/promtool `
     prometheus `
     check rules `
-    /etc/prometheus/rules/outbox-alerts.yml
+    /etc/prometheus/rules/abuse-protection-alerts.yml
 ~~~
+
+The Prometheus configuration loads the complete `*.yml` rule directory, so
+`check config` remains the aggregate provisioning gate.
 
 ## Security considerations
 
@@ -179,6 +200,11 @@ Other Actuator endpoints remain protected.
 The public Prometheus endpoint is intended for local Compose networking. Production deployments should restrict access through private networking, network policies, or authenticated infrastructure.
 
 Grafana anonymous access and public user registration are disabled.
+
+Alertmanager and Mailpit are local-development services in the Compose
+monitoring profile. Production notification routing must use deployment-owned
+private networking, authenticated infrastructure, and organization-approved
+receivers rather than exposing these local ports publicly.
 
 ## Stop the stack
 

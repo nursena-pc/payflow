@@ -2,16 +2,21 @@
 
 ## Current delivery state
 
-Increment 4 extends the shared Redis foundation across email-verification,
-password-recovery, MFA login-challenge confirmation, and step-up grant issuance.
-Account-action requests evaluate normalized email and the trusted effective
-client before account lookup. MFA challenge confirmation evaluates a
-fixed-length, non-reversible challenge identifier and the trusted effective
-client before challenge lookup or sensitive state mutation. Step-up issuance
-evaluates the authenticated JWT subject and trusted effective client before user
-or authenticator locking, second-factor consumption, or grant creation.
-`ABUSE_PROTECTION_ENABLED` remains `false` by default so activation is an
-explicit deployment decision. The login limiter remains unchanged.
+Increment 5 builds operational observability on the shared Redis enforcement
+foundation already used by email-verification, password-recovery, MFA
+login-challenge confirmation, and step-up grant issuance. Account-action
+requests evaluate normalized email and the trusted effective client before
+account lookup. MFA challenge confirmation evaluates a fixed-length,
+non-reversible challenge identifier and the trusted effective client before
+challenge lookup or sensitive state mutation. Step-up issuance evaluates the
+authenticated JWT subject and trusted effective client before user or
+authenticator locking, second-factor consumption, or grant creation.
+
+Bounded Micrometer decisions, Redis-failure metrics, a dedicated Grafana
+dashboard, Prometheus alerts, and an operations runbook now cover these
+workflows without changing enforcement semantics. `ABUSE_PROTECTION_ENABLED`
+remains `false` by default so activation is an explicit deployment decision.
+The login limiter remains unchanged.
 
 ## Policy contract
 
@@ -90,10 +95,19 @@ an implicit exemption from later review.
 
 ## Privacy and observability
 
-Future enforcement may emit only finite workflow, dimension, decision, and
-failure classifications. Email addresses, raw client addresses, credentials,
-proofs, tokens, digests, Redis keys, counts, and TTL values are prohibited from
-observable output.
+Generalized enforcement emits only finite application-owned classifications.
+`payflow.security.abuse_protection.decisions` uses bounded `workflow`,
+`outcome`, and `reason` tags. `payflow.security.abuse_protection.redis.failures`
+uses bounded `workflow` and `failure_mode` tags.
+
+Email addresses, user identifiers, JWT subjects, raw client addresses,
+credentials, proofs, tokens, digests, Redis keys, counters, TTL values, request
+URIs, and raw exception classes are prohibited from metric labels, dashboard
+dimensions, alert annotations, and incident notes.
+
+See the [Abuse-Protection Operations
+Runbook](operations/abuse-protection-observability.md) for safe triage,
+mitigation, rollback, and false-positive handling.
 
 ## Compatibility
 
