@@ -1,5 +1,10 @@
 param(
-    [ValidateSet('harness-smoke')]
+    [ValidateSet(
+        'harness-smoke',
+        'account-action-request',
+        'mfa-challenge-confirm',
+        'step-up-grant'
+    )]
     [string] $Scenario = 'harness-smoke',
 
     [ValidatePattern('^[a-z0-9][a-z0-9_-]{0,62}$')]
@@ -49,6 +54,15 @@ $ComposeArguments = @(
 $ScenarioFile = switch ($Scenario) {
     'harness-smoke' {
         '/work/scenarios/harness-smoke.js'
+    }
+    'account-action-request' {
+        '/work/scenarios/account-action-request.js'
+    }
+    'mfa-challenge-confirm' {
+        '/work/scenarios/mfa-challenge-confirm.js'
+    }
+    'step-up-grant' {
+        '/work/scenarios/step-up-grant.js'
     }
     default {
         throw "Unsupported scenario: $Scenario"
