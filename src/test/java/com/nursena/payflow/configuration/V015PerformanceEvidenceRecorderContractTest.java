@@ -131,6 +131,16 @@ class V015PerformanceEvidenceRecorderContractTest {
     }
 
     @Test
+    void shouldCaptureJavaRuntimeMetadataWithoutNativeStderrRedirection()
+        throws IOException {
+
+        String recorder = Files.readString(RECORDER);
+
+        assertThat(recorder)
+            .contains("exec -T app java --version")
+            .doesNotContain("exec -T app java -version 2>&1");
+    }
+    @Test
     void shouldPreserveSecurityDecisionBoundariesDuringEvidence()
         throws IOException {
 

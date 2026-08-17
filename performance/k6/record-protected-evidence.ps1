@@ -472,7 +472,7 @@ try {
 
     Wait-HttpSuccess -Url $HealthUrl -Name 'Evidence PayFlow health'
 
-    $JavaLines = @(docker compose @ComposeArguments exec -T app java -version 2>&1)
+    $JavaLines = @(docker compose @ComposeArguments exec -T app java --version)
     Assert-NativeSuccess 'Java runtime version'
     $JavaVersion = [string] ($JavaLines | Select-Object -First 1)
 
