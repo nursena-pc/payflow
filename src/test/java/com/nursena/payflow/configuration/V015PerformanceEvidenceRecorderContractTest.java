@@ -156,6 +156,21 @@ class V015PerformanceEvidenceRecorderContractTest {
             .doesNotContain("--new-machine-readable-summary");
     }
     @Test
+    void shouldKeepNestedRunnerOutputOutOfThePhaseReturnPipeline()
+        throws IOException {
+
+        String recorder = Files.readString(RECORDER);
+
+        assertThat(recorder)
+            .contains(
+                "-SummaryExportPath $SummaryContainerPath |",
+                "Out-Host",
+                "return [pscustomobject] @{",
+                "p95Ms = [Math]::Round($P95, 3)",
+                "p99Ms = [Math]::Round($P99, 3)"
+            );
+    }
+    @Test
     void shouldCaptureJavaRuntimeMetadataWithoutNativeStderrRedirection()
         throws IOException {
 

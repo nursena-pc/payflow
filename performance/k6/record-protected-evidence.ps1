@@ -289,7 +289,8 @@ function Invoke-EvidencePhase {
     & (Join-Path $PSScriptRoot 'run.ps1') `
         -Scenario account-action-evidence `
         -ProjectName $ProjectName `
-        -SummaryExportPath $SummaryContainerPath
+        -SummaryExportPath $SummaryContainerPath |
+        Out-Host
 
     if (-not (Test-Path -LiteralPath $SummaryHostPath)) {
         throw "k6 summary export is missing for phase $Name."
