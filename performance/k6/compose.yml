@@ -1,0 +1,49 @@
+services:
+  postgres:
+    ports: !reset []
+
+  redis:
+    ports: !reset []
+
+  kafka:
+    ports: !reset []
+
+  mailpit:
+    ports: !override
+      - "${PAYFLOW_PERFORMANCE_MAILPIT_PORT:-18025}:8025"
+
+  app:
+    ports: !override
+      - "${PAYFLOW_PERFORMANCE_APP_PORT:-18080}:8080"
+    environment:
+      ABUSE_PROTECTION_ENABLED: ${ABUSE_PROTECTION_ENABLED:-true}
+
+  k6:
+    profiles: ["loadtest"]
+    image: grafana/k6:2.1.0
+    working_dir: /work
+    environment:
+      BASE_URL: ${K6_BASE_URL:-http://app:8080}
+      K6_PROFILE: ${K6_PROFILE:-smoke}
+      K6_RATE: ${K6_RATE:-10}
+      PAYFLOW_K6_DURATION: ${K6_DURATION:-120s}
+      K6_PRE_ALLOCATED_VUS: ${K6_PRE_ALLOCATED_VUS:-20}
+      K6_MAX_VUS: ${K6_MAX_VUS:-100}
+      K6_FIXTURE_FILE: ${K6_FIXTURE_FILE:-/work/fixtures/credential-pool.example.json}
+      K6_ACCOUNT_ACTION_EMAIL_PREFIX: ${K6_ACCOUNT_ACTION_EMAIL_PREFIX:-payflow-load}
+      PAYFLOW_K6_EVIDENCE_RATE: ${PAYFLOW_K6_EVIDENCE_RATE:-10}
+      PAYFLOW_K6_EVIDENCE_DURATION: ${PAYFLOW_K6_EVIDENCE_DURATION:-60s}
+      PAYFLOW_K6_EVIDENCE_PRE_ALLOCATED_VUS: ${PAYFLOW_K6_EVIDENCE_PRE_ALLOCATED_VUS:-40}
+      PAYFLOW_K6_EVIDENCE_MAX_VUS: ${PAYFLOW_K6_EVIDENCE_MAX_VUS:-200}
+      PAYFLOW_K6_REGISTRATION_RATE: ${PAYFLOW_K6_REGISTRATION_RATE:-1}
+      PAYFLOW_K6_REGISTRATION_DURATION: ${PAYFLOW_K6_REGISTRATION_DURATION:-30s}
+      PAYFLOW_K6_REGISTRATION_PRE_ALLOCATED_VUS: ${PAYFLOW_K6_REGISTRATION_PRE_ALLOCATED_VUS:-8}
+      PAYFLOW_K6_REGISTRATION_MAX_VUS: ${PAYFLOW_K6_REGISTRATION_MAX_VUS:-64}
+      K6_REGISTRATION_EMAIL_PREFIX: ${K6_REGISTRATION_EMAIL_PREFIX:-pf-reg}
+      K6_REGISTRATION_PASSWORD: ${K6_REGISTRATION_PASSWORD:-}
+    volumes:
+      - ./performance/k6:/work:ro
+      - ./performance/results:/results
+    depends_on:
+      app:
+        condition: service_started

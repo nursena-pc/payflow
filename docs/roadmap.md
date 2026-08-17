@@ -770,12 +770,16 @@ operations without weakening fail-closed defaults or the existing login limiter.
 
 ### Increment 6 — Reproducible load and performance evidence
 
-- [ ] Define latency, throughput, concurrency, saturation, and overload budgets
-- [ ] Add reproducible load scenarios for representative protected workflows
-- [ ] Record environment, dataset, duration, warm-up, measurement method, and limitations
-- [ ] Verify abuse protection remains effective under concurrent and overload conditions
-- [ ] Keep load tooling outside the normal unit-test lifecycle while retaining repeatable commands
-
+- [x] Define latency, throughput, concurrency, saturation, and overload budgets
+- [x] Add reproducible load scenarios for representative protected workflows
+- [x] Record environment, dataset, duration, warm-up, measurement method, and limitations
+- [x] Verify abuse protection remains effective under concurrent and overload conditions
+- [x] Keep load tooling outside the normal unit-test lifecycle while retaining repeatable commands
+Protected-workflow evidence is recorded under `docs/performance/evidence/`.
+The bounded registration experiment produced an evidence-backed `DEFER`
+decision for v0.15.0 because material resource exhaustion was not demonstrated
+through the tested 16 registrations/second ceiling. Registration keeps its
+existing public behavior and no generalized registration limiter is added.
 ### Increment 7 — Contract alignment and release preparation
 
 - [ ] Align OpenAPI, Postman, README, changelog, ADRs, threat model, and operations guidance
