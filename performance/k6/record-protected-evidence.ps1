@@ -193,7 +193,13 @@ function Get-SummaryMetricValue {
         [double] $DefaultValue = [double]::NaN
     )
 
-    $MetricProperty = $Summary.metrics.PSObject.Properties[$MetricName]
+    $MetricsProperty = $Summary.PSObject.Properties['metrics']
+
+    if ($null -eq $MetricsProperty) {
+        throw 'k6 compatibility summary metrics object is missing.'
+    }
+
+    $MetricProperty = $MetricsProperty.Value.PSObject.Properties[$MetricName]
 
     if ($null -eq $MetricProperty) {
         if (-not [double]::IsNaN($DefaultValue)) {
@@ -203,7 +209,18 @@ function Get-SummaryMetricValue {
         throw "Summary metric is missing: $MetricName"
     }
 
-    $ValueProperty = $MetricProperty.Value.values.PSObject.Properties[$ValueName]
+    $ValueProperty = $MetricProperty.Value.PSObject.Properties[$ValueName]
+
+    if (
+        $null -eq $ValueProperty -and
+        [string]::Equals(
+            $ValueName,
+            'rate',
+            [StringComparison]::Ordinal
+        )
+    ) {
+        $ValueProperty = $MetricProperty.Value.PSObject.Properties['value']
+    }
 
     if ($null -eq $ValueProperty) {
         if (-not [double]::IsNaN($DefaultValue)) {
@@ -215,7 +232,6 @@ function Get-SummaryMetricValue {
 
     return [double] $ValueProperty.Value
 }
-
 function Format-Decimal {
     param([double] $Value, [string] $Pattern = '0.00')
 

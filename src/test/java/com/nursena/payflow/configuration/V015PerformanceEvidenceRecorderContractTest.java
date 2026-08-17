@@ -131,6 +131,31 @@ class V015PerformanceEvidenceRecorderContractTest {
     }
 
     @Test
+    void shouldParseThePinnedK6CompatibilitySummaryExportShape()
+        throws IOException {
+
+        String recorder = Files.readString(RECORDER);
+        String runner = Files.readString(RUNNER);
+
+        assertThat(recorder)
+            .contains(
+                "$Summary.PSObject.Properties['metrics']",
+                "$MetricsProperty.Value.PSObject.Properties[$MetricName]",
+                "$MetricProperty.Value.PSObject.Properties[$ValueName]",
+                "$MetricProperty.Value.PSObject.Properties['value']",
+                "[StringComparison]::Ordinal"
+            )
+            .doesNotContain(
+                "$MetricProperty.Value.values.PSObject.Properties[$ValueName]",
+                "$Summary.PSObject.Properties['results']",
+                "$MetricMatches[0].PSObject.Properties['values']"
+            );
+
+        assertThat(runner)
+            .contains("--summary-export")
+            .doesNotContain("--new-machine-readable-summary");
+    }
+    @Test
     void shouldCaptureJavaRuntimeMetadataWithoutNativeStderrRedirection()
         throws IOException {
 
