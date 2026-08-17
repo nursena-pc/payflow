@@ -14,11 +14,11 @@ function positiveInteger(name, fallback) {
     return value;
 }
 
-function durationSeconds(value) {
+function durationSeconds(value, name) {
     const match = /^(\d+)(s|m)$/.exec(value);
 
     if (!match) {
-        throw new Error('K6_DURATION must use whole seconds or minutes.');
+        throw new Error(`${name} must use whole seconds or minutes.`);
     }
 
     const amount = Number.parseInt(match[1], 10);
@@ -59,7 +59,7 @@ export function workloadOptions(operation) {
 
     const rate = positiveInteger('K6_RATE', DEFAULT_RATE);
     const duration = (__ENV.PAYFLOW_K6_DURATION || DEFAULT_DURATION).trim();
-    durationSeconds(duration);
+    durationSeconds(duration, 'PAYFLOW_K6_DURATION');
 
     thresholds[`http_req_duration{operation:${operation}}`] = [
         'p(95)<=750',
@@ -86,6 +86,54 @@ export function workloadOptions(operation) {
     };
 }
 
+
+export function evidenceWorkloadOptions(operation) {
+    const rate = positiveInteger('PAYFLOW_K6_EVIDENCE_RATE', 10);
+    const duration = (
+        __ENV.PAYFLOW_K6_EVIDENCE_DURATION || '60s'
+    ).trim();
+    durationSeconds(duration, 'PAYFLOW_K6_EVIDENCE_DURATION');
+
+    const preAllocatedVUs = positiveInteger(
+        'PAYFLOW_K6_EVIDENCE_PRE_ALLOCATED_VUS',
+        40
+    );
+    const maxVUs = positiveInteger('PAYFLOW_K6_EVIDENCE_MAX_VUS', 200);
+
+    if (maxVUs < preAllocatedVUs) {
+        throw new Error(
+            'PAYFLOW_K6_EVIDENCE_MAX_VUS must be at least the pre-allocated VU count.'
+        );
+    }
+
+    return {
+        discardResponseBodies: true,
+        summaryTrendStats: ['med', 'p(95)', 'p(99)'],
+        scenarios: {
+            protected_workflow: {
+                executor: 'constant-arrival-rate',
+                exec: 'protectedWorkflow',
+                rate,
+                timeUnit: '1s',
+                duration,
+                preAllocatedVUs,
+                maxVUs,
+                tags: { operation },
+            },
+            health_probe: {
+                executor: 'constant-arrival-rate',
+                exec: 'healthProbe',
+                rate: 1,
+                timeUnit: '1s',
+                duration,
+                preAllocatedVUs: 1,
+                maxVUs: 2,
+                tags: { operation: 'health_probe' },
+            },
+        },
+    };
+}
+
 export function requiredIterationCount() {
     if (workloadProfile() === 'smoke') {
         return 1;
@@ -93,7 +141,7 @@ export function requiredIterationCount() {
 
     const rate = positiveInteger('K6_RATE', DEFAULT_RATE);
     const duration = (__ENV.PAYFLOW_K6_DURATION || DEFAULT_DURATION).trim();
-    return rate * durationSeconds(duration);
+    return rate * durationSeconds(duration, 'PAYFLOW_K6_DURATION');
 }
 
 export function syntheticAccountActionEmail(iteration) {

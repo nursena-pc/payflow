@@ -69,3 +69,32 @@ comparable evidence.
 Only sanitized aggregate evidence that satisfies
 `docs/performance/abuse-protection-performance-contract.md` may later be
 promoted into committed documentation.
+
+
+## Checkpoint 4A — protected-workflow evidence recorder
+
+`record-protected-evidence.ps1` is the reviewed collector for the frozen
+protected-workflow measurement contract. It owns only its explicitly named
+isolated Compose project, requires a clean Git working tree, records the exact
+HEAD, and writes raw k6 summaries plus a sanitized candidate record only under
+ignored `performance/results/evidence/`.
+
+The recorder runs the phases frozen before evidence collection: 30 seconds at
+5 iterations/second for warm-up, 120 seconds at 10 iterations/second for steady
+state, 60-second saturation stages at 10, 20, 40, and 80 iterations/second,
+then a 60-second overload observation at the first saturated rate plus 50% or at
+120 iterations/second when no earlier stage saturates. A one-per-second health
+probe runs concurrently with measured traffic, and recovery must succeed within
+30 seconds after generated load stops.
+
+Each independent phase clears only the disposable Redis state inside the named
+performance project before measurement. This prevents quota state from an
+earlier phase from changing the next phase boundary; it does not modify
+production quota values or fail-open behavior. Abuse-protection decisions are
+recorded only as bounded aggregate deltas, and any dependency bypass or more
+than twenty allowed email-verification decisions in a phase aborts collection.
+
+Checkpoint 4A commits the recorder and executable contracts first. Do not treat
+a result as accepted evidence until that exact recorder commit has protected CI
+and Docker Smoke green. The resulting candidate Markdown remains ignored until
+it is separately reviewed and promoted in a later commit.

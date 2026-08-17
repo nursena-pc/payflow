@@ -3,16 +3,29 @@ param(
         'harness-smoke',
         'account-action-request',
         'account-action-quota-pressure',
+        'account-action-evidence',
         'mfa-challenge-confirm',
         'step-up-grant'
     )]
     [string] $Scenario = 'harness-smoke',
 
     [ValidatePattern('^[a-z0-9][a-z0-9_-]{0,62}$')]
-    [string] $ProjectName = 'payflow-performance'
+    [string] $ProjectName = 'payflow-performance',
+
+    [string] $SummaryExportPath = ''
 )
 
 $ErrorActionPreference = 'Stop'
+
+if (-not [string]::IsNullOrWhiteSpace($SummaryExportPath)) {
+    if (
+        $SummaryExportPath -notmatch '^/results/[A-Za-z0-9][A-Za-z0-9._/-]*\.json$' -or
+        $SummaryExportPath.Contains('..') -or
+        $SummaryExportPath.Contains('\\')
+    ) {
+        throw 'SummaryExportPath must be a bounded JSON path under /results/.'
+    }
+}
 
 $HadGrafanaAdminPassword = Test-Path Env:GRAFANA_ADMIN_PASSWORD
 $PreviousGrafanaAdminPassword = $env:GRAFANA_ADMIN_PASSWORD
@@ -62,6 +75,9 @@ $ScenarioFile = switch ($Scenario) {
     'account-action-quota-pressure' {
         '/work/scenarios/account-action-quota-pressure.js'
     }
+    'account-action-evidence' {
+        '/work/scenarios/account-action-evidence.js'
+    }
     'mfa-challenge-confirm' {
         '/work/scenarios/mfa-challenge-confirm.js'
     }
@@ -110,7 +126,20 @@ try {
 
     Write-Host "`n=== RUN $Scenario ===" -ForegroundColor Cyan
 
-    docker compose @ComposeArguments run --rm --no-deps k6 run $ScenarioFile
+    $K6Arguments = @('run')
+
+    if (-not [string]::IsNullOrWhiteSpace($SummaryExportPath)) {
+        $K6Arguments += @(
+            '--summary-trend-stats',
+            'med,p(95),p(99)',
+            '--summary-export',
+            $SummaryExportPath
+        )
+    }
+
+    $K6Arguments += $ScenarioFile
+
+    docker compose @ComposeArguments run --rm --no-deps k6 @K6Arguments
     Assert-NativeSuccess "k6 scenario $Scenario"
 }
 finally {

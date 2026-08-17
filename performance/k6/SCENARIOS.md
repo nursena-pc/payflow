@@ -131,3 +131,28 @@ This checkpoint establishes reproducible fixture setup and concurrency/quota
 correctness. Its smoke and quota-pressure runs are not accepted steady-state,
 saturation, overload, or registration performance evidence; those measurements
 remain later Increment 6 checkpoints.
+
+
+## Checkpoint 4A — accepted-evidence collection shape
+
+`account-action-evidence` is the measurement-only form of the representative
+email-verification request workflow. It uses a namespaced arrival-rate contract
+(`PAYFLOW_K6_EVIDENCE_*`) so k6's reserved execution environment cannot override
+script-defined scenarios. The measured request path exports only aggregate
+custom metrics for request count, request duration, and unexpected failures.
+A second one-request/second scenario probes `/api/v1/system/health` throughout
+each phase so health loss is observable without mixing health latency into the
+protected-workflow latency trend.
+
+`record-protected-evidence.ps1` orchestrates the frozen phases and calls
+`run.ps1 -Scenario account-action-evidence` with a bounded summary-export path
+under `/results/`. Raw summaries are ignored. The candidate evidence contains
+only environment metadata and aggregate measurements; synthetic emails are
+request bodies only and are never metric tags or evidence dimensions.
+
+The recorder evaluates steady-state acceptance from the frozen p95/p99,
+unexpected-failure, dropped-iteration, and achieved-rate budgets. Saturation is
+the first 10/20/40/80 stage where p95 exceeds 1500 ms, unexpected failures reach
+1%, dropped iterations are non-zero, or the concurrent health probe observes a
+failure. Overload is then measured for 60 seconds and recovery is bounded to 30
+seconds, exactly as required by the pre-existing performance contract.

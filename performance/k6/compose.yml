@@ -31,6 +31,10 @@ services:
       K6_MAX_VUS: ${K6_MAX_VUS:-100}
       K6_FIXTURE_FILE: ${K6_FIXTURE_FILE:-/work/fixtures/credential-pool.example.json}
       K6_ACCOUNT_ACTION_EMAIL_PREFIX: ${K6_ACCOUNT_ACTION_EMAIL_PREFIX:-payflow-load}
+      PAYFLOW_K6_EVIDENCE_RATE: ${PAYFLOW_K6_EVIDENCE_RATE:-10}
+      PAYFLOW_K6_EVIDENCE_DURATION: ${PAYFLOW_K6_EVIDENCE_DURATION:-60s}
+      PAYFLOW_K6_EVIDENCE_PRE_ALLOCATED_VUS: ${PAYFLOW_K6_EVIDENCE_PRE_ALLOCATED_VUS:-40}
+      PAYFLOW_K6_EVIDENCE_MAX_VUS: ${PAYFLOW_K6_EVIDENCE_MAX_VUS:-200}
     volumes:
       - ./performance/k6:/work:ro
       - ./performance/results:/results
