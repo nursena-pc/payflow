@@ -4,6 +4,7 @@ param(
         'account-action-request',
         'account-action-quota-pressure',
         'account-action-evidence',
+        'registration-experiment',
         'mfa-challenge-confirm',
         'step-up-grant'
     )]
@@ -77,6 +78,9 @@ $ScenarioFile = switch ($Scenario) {
     }
     'account-action-evidence' {
         '/work/scenarios/account-action-evidence.js'
+    }
+    'registration-experiment' {
+        '/work/scenarios/registration-experiment.js'
     }
     'mfa-challenge-confirm' {
         '/work/scenarios/mfa-challenge-confirm.js'

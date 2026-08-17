@@ -134,6 +134,90 @@ export function evidenceWorkloadOptions(operation) {
     };
 }
 
+export function registrationExperimentOptions() {
+    const rate = positiveInteger(
+        'PAYFLOW_K6_REGISTRATION_RATE',
+        1
+    );
+    const duration = (
+        __ENV.PAYFLOW_K6_REGISTRATION_DURATION || '30s'
+    ).trim();
+
+    durationSeconds(
+        duration,
+        'PAYFLOW_K6_REGISTRATION_DURATION'
+    );
+
+    const preAllocatedVUs = positiveInteger(
+        'PAYFLOW_K6_REGISTRATION_PRE_ALLOCATED_VUS',
+        8
+    );
+    const maxVUs = positiveInteger(
+        'PAYFLOW_K6_REGISTRATION_MAX_VUS',
+        64
+    );
+
+    if (maxVUs < preAllocatedVUs) {
+        throw new Error(
+            'PAYFLOW_K6_REGISTRATION_MAX_VUS must be at least ' +
+            'the pre-allocated VU count.'
+        );
+    }
+
+    return {
+        discardResponseBodies: true,
+        summaryTrendStats: ['med', 'p(95)', 'p(99)'],
+        scenarios: {
+            registration: {
+                executor: 'constant-arrival-rate',
+                exec: 'registration',
+                rate,
+                timeUnit: '1s',
+                duration,
+                preAllocatedVUs,
+                maxVUs,
+                tags: { operation: 'registration_experiment' },
+            },
+            health_probe: {
+                executor: 'constant-arrival-rate',
+                exec: 'healthProbe',
+                rate: 1,
+                timeUnit: '1s',
+                duration,
+                preAllocatedVUs: 1,
+                maxVUs: 2,
+                tags: { operation: 'health_probe' },
+            },
+        },
+    };
+}
+
+export function syntheticRegistrationEmail(iteration) {
+    const prefix = (
+        __ENV.K6_REGISTRATION_EMAIL_PREFIX || ''
+    ).trim().toLowerCase();
+
+    if (!/^[a-z0-9-]{1,40}$/.test(prefix)) {
+        throw new Error(
+            'K6_REGISTRATION_EMAIL_PREFIX must use only lowercase ' +
+            'letters, digits, or hyphens.'
+        );
+    }
+
+    return `${prefix}-${iteration}@example.invalid`;
+}
+
+export function requiredRegistrationPassword() {
+    const password = __ENV.K6_REGISTRATION_PASSWORD || '';
+
+    if (password.length < 12 || password.length > 72) {
+        throw new Error(
+            'K6_REGISTRATION_PASSWORD must contain 12 to 72 characters.'
+        );
+    }
+
+    return password;
+}
 export function requiredIterationCount() {
     if (workloadProfile() === 'smoke') {
         return 1;
