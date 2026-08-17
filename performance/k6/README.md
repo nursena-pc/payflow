@@ -15,6 +15,7 @@ $env:MAIL_CONTENT_ENCRYPTION_KEY = '<local test key>'
 $env:MFA_SECRET_ENCRYPTION_KEY = '<local test key>'
 $env:GRAFANA_ADMIN_PASSWORD = 'payflow-performance-local-only'
 $env:PAYFLOW_PERFORMANCE_APP_PORT = '18080'
+$env:PAYFLOW_PERFORMANCE_MAILPIT_PORT = '18025'
 
 docker compose `
     -p payflow-performance `
@@ -34,11 +35,13 @@ even when the monitoring profile is not started. The manual command above uses
 a local-only placeholder for that validation-only requirement.
 
 The performance overlay is isolated from an ordinary developer Compose stack.
-It removes host publication for PostgreSQL, Redis, Kafka, and Mailpit, and
-replaces the application's ordinary `8080:8080` mapping with host port `18080`
-by default. k6 still reaches PayFlow over the internal Compose network at
-`http://app:8080`. Set `PAYFLOW_PERFORMANCE_APP_PORT` before Compose startup if
-a different host-only health-check port is required.
+It removes host publication for PostgreSQL, Redis, and Kafka, replaces the
+application's ordinary `8080:8080` mapping with host port `18080`, and exposes
+only Mailpit's local HTTP UI/API on host port `18025` for disposable account
+verification during performance fixture setup. Mailpit SMTP remains internal to
+the Compose network. k6 still reaches PayFlow at `http://app:8080`. Set
+`PAYFLOW_PERFORMANCE_APP_PORT` or `PAYFLOW_PERFORMANCE_MAILPIT_PORT` before
+Compose startup if either local-only port must change.
 
 The runner assumes the application stack is already healthy in the same Compose
 project selected by `-ProjectName`. It supplies the same local-only placeholder

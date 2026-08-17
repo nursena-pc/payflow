@@ -55,20 +55,23 @@ class V015PerformanceHarnessContractTest {
             .filter(line -> line.trim().equals("ports: !reset []"))
             .count();
 
-        assertThat(resetPortDeclarations).isEqualTo(4);
+        assertThat(resetPortDeclarations).isEqualTo(3);
 
         assertThat(compose)
             .contains(
                 "ports: !override",
                 "PAYFLOW_PERFORMANCE_APP_PORT:-18080",
+                "PAYFLOW_PERFORMANCE_MAILPIT_PORT:-18025",
                 "K6_BASE_URL:-http://app:8080"
             );
 
         assertThat(readme)
             .contains(
                 "isolated from an ordinary developer Compose stack",
-                "PostgreSQL, Redis, Kafka, and Mailpit",
+                "PostgreSQL, Redis, and Kafka",
                 "host port `18080`",
+                "host port `18025`",
+                "Mailpit SMTP remains internal",
                 "`http://app:8080`"
             );
     }

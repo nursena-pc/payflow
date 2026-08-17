@@ -58,7 +58,7 @@ export function workloadOptions(operation) {
     }
 
     const rate = positiveInteger('K6_RATE', DEFAULT_RATE);
-    const duration = (__ENV.K6_DURATION || DEFAULT_DURATION).trim();
+    const duration = (__ENV.PAYFLOW_K6_DURATION || DEFAULT_DURATION).trim();
     durationSeconds(duration);
 
     thresholds[`http_req_duration{operation:${operation}}`] = [
@@ -92,7 +92,7 @@ export function requiredIterationCount() {
     }
 
     const rate = positiveInteger('K6_RATE', DEFAULT_RATE);
-    const duration = (__ENV.K6_DURATION || DEFAULT_DURATION).trim();
+    const duration = (__ENV.PAYFLOW_K6_DURATION || DEFAULT_DURATION).trim();
     return rate * durationSeconds(duration);
 }
 

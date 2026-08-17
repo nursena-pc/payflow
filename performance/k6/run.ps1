@@ -2,6 +2,7 @@ param(
     [ValidateSet(
         'harness-smoke',
         'account-action-request',
+        'account-action-quota-pressure',
         'mfa-challenge-confirm',
         'step-up-grant'
     )]
@@ -58,6 +59,9 @@ $ScenarioFile = switch ($Scenario) {
     'account-action-request' {
         '/work/scenarios/account-action-request.js'
     }
+    'account-action-quota-pressure' {
+        '/work/scenarios/account-action-quota-pressure.js'
+    }
     'mfa-challenge-confirm' {
         '/work/scenarios/mfa-challenge-confirm.js'
     }
@@ -79,8 +83,26 @@ try {
 
     Write-Host "`n=== COMPOSE VALIDATION ===" -ForegroundColor Cyan
 
-    docker compose @ComposeArguments config --quiet
+    $EffectiveComposeLines = @(
+        docker compose @ComposeArguments config
+    )
     Assert-NativeSuccess 'Docker Compose validation'
+
+    $EffectiveCompose = $EffectiveComposeLines -join "`n"
+    $ReservedExecutionOptions = @(
+        'K6_DURATION'
+        'K6_VUS'
+        'K6_ITERATIONS'
+        'K6_STAGES'
+    )
+
+    foreach ($ReservedName in $ReservedExecutionOptions) {
+        $ReservedPattern = '(?m)^\s+' + [regex]::Escape($ReservedName) + ':\s*'
+
+        if ($EffectiveCompose -match $ReservedPattern) {
+            throw "Effective k6 container environment exports reserved execution option $ReservedName; script scenarios would be overridden."
+        }
+    }
 
     Write-Host "`n=== HARNESS PREREQUISITE ===" -ForegroundColor Cyan
     Write-Host 'The PayFlow app stack must already be healthy.'

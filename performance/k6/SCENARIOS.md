@@ -71,3 +71,63 @@ copied into sanitized evidence, or included in issue/PR comments.
 Checkpoint 2 does not define how these one-time credentials are generated in
 bulk. Dataset generation and quota-pressure evidence remain separate reviewed
 checkpoints so setup cost is not silently mixed into measured request latency.
+
+## Checkpoint 3 — runtime fixtures and quota-pressure correctness
+
+Checkpoint 3 adds a bounded runtime fixture generator for credential-backed
+smoke validation. It creates disposable users only through the public PayFlow
+HTTP contracts, consumes the email-verification credential already issued by
+registration through the isolated Mailpit HTTP view, enables MFA, and writes
+the resulting one-time challenge, recovery-code, and access-token material only
+to the ignored `performance/results/runtime/credential-pool.json` path. The
+generator does not request a second email-verification credential: doing so
+would supersede the registration credential and race asynchronous mail
+delivery. The generator defaults to one fixture per credential-backed scenario
+and is capped at four so fixture setup cannot silently become a load test or
+exhaust the independent login limiter.
+
+The setup flow uses PayFlow's RFC 6238-compatible six-digit HMAC-SHA1 TOTP
+contract with a 30-second step. No external TOTP service or reusable credential
+is required, and sensitive values are never printed.
+
+Example against an already healthy isolated performance stack:
+
+```powershell
+.\performance\k6\setup\generate-credential-pool.ps1 `
+    -Count 1 `
+    -BaseUrl http://localhost:18080 `
+    -MailpitUrl http://localhost:18025
+
+$env:K6_FIXTURE_FILE = '/results/runtime/credential-pool.json'
+.\performance\k6\run.ps1 -Scenario mfa-challenge-confirm
+.\performance\k6\run.ps1 -Scenario step-up-grant
+
+# Delete the sensitive runtime fixture as soon as the smoke run is complete.
+Remove-Item .\performance\results\runtime\credential-pool.json -Force
+```
+
+The generator removes any stale file at the selected runtime output path before
+creating a new pool. If setup fails, do not reuse a file from an earlier run.
+The isolated database/Redis volumes should also be discarded after validation.
+
+`account-action-quota-pressure` is a separate correctness scenario: forty
+concurrent one-shot requests use distinct synthetic identities from one load
+client. With the reviewed email-verification client limit of twenty, every HTTP
+response must retain the coarse `202` contract while the bounded Micrometer
+counter delta must be exactly twenty `allowed/none` and twenty
+`blocked/client`, with zero identity/both blocking and zero dependency bypass.
+
+Run quota pressure only on a fresh isolated Compose project and Redis volume so
+prior quota state cannot change the configured boundary. The validator reads
+only `/actuator/prometheus` and reports aggregate bounded counts:
+
+```powershell
+.\performance\k6\validate-quota-pressure.ps1 `
+    -ProjectName payflow-performance-quota `
+    -AppPort 18081
+```
+
+This checkpoint establishes reproducible fixture setup and concurrency/quota
+correctness. Its smoke and quota-pressure runs are not accepted steady-state,
+saturation, overload, or registration performance evidence; those measurements
+remain later Increment 6 checkpoints.
