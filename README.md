@@ -112,7 +112,7 @@ Completed capabilities include:
 - operator-only, paginated command-audit queries and chronological command timelines
 - Prometheus metrics, Grafana dashboards, and alert rules for Kafka consumer failures
 
-OpenAPI documentation covers the implemented API, while executable Postman workflows remain aligned with released end-to-end flows. PayFlow v0.14.0 is the latest published release, and the active development line uses `0.15.0-SNAPSHOT`. The v0.15.0 milestone targets generalized abuse protection, reproducible load and performance evidence, and operational dashboards and alerts without changing the simulated-money boundary.
+OpenAPI documentation covers the implemented API, while executable Postman workflows remain aligned with released end-to-end flows. PayFlow v0.14.0 is the latest published release, and v0.15.0 is in protected release preparation with the Maven version frozen at `0.15.0`. The release candidate freezes generalized abuse protection, reproducible load and performance evidence, and operational dashboards and alerts without changing the simulated-money boundary.
 
 The immutable v0.14.0 publication record is anchored to annotated tag `v0.14.0`, merge commit `d65929b98bb66b22f208d26f75a764e1ade78b6a`, and successful release workflow run [31728977714](https://github.com/nursena-pc/payflow/actions/runs/31728977714). The published `payflow-0.14.0.jar` is 100200050 bytes and its independently verified SHA-256 is `A6533039C5DDBE610D9DDB986DDBDAFE192DD56BE664E86B65A72AECF51F116E`.
 
@@ -173,21 +173,66 @@ Authenticated users can obtain a short-lived, subject-bound, purpose-bound step-
 MFA disable and recovery-code rotation consume exact step-up purposes. MFA disable removes authenticator and recovery-code state, revokes active refresh-token families, and appends credential-free audit evidence atomically. Recovery-code rotation atomically replaces the complete digest set and returns replacement plaintext once. Active-authenticator replacement remains deferred until a safe two-stage replacement lifecycle is designed and verified.
 
 See the [v0.14.0 release notes](docs/releases/v0.14.0.md), [ADR 0014](docs/adr/0014-mfa-and-step-up-authentication.md), the [MFA threat model](docs/security/mfa-threat-model.md), the [MFA operations guide](docs/operations/mfa-security.md), the [TOTP enrollment contract](docs/security/mfa-enrollment.md), the [MFA login challenge contract](docs/security/mfa-login-challenge.md), the [recovery-code contract](docs/security/mfa-recovery-codes.md), and the [step-up contract](docs/security/step-up-authentication.md).
-## v0.15.0 active development
+## v0.15.0 release preparation
 
-The active `0.15.0-SNAPSHOT` line introduces generalized abuse protection for sensitive identity workflows through an application-facing policy independent from controllers and servlet APIs. The design reuses the trusted effective-client-address boundary, supports bounded per-identity and per-client decisions, and keeps Redis state atomic, explicitly expiring, and free of credential material.
+The `0.15.0` release-preparation line contains the complete generalized
+abuse-protection implementation and accepted Increment 6 evidence while release
+finalization is tracked by [issue #166](https://github.com/nursena-pc/payflow/issues/166)
+under milestone [#149](https://github.com/nursena-pc/payflow/issues/149).
 
-The milestone also defines reproducible latency, throughput, concurrency, and overload evidence. Low-cardinality metrics, provisioned Grafana dashboards, actionable alert rules, and documented investigation procedures must remain free of email addresses, raw client addresses, credentials, Redis keys, and counter contents.
+The v0.15.0 milestone remains tracked by issue #149 and covers generalized abuse
+protection, reproducible load and performance evidence, and operational
+dashboards and alerts.
 
-Increment 1 freezes five bounded workflow identifiers, an application-facing `AbuseProtectionPolicyProvider`, explicit `FAIL_CLOSED` or `FAIL_OPEN` dependency behavior, and validated endpoint-specific windows and identity/client limits. The global generalized policy switch defaults off until the shared Redis enforcement and endpoint-wiring increments are delivered; the existing login limiter remains unchanged.
+The historical foundation remains explicit: Increment 1 freezes five bounded workflow identifiers, the global generalized policy switch defaults off, and
+the approved foundation is recorded by issue #151. Later increments delivered
+Redis enforcement, workflow wiring, observability, and reviewed evidence
+without changing that original policy boundary.
 
-See [ADR 0015](docs/adr/0015-generalized-abuse-protection.md), the [generalized abuse-protection threat model](docs/security/abuse-protection-threat-model.md), and the [policy configuration guide](docs/abuse-protection.md). Increment 1 is tracked by [issue #151](https://github.com/nursena-pc/payflow/issues/151).
+Generalized protection is wired for email-verification requests,
+password-recovery requests, MFA login-challenge confirmation, and step-up grant
+issuance. The application-facing policy remains independent from controllers
+and servlet APIs, reuses the trusted effective-client-address boundary, and
+enforces bounded per-identity and per-client decisions through one atomic,
+expiring Redis operation. `ABUSE_PROTECTION_ENABLED` remains `false` by default
+so deployment activation is explicit. The existing password-login limiter is a
+separate compatibility contract and is unchanged.
 
-Increment 2 adds a separate atomic Redis enforcement foundation tracked by [issue #153](https://github.com/nursena-pc/payflow/issues/153). It evaluates identity and trusted-client quotas in one operation, uses expiring digest-only keys, follows explicit dependency-failure policy, and leaves endpoint wiring and the existing login limiter unchanged.
+Email-verification and password-recovery requests preserve the same empty `202
+Accepted` response for eligible, ineligible, quota-limited, and fail-closed
+dependency outcomes. Blocked work creates no account-action credential or mail
+side effect. MFA challenge quota rejection preserves the coarse unauthorized
+contract without mutating challenge attempts, recovery codes, or credentials.
+Step-up rejection runs before user/authenticator locking, second-factor
+consumption, or grant creation. Fail-closed Redis dependency failure for MFA and
+step-up uses the existing coarse `MFA_SECURITY_UNAVAILABLE` boundary.
 
-Development is tracked by [issue #149](https://github.com/nursena-pc/payflow/issues/149). Active-authenticator replacement, CAPTCHA services, external bot detection, WAF or API-gateway deployment, and adaptive risk scoring remain outside the v0.15.0 scope.
+Increment 5 adds bounded Micrometer decision and Redis-failure metrics, the
+dedicated Grafana abuse-protection dashboard, three actionable Prometheus alert
+paths, and an operations runbook. Observable dimensions remain limited to
+application-owned workflow, outcome, reason, and failure-mode values; email
+addresses, user identifiers, raw client addresses, credentials, Redis keys,
+counters, and TTL values remain prohibited.
 
-Increment 3 protects email-verification and password-recovery requests before account lookup with normalized-identity and trusted-client Redis quotas. Limited, dependency-failed, unknown, closed, verified, eligible, and otherwise ineligible requests retain the same empty `202` response; blocked work creates no account-action credential or delivery side effect. Registration enforcement remains deferred until reproducible performance and overload evidence is available.
+Increment 6 adds the pinned external load harness, frozen latency/throughput/
+saturation/overload budgets, quota-pressure evidence with zero bypass, and
+reviewed developer-workstation performance evidence under
+`docs/performance/evidence/`. This evidence is not a production capacity
+certification.
+
+The bounded registration experiment produced an evidence-backed `DEFER`
+decision. No material resource-exhaustion risk was demonstrated through the
+tested 16 registrations/second ceiling, so generalized registration protection
+is not wired in v0.15.0. The existing registration `201` / `400` / `409` public
+contract remains unchanged. This does not claim absence of risk above the tested
+range; a future `ACTIVATE` decision requires new evidence and a separately
+reviewed implementation/comparison checkpoint.
+
+See the [v0.15.0 release notes](docs/releases/v0.15.0.md), [ADR 0015](docs/adr/0015-generalized-abuse-protection.md), the
+[generalized abuse-protection threat model](docs/security/abuse-protection-threat-model.md),
+the [policy guide](docs/abuse-protection.md), the
+[operations runbook](docs/operations/abuse-protection-observability.md), and
+the committed [registration decision evidence](docs/performance/evidence/2026-08-17-registration-defer-f94ffa8.md).
 ## Implemented API
 
 | Method | Endpoint | Authentication | Description |
@@ -350,8 +395,9 @@ An executable Postman workflow is available under [`postman/`](postman/).
 Import:
 
 - `postman/PayFlow.postman_collection.json`
+- `postman/PayFlow.mfa.postman_collection.json` for the MFA and step-up security workflow
 - `postman/PayFlow.local.postman_environment.json`
-- `postman/PayFlow.login-rate-limit.postman_collection.json` for the separate, deliberately disruptive security workflow
+- `postman/PayFlow.login-rate-limit.postman_collection.json` for the separate, deliberately disruptive login-limiter workflow
 
 Select the **PayFlow Local** environment and run the standard application workflow folders in this order:
 

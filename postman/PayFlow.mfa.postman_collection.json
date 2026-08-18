@@ -313,7 +313,7 @@
                                                                                "confirm"
                                                                            ]
                                                               },
-                                                      "description":  "Consumes the pending login challenge using a fresh TOTP or one unused recovery code and stores the returned access token only in the active local environment.",
+                                                      "description":  "Consumes the pending login challenge using a fresh TOTP or one unused recovery code and stores returned credentials only in the active local environment. Generalized abuse protection evaluates challenge-scoped identity and trusted-client quotas before challenge state access; policy-limited requests retain the same coarse unauthorized contract, and Redis fail-closed dependency failure uses MFA_SECURITY_UNAVAILABLE.",
                                                       "body":  {
                                                                    "mode":  "raw",
                                                                    "raw":  "{\n  \"challengeToken\": \"{{mfaChallengeToken}}\",\n  \"code\": \"{{mfaCode}}\"\n}",
@@ -391,7 +391,7 @@
                                                                                "grants"
                                                                            ]
                                                               },
-                                                      "description":  "Issues one short-lived grant for the exact recovery-code-rotation purpose. Use a fresh TOTP or one unused recovery code.",
+                                                      "description":  "Issues one short-lived grant for the exact recovery-code-rotation purpose. Generalized abuse protection evaluates authenticated-subject and trusted-client quotas before second-factor consumption or grant mutation; policy rejection retains the existing coarse step-up failure contract.",
                                                       "body":  {
                                                                    "mode":  "raw",
                                                                    "raw":  "{\n  \"purpose\": \"recovery-code-rotation\",\n  \"code\": \"{{mfaCode}}\"\n}",
@@ -543,7 +543,7 @@
                                                                                "grants"
                                                                            ]
                                                               },
-                                                      "description":  "Issues one short-lived grant for the exact mfa-disable purpose. Generate a fresh authenticator code before sending.",
+                                                      "description":  "Issues one short-lived grant for the exact mfa-disable purpose. Generalized abuse protection evaluates authenticated-subject and trusted-client quotas before second-factor consumption or grant mutation; policy rejection retains the existing coarse step-up failure contract.",
                                                       "body":  {
                                                                    "mode":  "raw",
                                                                    "raw":  "{\n  \"purpose\": \"mfa-disable\",\n  \"code\": \"{{mfaCode}}\"\n}",

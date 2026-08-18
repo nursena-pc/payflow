@@ -57,8 +57,34 @@ Run **Operations** separately. It is not part of the unattended application work
 
 The public registration and login workflow does not grant operations authority automatically.
 
-## Login rate-limit workflow
+## Generalized abuse-protection workflow notes
 
+v0.15.0 generalized abuse protection covers email-verification requests,
+password-recovery requests, MFA login-challenge confirmation, and step-up grant
+issuance when the deployment gate is enabled.
+
+The standard collection includes source-user email-verification and
+password-recovery request examples. Both account-action request endpoints retain
+the same empty `202 Accepted` response for eligible, ineligible, quota-limited,
+and fail-closed dependency outcomes; blocked work creates no protected
+credential or mail-delivery side effect.
+
+The MFA collection covers challenge confirmation and both purpose-bound step-up
+grant requests. Generalized protection runs before challenge, second-factor, or
+grant mutation. Policy-limited requests reuse the existing coarse public
+failure contracts, and fail-closed Redis dependency failures retain the
+`MFA_SECURITY_UNAVAILABLE` contract.
+
+Registration remains outside generalized abuse-protection wiring in v0.15.0
+under the reviewed Increment 6 `DEFER` decision. Its existing `201` / `400` /
+`409` public contract is unchanged.
+
+`ABUSE_PROTECTION_ENABLED` remains an explicit deployment gate and defaults to
+`false`. The existing login limiter is a separate compatibility contract; use
+the dedicated login-rate-limit collection for its intentionally disruptive
+threshold workflow.
+
+## Login rate-limit workflow
 Run **PayFlow Login Rate-Limit Verification** separately from the normal
 application workflow. It intentionally consumes login attempts.
 

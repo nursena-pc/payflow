@@ -72,7 +72,7 @@ class V015RegistrationProtectionDecisionContractTest {
     }
 
     @Test
-    void shouldCompleteV015Increment6WithoutAdvancingIncrement7()
+    void shouldPreserveRegistrationDecisionDuringIncrement7ReleasePreparation()
         throws IOException {
 
         String roadmap = Files.readString(ROADMAP);
@@ -111,7 +111,12 @@ class V015RegistrationProtectionDecisionContractTest {
         assertThat(increment7)
             .contains(
                 "Contract alignment and release preparation",
-                "- [ ] Align OpenAPI, Postman, README, changelog, ADRs, threat model, and operations guidance"
+                "- [x] Align OpenAPI, Postman, README, changelog, ADRs, threat model, and operations guidance",
+                "- [x] Add focused unit, Redis, HTTP, concurrency, redaction, and dependency-failure tests",
+                "- [x] Prepare versioned release notes",
+                "- [ ] Pass protected `build-and-test` and `docker-smoke` checks on the exact release-preparation PR head",
+                "- [ ] Record immutable publication evidence after protected merge and publication",
+                "the v0.15.0 tag, JAR, checksum, and GitHub Release are published"
             );
     }
 }

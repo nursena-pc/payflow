@@ -85,14 +85,16 @@ public class EmailVerificationController {
         summary = "Request email verification",
         description =
             "Accepts every valid email-shaped identity "
-                + "without disclosing account existence "
-                + "or verification eligibility."
+                + "without disclosing account existence, "
+                + "verification eligibility, quota outcome, "
+                + "or fail-closed dependency state."
     )
     @ApiResponses({
         @ApiResponse(
             responseCode = "202",
             description =
-                "The verification request was accepted."
+                "Eligible, ineligible, quota-limited, and fail-closed "
+                    + "dependency outcomes share this empty accepted response."
         ),
         @ApiResponse(
             responseCode = "400",

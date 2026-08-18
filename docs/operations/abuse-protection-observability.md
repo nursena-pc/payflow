@@ -10,8 +10,12 @@ v0.15.0 for:
 - MFA login-challenge confirmation
 - step-up grant issuance
 
-Registration remains configured but is not activated until Increment 6
-performance evidence supports a separate decision.
+Registration remains configured but is not wired under the reviewed Increment 6
+evidence-backed `DEFER` decision. The bounded developer-workstation experiment
+did not demonstrate material resource exhaustion through 16 registrations/
+second, so v0.15.0 adds no generalized registration limiter and preserves the
+existing `201` / `400` / `409` contract. This does not prove absence of risk
+above the tested ceiling.
 
 The existing login limiter is a separate control and is not changed by this
 runbook.
@@ -102,8 +106,10 @@ Do not search by email address, account identifier, JWT subject, or raw client
 address to explain the alert.
 
 A quota change is not an emergency mitigation. Proposed limit/window changes
-must follow normal review and should be supported by Increment 6 performance and
-false-positive evidence.
+must follow normal review and should be supported by the reviewed Increment 6
+performance/false-positive evidence. Developer-workstation results are not
+production capacity certification and must not be used to justify silent
+threshold retuning.
 
 ### PayFlowAbuseProtectionDependencyBypass
 
@@ -225,3 +231,8 @@ docker compose `
 
 Then run the focused observability contracts and the complete Maven
 verification suite before merge.
+
+Reviewed performance evidence lives under `docs/performance/evidence/`.
+Registration decision evidence is
+`docs/performance/evidence/2026-08-17-registration-defer-f94ffa8.md`.
+Never promote ignored raw performance results directly into incident evidence.

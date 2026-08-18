@@ -2,23 +2,28 @@
 
 ## Current delivery state
 
-Increment 5 builds operational observability on the shared Redis enforcement
-foundation already used by email-verification, password-recovery, MFA
-login-challenge confirmation, and step-up grant issuance. Account-action
-requests evaluate normalized email and the trusted effective client before
-account lookup. MFA challenge confirmation evaluates a fixed-length,
-non-reversible challenge identifier and the trusted effective client before
-challenge lookup or sensitive state mutation. Step-up issuance evaluates the
-authenticated JWT subject and trusted effective client before user or
-authenticator locking, second-factor consumption, or grant creation.
+The v0.15.0 implementation uses the shared Redis enforcement foundation for
+email-verification requests, password-recovery requests, MFA login-challenge
+confirmation, and step-up grant issuance. Account-action requests evaluate
+normalized email and the trusted effective client before account lookup. MFA
+challenge confirmation evaluates a fixed-length, non-reversible challenge
+identifier and the trusted effective client before challenge lookup or
+sensitive state mutation. Step-up issuance evaluates the authenticated JWT
+subject and trusted effective client before user/authenticator locking,
+second-factor consumption, or grant creation.
 
 Bounded Micrometer decisions, Redis-failure metrics, a dedicated Grafana
-dashboard, Prometheus alerts, and an operations runbook now cover these
-workflows without changing enforcement semantics.
+dashboard, Prometheus alerts, an operations runbook, and reviewed performance
+evidence cover these workflows without changing enforcement semantics.
 `ABUSE_PROTECTION_ENABLED` remains `false` by default so activation is an
-explicit deployment decision.
-The login limiter remains unchanged.
+explicit deployment decision. The existing login limiter remains a separate,
+unchanged compatibility contract.
 
+The registration workflow remains present in typed policy/configuration but is
+not wired into generalized enforcement. Increment 6 produced an evidence-backed
+`DEFER` decision because the bounded experiment did not demonstrate material
+resource exhaustion through the tested 16 registrations/second ceiling. The
+existing `201` / `400` / `409` registration contract is unchanged.
 ## Policy contract
 
 The application-facing contract consists of:
@@ -43,40 +48,46 @@ Invalid configuration fails application startup.
 
 ## Configuration
 
-| Workflow | Window | Identity limit | Client limit | Failure mode |
-|---|---:|---:|---:|---|
-| Registration | 15 minutes | 5 | 20 | `FAIL_CLOSED` |
-| Email-verification request | 15 minutes | 3 | 20 | `FAIL_CLOSED` |
-| Password-recovery request | 15 minutes | 3 | 20 | `FAIL_CLOSED` |
-| MFA login-challenge confirmation | 5 minutes | 5 | 20 | `FAIL_CLOSED` |
-| Step-up grant issuance | 5 minutes | 5 | 20 | `FAIL_CLOSED` |
+| Workflow | Window | Identity limit | Client limit | Failure mode | v0.15.0 wiring |
+|---|---:|---:|---:|---|---|
+| Registration | 15 minutes | 5 | 20 | `FAIL_CLOSED` | Not wired (`DEFER`) |
+| Email-verification request | 15 minutes | 3 | 20 | `FAIL_CLOSED` | Wired |
+| Password-recovery request | 15 minutes | 3 | 20 | `FAIL_CLOSED` | Wired |
+| MFA login-challenge confirmation | 5 minutes | 5 | 20 | `FAIL_CLOSED` | Wired |
+| Step-up grant issuance | 5 minutes | 5 | 20 | `FAIL_CLOSED` | Wired |
 
 Environment variables use the `ABUSE_PROTECTION_` prefix. Each workflow exposes
 `ENABLED`, `WINDOW`, `IDENTITY_LIMIT`, `CLIENT_LIMIT`, and `FAILURE_MODE`
 settings. The global switch is `ABUSE_PROTECTION_ENABLED`.
 
+Configuration presence does not imply endpoint wiring. In particular,
+registration keeps its validated policy definition for a possible future
+review, but the v0.15.0 application path does not invoke generalized
+registration enforcement.
+
 Changing a failure mode to `FAIL_OPEN` requires a security review, updated ADR
 and threat-model evidence, public-contract tests, and explicit operational
 approval. It must never be used as an automatic response to Redis instability.
-
 ## Account-action HTTP contract
 
 - email-verification and password-recovery requests evaluate policy before any
   account lookup or row lock
 - normalized email is the identity dimension
 - only `ClientAddressResolver` supplies the effective client dimension
-- allowed, limited, unknown, closed, verified, and otherwise ineligible
-  outcomes retain an empty `202 Accepted` response
+- allowed, limited, unknown, closed, verified, eligible, and otherwise
+  ineligible outcomes retain an empty `202 Accepted` response
 - blocked and fail-closed outcomes create no credential or mail-outbox work
 - concurrent requests cannot create more protected side effects than the
   configured identity or client limit
 
-Registration was evaluated but is not wired in Increment 3. Its existing
-`201`/`409` contract, BCrypt cost, and initial verification-mail side effect
-require the reproducible performance and overload evidence planned for
-Increment 6 before an activation decision. This is a documented deferral, not
-an implicit exemption from later review.
-
+Registration remains configured but is not wired under the reviewed Increment 6
+evidence-backed `DEFER` decision. The bounded experiment did not demonstrate
+material resource exhaustion through 16 registrations/second, so v0.15.0 adds
+no generalized registration limiter and preserves the existing `201` / `400` /
+`409` public contract. The experiment is developer-workstation evidence only
+and does not prove absence of risk above the tested ceiling. A future
+`ACTIVATE` decision requires new evidence and a separately reviewed
+implementation/comparison checkpoint.
 ## MFA and step-up HTTP contract
 
 - MFA challenge confirmation derives its identity quota from a fixed-length,

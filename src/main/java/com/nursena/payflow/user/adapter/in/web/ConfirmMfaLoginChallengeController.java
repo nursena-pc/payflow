@@ -51,9 +51,10 @@ public class ConfirmMfaLoginChallengeController {
         operationId = "confirmMfaLoginChallenge",
         summary = "Complete an MFA login challenge",
         description =
-            "Consumes one pending challenge after a valid TOTP or unused "
-                + "recovery-code proof and only then issues access and refresh "
-                + "credentials."
+            "Applies challenge-scoped and trusted-client abuse protection "
+                + "before challenge state access, then consumes one pending "
+                + "challenge after a valid TOTP or unused recovery-code proof "
+                + "before issuing credentials."
     )
     @ApiResponses({
         @ApiResponse(
@@ -66,7 +67,9 @@ public class ConfirmMfaLoginChallengeController {
         ),
         @ApiResponse(
             responseCode = "401",
-            description = "Challenge or MFA proof is invalid.",
+            description =
+                "Challenge or MFA proof could not be verified; policy-limited "
+                    + "requests use the same coarse response.",
             content = @Content(
                 mediaType = APPLICATION_JSON_VALUE,
                 schema = @Schema(implementation = ApiError.class)
@@ -74,7 +77,9 @@ public class ConfirmMfaLoginChallengeController {
         ),
         @ApiResponse(
             responseCode = "503",
-            description = "MFA secret protection is unavailable.",
+            description =
+                "MFA security infrastructure, including fail-closed abuse "
+                    + "protection, cannot make a safe decision.",
             content = @Content(
                 mediaType = APPLICATION_JSON_VALUE,
                 schema = @Schema(implementation = ApiError.class)

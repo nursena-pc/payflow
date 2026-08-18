@@ -319,6 +319,57 @@
                                                 ]
                                   },
                                   {
+                                      "name":  "Request Source Email Verification",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json",
+                                                                         "type":  "text"
+                                                                     }
+                                                                 ],
+                                                      "auth":  {
+                                                                   "type":  "noauth"
+                                                               },
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/api/v1/auth/email-verification/requests",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "api",
+                                                                               "v1",
+                                                                               "auth",
+                                                                               "email-verification",
+                                                                               "requests"
+                                                                           ]
+                                                              },
+                                                      "description":  "Requests email verification without disclosing account existence, eligibility, quota outcome, or fail-closed dependency state. When generalized abuse protection is enabled, limited and Redis-unavailable decisions retain the same empty 202 response and suppress protected side effects.",
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"email\": \"{{sourceEmail}}\"\n}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               }
+                                                               }
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code is 202\u0027, function () { pm.response.to.have.status(202); });",
+                                                                                    "pm.test(\u0027Response body is empty\u0027, function () { pm.expect(pm.response.text()).to.eql(\u0027\u0027); });"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  },
+                                  {
                                       "name":  "Request Source Password Recovery",
                                       "request":  {
                                                       "method":  "POST",
@@ -345,7 +396,7 @@
                                                                                "requests"
                                                                            ]
                                                               },
-                                                      "description":  "Requests password recovery without disclosing account existence or eligibility.",
+                                                      "description":  "Requests password recovery without disclosing account existence, eligibility, quota outcome, or fail-closed dependency state. When generalized abuse protection is enabled, limited and Redis-unavailable decisions retain the same empty 202 response and suppress protected side effects.",
                                                       "body":  {
                                                                    "mode":  "raw",
                                                                    "raw":  "{\n  \"email\": \"{{sourceEmail}}\"\n}",
