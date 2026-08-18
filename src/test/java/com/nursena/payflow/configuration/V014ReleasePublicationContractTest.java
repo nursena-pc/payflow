@@ -45,7 +45,7 @@ class V014ReleasePublicationContractTest {
             )
             .doesNotContain(
                 "v0.14.0 release preparation",
-                "release-preparation line"
+                "The `0.14.0` release-preparation line"
             );
     }
 
@@ -57,8 +57,7 @@ class V014ReleasePublicationContractTest {
             .contains(
                 "## [Unreleased]",
                 "## [0.14.0] - 2026-08-12",
-                "[0.14.0]: https://github.com/nursena-pc/payflow/compare/v0.13.0...v0.14.0",
-                "[Unreleased]: https://github.com/nursena-pc/payflow/compare/v0.14.0...HEAD"
+                "[0.14.0]: https://github.com/nursena-pc/payflow/compare/v0.13.0...v0.14.0"
             );
 
         assertThat(Files.readString(RELEASE_NOTES))

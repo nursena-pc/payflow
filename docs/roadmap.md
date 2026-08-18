@@ -2,7 +2,7 @@
 
 ## Current delivery focus
 
-PayFlow v0.14.0 is the latest tagged release. The Maven version is `0.15.0-SNAPSHOT`.
+PayFlow v0.14.0 is the latest tagged release. The Maven version is `0.15.0`.
 
 The v0.14.0 MFA and step-up release was published from verified merge commit
 `d65929b98bb66b22f208d26f75a764e1ade78b6a` through successful release workflow run `31728977714`.
@@ -11,11 +11,11 @@ The published `100200050`-byte JAR has independently verified SHA-256
 recovery codes, and bounded step-up authentication while preserving the
 existing anti-enumeration, refresh-session, and logging boundaries.
 
-The active v0.15.0 development line delivers generalized abuse protection,
+The v0.15.0 release-preparation line freezes generalized abuse protection,
 reproducible load and performance evidence, and operational dashboards and
-alerts. The milestone is tracked by issue `#149` and preserves the existing
-anti-enumeration, trusted-client, credential-redaction, and modular-monolith
-boundaries.
+alerts. The milestone remains tracked by issue `#149`; release finalization is tracked by issue `#166`.
+The existing anti-enumeration, trusted-client, credential-redaction, and
+modular-monolith boundaries remain unchanged.
 PayFlow remains a modular monolith. PostgreSQL is the system of record; Redis is
 used only for bounded, explicitly expiring abuse-control state.
 
@@ -701,7 +701,7 @@ The release is ready only when:
 - published JAR SHA-256: `A6533039C5DDBE610D9DDB986DDBDAFE192DD56BE664E86B65A72AECF51F116E`
 - release checksum verification: passed
 
-## v0.15.0 — Active Development: Generalized Abuse Protection and Performance Evidence
+## v0.15.0 — Release Preparation: Generalized Abuse Protection and Performance Evidence
 
 Tracking issue: [#149](https://github.com/nursena-pc/payflow/issues/149)
 
@@ -782,11 +782,12 @@ through the tested 16 registrations/second ceiling. Registration keeps its
 existing public behavior and no generalized registration limiter is added.
 ### Increment 7 — Contract alignment and release preparation
 
-- [ ] Align OpenAPI, Postman, README, changelog, ADRs, threat model, and operations guidance
-- [ ] Add focused unit, Redis, HTTP, concurrency, redaction, and dependency-failure tests
-- [ ] Run the complete Maven verification suite and production Docker smoke
-- [ ] Pass protected `build-and-test` and `docker-smoke` checks for every increment
-- [ ] Prepare versioned release notes and immutable publication evidence
+- [x] Align OpenAPI, Postman, README, changelog, ADRs, threat model, and operations guidance
+- [x] Add focused unit, Redis, HTTP, concurrency, redaction, and dependency-failure tests
+- [x] Run the complete Maven verification suite and production Docker smoke on the exact release-candidate content
+- [ ] Pass protected `build-and-test` and `docker-smoke` checks on the exact release-preparation PR head
+- [x] Prepare versioned release notes
+- [ ] Record immutable publication evidence after protected merge and publication
 
 ## Explicit v0.15.0 non-goals
 
@@ -799,15 +800,15 @@ existing public behavior and no generalized registration limiter is added.
 
 ## v0.15.0 release exit criteria
 
-- [ ] selected identity workflows enforce documented per-identity and per-client limits
-- [ ] anti-enumeration behavior remains stable under quota and dependency failures
-- [ ] Redis operations are atomic, expiring, bounded, and concurrency-tested
-- [ ] observable output contains no sensitive identity or credential material
-- [ ] latency, throughput, concurrency, and overload budgets are documented
-- [ ] reproducible load-test evidence satisfies the approved budgets
-- [ ] dashboards and actionable alerts are provisioned and verified
-- [ ] focused unit, Redis, HTTP, concurrency, and failure-path tests pass
-- [ ] the complete Maven suite and production Docker smoke pass
+- [x] selected identity workflows enforce documented per-identity and per-client limits
+- [x] anti-enumeration behavior remains stable under quota and dependency failures
+- [x] Redis operations are atomic, expiring, bounded, and concurrency-tested
+- [x] observable output contains no sensitive identity or credential material
+- [x] latency, throughput, concurrency, and overload budgets are documented
+- [x] reproducible load-test evidence satisfies the approved budgets
+- [x] dashboards and actionable alerts are provisioned and verified
+- [x] focused unit, Redis, HTTP, concurrency, and failure-path tests pass
+- [x] the complete Maven suite and production Docker smoke pass
 - [ ] protected feature and release-preparation pull requests are merged
 - [ ] the v0.15.0 tag, JAR, checksum, and GitHub Release are published
 

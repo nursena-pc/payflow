@@ -8,6 +8,8 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-08-18
+
 ### Added
 
 - Application-facing generalized abuse-protection policy with five bounded workflow identifiers, validated endpoint-specific windows/limits, and explicit dependency-failure modes under `payflow.security.abuse-protection`.
@@ -20,7 +22,7 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
-- Advanced the active development version to `0.15.0-SNAPSHOT` and tracked the milestone through issue #149 and release finalization through issue #166.
+- Prepared the v0.15.0 release candidate at Maven version `0.15.0` while preserving milestone issue #149 and release-finalization issue #166.
 - Aligned OpenAPI and Postman descriptions with the implemented coarse quota/dependency behavior for protected account-action, MFA challenge, and step-up workflows.
 - Added source-user email-verification request coverage to the standard Postman collection and aligned MFA/step-up workflow guidance.
 - Aligned README, ADR 0015, threat model, policy guidance, and operations guidance with the final v0.15.0 implementation and reviewed Increment 6 evidence.
@@ -251,4 +253,5 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 [0.12.0]: https://github.com/nursena-pc/payflow/compare/v0.11.0...v0.12.0
 [0.13.0]: https://github.com/nursena-pc/payflow/compare/v0.12.0...v0.13.0
 [0.14.0]: https://github.com/nursena-pc/payflow/compare/v0.13.0...v0.14.0
-[Unreleased]: https://github.com/nursena-pc/payflow/compare/v0.14.0...HEAD
+[0.15.0]: https://github.com/nursena-pc/payflow/compare/v0.14.0...v0.15.0
+[Unreleased]: https://github.com/nursena-pc/payflow/compare/v0.15.0...HEAD
