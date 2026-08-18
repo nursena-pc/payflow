@@ -59,7 +59,7 @@ class V015AccountActionAbuseProtectionContractTest {
     }
 
     @Test
-    void shouldRecordCompletedIncrementAndRegistrationDeferral()
+    void shouldRecordFinalAccountActionAndRegistrationDecision()
         throws IOException {
 
         String roadmap = Files.readString(
@@ -82,13 +82,17 @@ class V015AccountActionAbuseProtectionContractTest {
             "- [x] Evaluate registration protection",
             "- [x] Verify concurrent requests"
         );
-        assertThat(guide).contains(
+        assertThat(guide.replaceAll("\\s+", " ")).contains(
             "empty `202 Accepted` response",
-            "Registration was evaluated but is not wired"
+            "evidence-backed `DEFER` decision",
+            "no generalized registration limiter",
+            "`201` / `400` / `409` public contract"
         );
-        assertThat(threatModel).contains(
-            "Real-Redis HTTP concurrency tests",
-            "Registration protection remains deferred"
+        assertThat(threatModel.replaceAll("\\s+", " ")).contains(
+            "Real-Redis HTTP/concurrency tests",
+            "reviewed v0.15.0 decision is `DEFER`",
+            "No generalized registration limiter is wired",
+            "not production capacity"
         );
     }
 

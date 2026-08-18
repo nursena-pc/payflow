@@ -10,31 +10,35 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
-- Generalized per-identity and trusted-client Redis enforcement for email-verification and password-recovery requests before account lookup.
-- Real-Redis HTTP concurrency and anti-enumeration evidence for bounded account-action side effects.
-
-### Security
-
-- Blocked and fail-closed account-action requests preserve the empty `202` response while suppressing credential and delivery work.
-- Registration enforcement remains deferred until reproducible performance and overload evidence supports its public failure contract.
-
-### Added
-
-- Shared atomic Redis abuse-enforcement foundation with expiring, domain-separated digest-only identity and client quota keys ([#153](https://github.com/nursena-pc/payflow/issues/153)).
-- Typed generalized abuse-protection request, decision, dimension, dependency-failure, and enforcement-port contracts.
-- Real Redis verification for window boundaries, TTL repair, concurrency, and combined quota decisions while preserving the existing login limiter.
-
-### Added
-
-- Application-facing generalized abuse-protection policy with five bounded workflow identifiers and no controller, servlet, HTTP, or Redis coupling.
-- Validated endpoint-specific windows, identity/client limits, and explicit dependency-failure modes under `payflow.security.abuse-protection`.
-- ADR 0015, generalized abuse-protection threat model, configuration guidance, and executable Increment 1 contracts tracked by issue #151.
+- Application-facing generalized abuse-protection policy with five bounded workflow identifiers, validated endpoint-specific windows/limits, and explicit dependency-failure modes under `payflow.security.abuse-protection`.
+- Validated endpoint-specific windows and limits were established with the Increment 1 foundation tracked by issue #151.
+- Shared atomic Redis enforcement with expiring, domain-separated digest-only identity/client keys, TTL repair, bounded cardinality, real-Redis concurrency verification, and explicit `FAIL_CLOSED` / `FAIL_OPEN` handling.
+- Generalized protection for email-verification requests, password-recovery requests, MFA login-challenge confirmation, and step-up grant issuance while preserving the trusted effective-client-address boundary.
+- Bounded Micrometer abuse-decision and Redis-failure metrics, a dedicated Grafana dashboard, actionable Prometheus alerts, and credential-safe operations guidance.
+- Pinned external load tooling, reproducible protected-workflow scenarios, frozen steady/saturation/overload budgets, quota-pressure evidence, recovery checks, and reviewed performance evidence under `docs/performance/evidence/`.
+- Bounded registration performance experiment and committed decision evidence at `docs/performance/evidence/2026-08-17-registration-defer-f94ffa8.md`.
 
 ### Changed
 
-- Advanced the active development version to `0.15.0-SNAPSHOT`.
-- Defined the v0.15.0 generalized abuse-protection, performance-evidence, dashboard, and alert roadmap through issue #149.
+- Advanced the active development version to `0.15.0-SNAPSHOT` and tracked the milestone through issue #149 and release finalization through issue #166.
+- Aligned OpenAPI and Postman descriptions with the implemented coarse quota/dependency behavior for protected account-action, MFA challenge, and step-up workflows.
+- Added source-user email-verification request coverage to the standard Postman collection and aligned MFA/step-up workflow guidance.
+- Aligned README, ADR 0015, threat model, policy guidance, and operations guidance with the final v0.15.0 implementation and reviewed Increment 6 evidence.
 
+### Security
+
+- Email-verification and password-recovery request outcomes remain empty `202 Accepted` for eligible, ineligible, quota-limited, and fail-closed dependency paths; blocked work creates no credential or delivery side effect.
+- MFA challenge quota rejection reuses the existing coarse unauthorized contract, while fail-closed abuse-protection dependency failure uses the existing `MFA_SECURITY_UNAVAILABLE` boundary without sensitive mutation.
+- Step-up quota rejection runs before user/authenticator locking, second-factor consumption, or grant creation/supersession.
+- Generalized observability uses only bounded application-owned dimensions and excludes email addresses, user identifiers, raw client addresses, credentials, Redis keys, counters, TTL values, and raw exception detail.
+- Registration remains deliberately unwired under the evidence-backed `DEFER` decision; the existing `201` / `400` / `409` registration contract is unchanged.
+- The existing password-login limiter remains a separate compatibility contract with unchanged counters, keys, limits, public behavior, and metrics.
+
+### Performance
+
+- Accepted protected-workflow evidence satisfies the frozen developer-workstation contract, including zero quota bypass and recovery within the documented budget.
+- The registration experiment observed no saturation through 16 registrations/second and therefore did not establish the material resource-exhaustion prerequisite for `ACTIVATE`.
+- Performance evidence is environment-specific developer-workstation evidence and is not production capacity certification.
 ## [0.14.0] - 2026-08-12
 
 ### Added

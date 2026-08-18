@@ -2,19 +2,26 @@
 
 ## Scope
 
-This threat model covers the v0.15.0 policy foundation for registration,
-email-verification requests, password-recovery requests, MFA login-challenge
-confirmation, and step-up grant issuance. Password login retains its existing
-rate limiter. Redis enforcement and endpoint wiring are delivered separately.
+This threat model covers the final v0.15.0 generalized abuse-protection design,
+Redis enforcement, protected workflow wiring, observability, performance
+evidence, and registration `DEFER` decision.
+
+Generalized enforcement is wired for email-verification requests,
+password-recovery requests, MFA login-challenge confirmation, and step-up grant
+issuance. Registration remains a configured policy definition but is not wired.
+Password login retains its existing separate Redis-backed limiter.
 
 ## Security objectives
 
-- bound automated attempts by normalized identity and effective client
+- bound automated attempts by normalized/derived identity and effective client
 - prevent untrusted forwarding headers from changing the client dimension
-- preserve generic account-action responses and anti-enumeration behavior
-- make dependency-failure behavior deterministic for every workflow
-- keep secrets, personal data, keys, and counters outside observable output
-- keep workflow, dimension, decision, and failure labels finite
+- preserve generic account-action responses and coarse MFA/step-up behavior
+- make dependency-failure behavior deterministic for every wired workflow
+- keep secrets, personal data, keys, counters, and TTL state outside observable
+  output
+- keep workflow, dimension, decision, reason, and failure labels finite
+- retain reproducible evidence without treating developer-workstation results as
+  production capacity certification
 
 ## Protected assets
 
@@ -23,7 +30,7 @@ rate limiter. Redis enforcement and endpoint wiring are delivered separately.
 - passwords, TOTP proofs, recovery codes, challenge tokens, and step-up grants
 - normalized email addresses and effective client addresses
 - Redis key names, digests, counts, expiration, and remaining quota
-- application availability and operator confidence in metrics
+- application availability and operator confidence in metrics/evidence
 
 ## Attacker capabilities
 
@@ -31,137 +38,201 @@ An unauthenticated attacker can submit concurrent requests, rotate supplied
 identity values, reuse one client, distribute traffic across clients, send
 malformed or duplicated forwarding headers, measure coarse responses, and time
 requests. An authenticated attacker can submit invalid MFA proofs or request
-step-up grants repeatedly. An attacker cannot configure trusted proxy CIDRs,
-read server-side digests, or directly choose the resolved effective address.
+step-up grants repeatedly.
+
+An attacker cannot configure trusted proxy CIDRs, read server-side digests, or
+directly choose the resolved effective client address.
 
 ## Trust boundaries
 
 1. The public HTTP boundary accepts attacker-controlled payloads and headers.
 2. `ClientAddressResolver` accepts forwarding data only when the direct peer is
    a configured trusted proxy and otherwise uses the direct peer.
-3. The owning user or MFA workflow normalizes identity material before policy
-   evaluation.
-4. The application-facing policy contains only bounded workflow and policy
-   types; it has no servlet or Redis dependency.
-5. The Increment 2 Redis adapter digests sensitive dimensions and owns atomic,
-   expiring counter state without exposing raw inputs.
-6. Logs, metrics, traces, errors, and audits are disclosure boundaries and may
-   contain only bounded coarse classifications.
+3. The owning user/MFA workflow normalizes or derives identity material before
+   policy evaluation.
+4. Application-facing policy contains only bounded workflow/policy types and has
+   no servlet or Redis dependency.
+5. The Redis adapter digests sensitive dimensions and owns atomic, expiring
+   counter state without exposing raw inputs.
+6. Logs, metrics, traces, errors, audits, dashboards, alerts, and committed
+   evidence are disclosure boundaries and may contain only bounded safe data.
 
-## Workflow policy
+## Workflow policy and enforcement status
 
-| Workflow | Identity dimension | Client dimension | Dependency mode | Public behavior |
-|---|---|---|---|---|
-| Registration | normalized proposed email | trusted effective address | fail closed | stable coarse rejection |
-| Email-verification request | normalized email | trusted effective address | fail closed | generic accepted response; no side effect |
-| Password-recovery request | normalized email | trusted effective address | fail closed | generic accepted response; no side effect |
-| MFA challenge confirmation | fixed-length non-reversible challenge identifier | trusted effective address | fail closed | stable coarse rejection |
-| Step-up grant issuance | authenticated subject | trusted effective address | fail closed | stable coarse rejection |
+| Workflow | Identity dimension | Client dimension | Dependency mode | Public behavior | v0.15.0 enforcement |
+|---|---|---|---|---|---|
+| Registration | normalized proposed email | trusted effective address | configured fail closed | existing `201` / `400` / `409` | Not wired (`DEFER`) |
+| Email-verification request | normalized email | trusted effective address | fail closed | generic empty `202`; no protected side effect | Wired |
+| Password-recovery request | normalized email | trusted effective address | fail closed | generic empty `202`; no protected side effect | Wired |
+| MFA challenge confirmation | fixed-length non-reversible challenge identifier | trusted effective address | fail closed | coarse unauthorized policy rejection; coarse unavailable dependency failure | Wired |
+| Step-up grant issuance | authenticated subject | trusted effective address | fail closed | existing coarse step-up rejection; coarse unavailable dependency failure | Wired |
 
-The table defines policy intent, not active endpoint enforcement in Increment 1.
+Configuration presence does not imply active enforcement. The registration row
+exists so a future activation can reuse the same typed policy boundary after new
+evidence/review.
 
 ## Threats and controls
 
 ### Forwarding-header spoofing
 
 An attacker supplies `Forwarded` or `X-Forwarded-For` to rotate the client
-quota. The application must reuse the trusted-proxy resolver. Untrusted peers,
+quota. Wired workflows reuse the trusted-proxy resolver. Untrusted peers,
 malformed chains, excessive hops, and oversized headers fall back to the direct
 peer according to ADR 0011.
 
 ### Identity spraying and quota evasion
 
-An attacker rotates identities or clients to avoid one dimension. Selected
-workflows require both dimensions with endpoint-specific limits. Neither raw
-value may become a Redis key; a later adapter must use domain-separated,
-fixed-length digests and bounded key prefixes.
+An attacker rotates identities or clients to avoid one dimension. Wired
+workflows require both dimensions with workflow-specific limits. Neither raw
+value becomes a Redis key; the adapter uses domain-separated fixed-length
+digests and bounded key prefixes.
 
-### Account enumeration
+Distributed identities/clients can still consume resources within configured
+bounds. That residual risk is accepted for v0.15.0 and is not represented as
+eliminated by the workstation evidence.
 
-Different quota or dependency outcomes can disclose whether an account exists.
-Email-verification and password-recovery request endpoints retain the same
-generic accepted status and body whether the identity is absent, ineligible,
-limited, or blocked by a dependency failure. Observable labels never include
-identity or eligibility.
+### Account enumeration and coarse-response probing
+
+Different quota or dependency outcomes can disclose account existence or
+internal state. Email-verification and password-recovery requests therefore
+retain the same empty `202` status/body for absent, ineligible, limited, and
+fail-closed dependency outcomes.
+
+MFA challenge quota rejection uses the same coarse unauthorized contract as
+invalid challenge/proof outcomes. Step-up quota rejection reuses the existing
+coarse failure boundary. Observable labels never include identity or
+eligibility.
 
 ### Dependency-failure bypass
 
 Timeouts, connection failures, malformed Redis results, and partial operations
-must not silently permit protected work. Each configured workflow has an
-explicit failure mode. The initial policy set is fail closed. Later adapters
-must map failures to the workflow-specific public behavior above.
+must not silently permit protected work. Wired workflows are fail closed by
+default. Fail-open behavior is visible in typed policy/telemetry but requires a
+separate explicit security decision.
+
+For account-action request endpoints, fail closed suppresses protected work while
+preserving empty `202`. For MFA challenge/step-up, dependency failure maps to
+the existing coarse `MFA_SECURITY_UNAVAILABLE` boundary.
 
 ### Counter persistence and cardinality
 
 Missing expiration can create durable personal-data-derived state, while
 attacker-selected metric labels can exhaust monitoring systems. Configuration
-bounds windows and limits. Increment 2 uses one atomic operation, creates or
-repairs explicit expiration, and limits keys to finite workflow and dimension
-prefixes plus fixed-length domain-separated digests.
+bounds windows/limits. One atomic Redis operation creates or repairs expiration
+and limits key shape to finite workflow/dimension prefixes plus fixed-length
+domain-separated digests.
 
-### Credential disclosure
+### Credential disclosure and identity privacy
 
-Passwords, account-action tokens, MFA proofs, recovery codes, login challenges,
-step-up grants, email addresses, client addresses, digests, Redis keys, counts,
-and TTLs are prohibited from logs, metrics, traces, errors, and audits. Tests
-must inspect success, rejection, and dependency-failure paths.
+Passwords, account-action credentials, MFA proofs, recovery codes, login
+challenges, step-up grants, email addresses, user identifiers, raw client
+addresses, digests, Redis keys, counts, TTLs, and raw exception detail are
+prohibited from logs, metrics, traces, errors, audits, dashboards, alerts, and
+committed performance evidence.
+
+### Registration resource exhaustion
+
+Registration performs BCrypt hashing, persistence, uniqueness handling,
+verification preparation, and mail enqueue work. Increment 6 measured the
+complete successful path with disposable synthetic identities.
+
+The bounded experiment observed no saturation, unexpected failure, health
+failure, or dropped iteration through 16 registrations/second. That result did
+not establish the material resource-exhaustion prerequisite for generalized
+registration protection, so the reviewed v0.15.0 decision is `DEFER`.
+
+No generalized registration limiter is wired and the existing `201` / `400` /
+`409` contract remains unchanged. The experiment does not prove absence of risk
+above the tested ceiling and does not certify production capacity. Future
+`ACTIVATE` work requires new evidence and separate implementation/review.
 
 ### Configuration mistakes
 
-Missing workflow policy, sub-second or greater-than-one-day windows, non-positive
-limits, limits above one million, and absent failure modes fail application
-startup. The global policy switch defaults off until enforcement is wired.
+Missing workflow policy, sub-second or greater-than-one-day windows,
+non-positive limits, limits above one million, and absent failure modes fail
+application startup. `ABUSE_PROTECTION_ENABLED` defaults off so generalized
+activation is explicit.
 
-## Increment 3 account-action decision
+Registration's configured policy must not be mistaken for endpoint wiring.
+Operations/documentation must keep the `DEFER` boundary visible.
 
-Email-verification and password-recovery request policy runs before account
-lookup, eligibility inspection, credential creation, and mail-outbox work.
-Every allowed, blocked, dependency-failed, unknown, closed, verified, or
-otherwise ineligible request retains the same empty `202` public response.
-Real-Redis HTTP concurrency tests prove that accepted response volume cannot
-increase protected side effects beyond the configured bound.
+## Delivered workflow decisions
 
-Registration protection remains deferred pending Increment 6 evidence. Unlike
-the two generic account-action request endpoints, registration already has
-distinct `201` and duplicate-account `409` behavior and performs BCrypt plus
-initial verification preparation. Latency, overload, and false-positive data
-must be recorded before choosing its public failure contract and activation
-policy.
+### Account-action requests
 
-## Increment 4 MFA and step-up decision
+Email-verification and password-recovery policy runs before account lookup,
+eligibility inspection, credential creation, and mail-outbox work. Every
+allowed, blocked, dependency-failed, unknown, closed, verified, or otherwise
+ineligible request retains the same empty `202` response.
+
+Real-Redis HTTP/concurrency tests prove accepted response volume cannot increase
+protected side effects beyond configured identity/client bounds.
+
+### MFA challenge confirmation
 
 MFA login-challenge confirmation derives a fixed-length non-reversible identity
 before generalized enforcement and evaluates policy before challenge lookup,
 row locking, attempt mutation, recovery-code consumption, challenge
-consumption, or credential issuance. Malformed challenge input also enters the
+consumption, or credential issuance. Malformed challenge input enters the same
 enforcement boundary without exposing plaintext challenge material.
 
-Step-up grant issuance uses the authenticated JWT subject as its identity
-dimension and the trusted effective client as its client dimension. Enforcement
-runs before user or authenticator locking, TOTP or recovery-code consumption,
-and grant creation or supersession. Purpose parsing remains application-owned.
+Quota rejection preserves the coarse unauthorized contract; Redis dependency
+failure preserves the coarse `MFA_SECURITY_UNAVAILABLE` boundary.
 
-Real-Redis HTTP and concurrency tests prove configured identity and client
-limits bound protected side effects. Untrusted forwarding headers cannot change
-the client quota. Redis-unavailable tests prove both workflows fail closed with
-the coarse `MFA_SECURITY_UNAVAILABLE` contract while challenge attempts,
-recovery codes, credentials, and grants remain untouched.
+### Step-up grant issuance
+
+Step-up issuance uses authenticated JWT subject as the identity dimension and
+trusted effective client as the client dimension. Enforcement runs before user
+or authenticator locking, TOTP/recovery-code consumption, and grant creation or
+supersession. Purpose parsing remains application-owned.
+
+Real-Redis HTTP/concurrency tests prove configured identity/client limits bound
+protected side effects, and untrusted forwarding headers cannot rotate the
+client quota.
+
+## Observability and operations
+
+Generalized Micrometer metrics use only bounded workflow/outcome/reason and
+workflow/failure-mode dimensions. The dedicated Grafana dashboard and
+Prometheus rules operate on those bounded values.
+
+Operators investigate through aggregate telemetry, service/Redis health,
+deployment configuration, and trusted-client configuration. They must not
+disable protection or switch fail-closed workflows to fail open as an incident
+workaround.
+
+## Performance evidence boundary
+
+The accepted load harness uses pinned external tooling and keeps load execution
+outside normal Maven verification. Evidence records environment, dataset,
+warm-up, duration, arrival-rate model, request mix, latency percentiles,
+throughput, expected policy outcomes, unexpected failures, dropped iterations,
+saturation/overload observations, recovery, and limitations.
+
+Quota-pressure evidence recorded zero bypass. Registration evidence supports
+`DEFER`. These results are developer-workstation evidence and are not production
+capacity certification or SLO evidence.
 
 ## Verification obligations
 
-- unit-test policy bounds and complete workflow configuration
-- prove application policy source contains no Spring, servlet, HTTP, or Redis
-  imports
-- test trusted-client integration during Increment 2
-- test atomic expiration and concurrency with real Redis during Increment 2
-- verify generic public behavior during endpoint increments
-- scan logs, metrics, traces, errors, and audits for prohibited material
+- retain unit coverage for policy bounds and complete configuration
+- retain source/package boundary checks that keep application policy free of
+  Spring/servlet/Redis imports
+- retain real-Redis atomic expiration, threshold, dependency-failure, and
+  concurrency tests
+- retain HTTP contracts for generic/coarse public behavior under quota and
+  dependency failure
+- retain redaction/privacy checks across logs, metrics, traces, errors, audits,
+  dashboards, alerts, and committed evidence
 - retain the existing login-rate-limit contract suite unchanged
+- retain executable Postman/OpenAPI/documentation drift contracts through
+  release finalization
 
 ## Residual risks
 
 Distributed clients and identity rotation can still consume resources within
-configured bounds. Fixed windows can permit boundary bursts. These risks are
-accepted for v0.15.0 and must be measured by the load and performance increment.
-CAPTCHA, external bot intelligence, adaptive risk scoring, and edge enforcement
-remain explicit non-goals.
+configured bounds. Fixed windows can permit boundary bursts. Registration risk
+above the measured 16 registrations/second ceiling remains unknown.
+
+CAPTCHA, external bot intelligence, adaptive risk scoring, edge enforcement,
+and production capacity certification remain explicit non-goals.
