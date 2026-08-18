@@ -83,14 +83,16 @@ public class PasswordRecoveryController {
         summary = "Request password recovery",
         description =
             "Accepts every valid email-shaped identity "
-                + "without disclosing account existence "
-                + "or recovery eligibility."
+                + "without disclosing account existence, "
+                + "recovery eligibility, quota outcome, "
+                + "or fail-closed dependency state."
     )
     @ApiResponses({
         @ApiResponse(
             responseCode = "202",
             description =
-                "The password-recovery request was accepted."
+                "Eligible, ineligible, quota-limited, and fail-closed "
+                    + "dependency outcomes share this empty accepted response."
         ),
         @ApiResponse(
             responseCode = "400",
