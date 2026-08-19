@@ -8,6 +8,11 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- Advanced the active development version to `0.16.0-SNAPSHOT`.
+- Opened the v0.16.0 stabilization, recovery-rehearsal, API-freeze, and supply-chain hardening milestone through issue #169 without adding new product features.
+
 ## [0.15.0] - 2026-08-18
 
 ### Added
