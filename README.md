@@ -112,13 +112,15 @@ Completed capabilities include:
 - operator-only, paginated command-audit queries and chronological command timelines
 - Prometheus metrics, Grafana dashboards, and alert rules for Kafka consumer failures
 
-OpenAPI documentation covers the implemented API, while executable Postman workflows remain aligned with released end-to-end flows. PayFlow v0.14.0 is the latest published release, and v0.15.0 is in protected release preparation with the Maven version frozen at `0.15.0`. The release candidate freezes generalized abuse protection, reproducible load and performance evidence, and operational dashboards and alerts without changing the simulated-money boundary.
+OpenAPI documentation covers the implemented API, while executable Postman workflows remain aligned with released end-to-end flows. PayFlow v0.15.0 is the latest published release, and the Maven version is `0.15.0`. The release delivers generalized abuse protection, reproducible load and performance evidence, and operational dashboards and alerts without changing the simulated-money boundary.
 
-The immutable v0.14.0 publication record is anchored to annotated tag `v0.14.0`, merge commit `d65929b98bb66b22f208d26f75a764e1ade78b6a`, and successful release workflow run [31728977714](https://github.com/nursena-pc/payflow/actions/runs/31728977714). The published `payflow-0.14.0.jar` is 100200050 bytes and its independently verified SHA-256 is `A6533039C5DDBE610D9DDB986DDBDAFE192DD56BE664E86B65A72AECF51F116E`.
+The immutable v0.15.0 publication record is anchored to annotated tag `v0.15.0`, merge commit `c29a067ca3a64514444e17db59a2b862d26f5950`, and successful release workflow run [32172653513](https://github.com/nursena-pc/payflow/actions/runs/32172653513). The published `payflow-0.15.0.jar` is 100236578 bytes and its independently verified SHA-256 is `7EDF5EAD1EB93966E750F917D9472B4383D2B3CDA7406A264AE78B106A779080`.
+
+The immutable v0.14.0 publication record remains anchored to annotated tag `v0.14.0`, merge commit `d65929b98bb66b22f208d26f75a764e1ade78b6a`, and successful release workflow run [31728977714](https://github.com/nursena-pc/payflow/actions/runs/31728977714). The published `payflow-0.14.0.jar` is 100200050 bytes and its independently verified SHA-256 is `A6533039C5DDBE610D9DDB986DDBDAFE192DD56BE664E86B65A72AECF51F116E`.
 
 The immutable v0.13.0 publication record remains anchored to annotated tag `v0.13.0`, merge commit `726f631a0de800870813ccb0c00b2676eb5d172b`, and successful release workflow run [31115952987](https://github.com/nursena-pc/payflow/actions/runs/31115952987). The published `payflow-0.13.0.jar` is 100015861 bytes and its independently verified SHA-256 is `78520B04BA3FDAF1BCEB3EAF29FCBE96C46265DF691C52C9048CEE6B5D58F4DA`.
 
-See the [v0.14.0 release notes](docs/releases/v0.14.0.md), the [published GitHub Release](https://github.com/nursena-pc/payflow/releases/tag/v0.14.0), the [MFA operations guide](docs/operations/mfa-security.md), [ADR 0014](docs/adr/0014-mfa-and-step-up-authentication.md), the [v0.13.0 release notes](docs/releases/v0.13.0.md), and the [roadmap](docs/roadmap.md).
+See the [v0.15.0 release notes](docs/releases/v0.15.0.md), the [published GitHub Release](https://github.com/nursena-pc/payflow/releases/tag/v0.15.0), the [abuse-protection operations guide](docs/operations/abuse-protection-observability.md), [ADR 0015](docs/adr/0015-generalized-abuse-protection.md), the [v0.14.0 release notes](docs/releases/v0.14.0.md), and the [roadmap](docs/roadmap.md).
 
 ## Structured logging
 
@@ -173,16 +175,15 @@ Authenticated users can obtain a short-lived, subject-bound, purpose-bound step-
 MFA disable and recovery-code rotation consume exact step-up purposes. MFA disable removes authenticator and recovery-code state, revokes active refresh-token families, and appends credential-free audit evidence atomically. Recovery-code rotation atomically replaces the complete digest set and returns replacement plaintext once. Active-authenticator replacement remains deferred until a safe two-stage replacement lifecycle is designed and verified.
 
 See the [v0.14.0 release notes](docs/releases/v0.14.0.md), [ADR 0014](docs/adr/0014-mfa-and-step-up-authentication.md), the [MFA threat model](docs/security/mfa-threat-model.md), the [MFA operations guide](docs/operations/mfa-security.md), the [TOTP enrollment contract](docs/security/mfa-enrollment.md), the [MFA login challenge contract](docs/security/mfa-login-challenge.md), the [recovery-code contract](docs/security/mfa-recovery-codes.md), and the [step-up contract](docs/security/step-up-authentication.md).
-## v0.15.0 release preparation
+## v0.15.0 release
 
-The `0.15.0` release-preparation line contains the complete generalized
-abuse-protection implementation and accepted Increment 6 evidence while release
-finalization is tracked by [issue #166](https://github.com/nursena-pc/payflow/issues/166)
-under milestone [#149](https://github.com/nursena-pc/payflow/issues/149).
+PayFlow v0.15.0 delivers the complete generalized abuse-protection implementation
+and accepted performance evidence while preserving the simulated-money boundary.
+The completed milestone is tracked by [issue #149](https://github.com/nursena-pc/payflow/issues/149),
+with release finalization recorded by [issue #166](https://github.com/nursena-pc/payflow/issues/166).
 
-The v0.15.0 milestone remains tracked by issue #149 and covers generalized abuse
-protection, reproducible load and performance evidence, and operational
-dashboards and alerts.
+The release covers generalized abuse protection, reproducible load and
+performance evidence, and operational dashboards and alerts.
 
 The historical foundation remains explicit: Increment 1 freezes five bounded workflow identifiers, the global generalized policy switch defaults off, and
 the approved foundation is recorded by issue #151. Later increments delivered

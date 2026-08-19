@@ -22,7 +22,7 @@ class RoadmapContractTest {
         Path.of("docs", "roadmap.md");
 
     @Test
-    void shouldAlignRoadmapWithReleasePreparationVersion()
+    void shouldAlignRoadmapWithPublishedRelease()
         throws Exception {
 
         String projectVersion = readProjectVersion();
@@ -34,30 +34,31 @@ class RoadmapContractTest {
 
         assertThat(roadmap)
             .contains(
-                "PayFlow v0.14.0 is the latest tagged release",
+                "PayFlow v0.15.0 is the latest tagged release",
                 "The Maven version is `" + projectVersion + "`",
                 "## v0.10.0 — Released: Trusted Client Context",
                 "## v0.11.0 — Released: Structured Logging and Request Correlation",
                 "## v0.12.0 — Released: JWT Signing-Key Rotation",
                 "## v0.13.0 — Released: Account Recovery and Secure Mail Delivery",
                 "## v0.14.0 — Released: MFA and Step-Up Authentication",
-                "## v0.15.0 — Release Preparation: Generalized Abuse Protection and Performance Evidence",
-                "d65929b98bb66b22f208d26f75a764e1ade78b6a",
-                "31728977714"
+                "## v0.15.0 — Released: Generalized Abuse Protection and Performance Evidence",
+                "c29a067ca3a64514444e17db59a2b862d26f5950",
+                "32172653513"
             )
             .doesNotContain(
                 "0.14.0-SNAPSHOT",
                 "0.15.0-SNAPSHOT",
                 "## v0.14.0 — Release Candidate",
                 "## v0.14.0 — Release Preparation",
-                "## v0.15.0 — Active Development: Generalized Abuse Protection and Performance Evidence"
+                "## v0.15.0 — Active Development: Generalized Abuse Protection and Performance Evidence",
+                "## v0.15.0 — Release Preparation: Generalized Abuse Protection and Performance Evidence"
             );
 
         assertThat(normalizedRoadmap)
             .contains(
-                "TOTP multi-factor authentication",
-                "digest-only recovery codes",
-                "bounded step-up authentication",
+                "standards-compatible TOTP authenticator",
+                "Persist only fixed-length recovery-code digests",
+                "purpose-bound step-up",
                 "generalized abuse protection",
                 "load and performance evidence",
                 "operational dashboards and alerts"
@@ -65,36 +66,27 @@ class RoadmapContractTest {
     }
 
     @Test
-    void shouldFreezeV013AndV014PublicationBoundaries()
+    void shouldFreezeV013V014AndV015PublicationBoundaries()
         throws IOException {
 
         assertThat(Files.readString(ROADMAP))
             .contains(
-                "- [x] Backfill every pre-v0.13.0 user as verified to prevent migration lockout",
-                "- [x] Persist only fixed-length SHA-256 digests, never plaintext credentials",
-                "- [x] Add generic `POST /api/v1/auth/email-verification/requests`",
-                "- [x] Add token-confirmation `POST /api/v1/auth/password-recovery/confirm`",
-                "- [x] Revoke all active refresh-token families with `PASSWORD_RECOVERY`",
-                "- [x] Protect provider-ready mail bodies with AES-256-GCM before persistence",
-                "- [x] Claim work with PostgreSQL leases and `FOR UPDATE SKIP LOCKED`",
-                "- [x] Run the complete Maven verification suite and production Docker smoke",
-                "1,174 tests, zero failures, zero errors",
-                "Deferred to the generalized abuse-protection milestone",
-                "They are not claimed by this release",
                 "- [x] the protected v0.13.0 release-preparation pull request is merged",
                 "- [x] the v0.13.0 tag, JAR, checksum, and GitHub Release are published",
-                "9879780a418d8490b835c36b7a01cd0019621a7e",
                 "78520B04BA3FDAF1BCEB3EAF29FCBE96C46265DF691C52C9048CEE6B5D58F4DA",
-                "4FDD37BC1BF5D058A391A23784CCF87DED3FADCC3F9DB564806A8A52DC1F7B51",
-                "- [x] Open the dedicated v0.14.0 implementation issue",
-                "Keep MFA state separate from `UserStatus` and email-verification state",
-                "Protect every pending or active TOTP secret before PostgreSQL persistence",
-                "Persist only fixed-length recovery-code digests",
-                "Introduce an application-facing step-up policy independent from controller annotations",
-                "generalized registration, refresh, recovery, or operations rate-limit policy; that remains a v0.15.0 concern",
                 "- [x] protected feature and release-preparation pull requests are merged",
                 "- [x] the v0.14.0 tag, JAR, checksum, and GitHub Release are published",
-                "A6533039C5DDBE610D9DDB986DDBDAFE192DD56BE664E86B65A72AECF51F116E"
+                "A6533039C5DDBE610D9DDB986DDBDAFE192DD56BE664E86B65A72AECF51F116E",
+                "- [x] Pass protected `build-and-test` and `docker-smoke` checks on the exact release-preparation PR head",
+                "- [x] Record immutable publication evidence after protected merge and publication",
+                "- [x] the v0.15.0 tag, JAR, checksum, and GitHub Release are published",
+                "release-preparation PR: `#167`",
+                "2f334ca28c78533e5bfc3a2dc5ee3c4a3d903976",
+                "c29a067ca3a64514444e17db59a2b862d26f5950",
+                "a1aa528b4933c69a3fa81c10a103154bd1d6a327",
+                "32172653513",
+                "100236578",
+                "7EDF5EAD1EB93966E750F917D9472B4383D2B3CDA7406A264AE78B106A779080"
             );
     }
 

@@ -29,7 +29,7 @@ class V015DevelopmentContractTest {
         Path.of(".github", "workflows", "release.yml");
 
     @Test
-    void shouldExposeV015ReleasePreparationStatus()
+    void shouldExposeV015PublishedReleaseStatus()
         throws IOException {
 
         assertThat(Files.readString(POM))
@@ -38,18 +38,19 @@ class V015DevelopmentContractTest {
 
         assertThat(Files.readString(README))
             .contains(
-                "PayFlow v0.14.0 is the latest published release",
-                "v0.15.0 is in protected release preparation",
-                "Maven version frozen at `0.15.0`",
-                "## v0.15.0 release preparation",
-                "generalized abuse protection",
-                "reproducible load and performance evidence",
-                "operational dashboards and alerts",
-                "issue #166"
+                "PayFlow v0.15.0 is the latest published release",
+                "the Maven version is `0.15.0`",
+                "## v0.15.0 release",
+                "annotated tag `v0.15.0`",
+                "c29a067ca3a64514444e17db59a2b862d26f5950",
+                "32172653513",
+                "100236578 bytes",
+                "7EDF5EAD1EB93966E750F917D9472B4383D2B3CDA7406A264AE78B106A779080"
             )
             .doesNotContain(
                 "0.15.0-SNAPSHOT",
-                "## v0.15.0 active development"
+                "v0.15.0 is in protected release preparation",
+                "## v0.15.0 release preparation"
             );
     }
 
@@ -61,9 +62,6 @@ class V015DevelopmentContractTest {
             .contains(
                 "## [Unreleased]",
                 "## [0.15.0] - 2026-08-18",
-                "Prepared the v0.15.0 release candidate at Maven version `0.15.0`",
-                "issue #149",
-                "issue #166",
                 "[0.15.0]: https://github.com/nursena-pc/payflow/compare/v0.14.0...v0.15.0",
                 "[Unreleased]: https://github.com/nursena-pc/payflow/compare/v0.15.0...HEAD"
             );
@@ -72,10 +70,6 @@ class V015DevelopmentContractTest {
             .contains(
                 "# PayFlow v0.15.0",
                 "five bounded workflow identifiers",
-                "Shared Redis enforcement",
-                "Protected workflows",
-                "Observability and operations",
-                "Performance evidence",
                 "Registration decision",
                 "1,582 Maven tests",
                 "payflow-0.15.0.jar",
@@ -102,18 +96,15 @@ class V015DevelopmentContractTest {
 
         assertThat(Files.readString(ROADMAP))
             .contains(
-                "## v0.15.0 — Release Preparation: Generalized Abuse Protection and Performance Evidence",
-                "release finalization is tracked by issue `#166`",
-                "- [x] Align OpenAPI, Postman, README, changelog, ADRs, threat model, and operations guidance",
-                "- [x] Add focused unit, Redis, HTTP, concurrency, redaction, and dependency-failure tests",
-                "- [x] Run the complete Maven verification suite and production Docker smoke on the exact release-candidate content",
-                "- [ ] Pass protected `build-and-test` and `docker-smoke` checks on the exact release-preparation PR head",
-                "- [ ] Record immutable publication evidence after protected merge and publication"
+                "## v0.15.0 — Released: Generalized Abuse Protection and Performance Evidence",
+                "- [x] Pass protected `build-and-test` and `docker-smoke` checks on the exact release-preparation PR head",
+                "- [x] Record immutable publication evidence after protected merge and publication",
+                "- [x] the v0.15.0 tag, JAR, checksum, and GitHub Release are published"
             );
     }
 
     @Test
-    void shouldRequireImmutablePublicationFromProtectedMainHistory()
+    void shouldFreezeImmutablePublicationEvidence()
         throws IOException {
 
         assertThat(Files.readString(RELEASE_WORKFLOW))
@@ -128,10 +119,18 @@ class V015DevelopmentContractTest {
                 "--verify-tag"
             );
 
-        assertThat(Files.readString(RELEASE_NOTES))
+        assertThat(Files.readString(ROADMAP))
             .contains(
-                "protected `CI` and `Docker Smoke` must still pass",
-                "immutable tag, merge SHA, release workflow run, published artifact size, and published SHA-256 are recorded only after publication"
+                "release-preparation PR: `#167`",
+                "2f334ca28c78533e5bfc3a2dc5ee3c4a3d903976",
+                "c29a067ca3a64514444e17db59a2b862d26f5950",
+                "a1aa528b4933c69a3fa81c10a103154bd1d6a327",
+                "32172653513",
+                "2026-08-18T18:52:43Z",
+                "9338113318",
+                "372572363",
+                "100236578",
+                "7EDF5EAD1EB93966E750F917D9472B4383D2B3CDA7406A264AE78B106A779080"
             );
     }
 }
