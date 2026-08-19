@@ -841,12 +841,12 @@ Baseline: v0.15.0 publication-record merge
 
 ### Increment 1 — Stabilization baseline and compatibility contract
 
-- [ ] Open the Maven development line at `0.16.0-SNAPSHOT` through a protected PR
-- [ ] Inventory implemented `/api/v1` endpoints, status/error contracts, OpenAPI descriptions, and executable Postman flows
-- [ ] Define the v1 compatibility boundary so existing `/api/v1` request, response, and error semantics cannot change silently
-- [ ] Freeze existing security, privacy, fail-closed, simulated-money, and modular-monolith boundaries
-- [ ] Inventory stale architecture and release documentation before changing it
-- [ ] Add executable development contracts for the approved v0.16.0 stabilization scope
+- [x] Open the Maven development line at `0.16.0-SNAPSHOT` through a protected PR
+- [x] Inventory implemented `/api/v1` endpoints, status/error contracts, OpenAPI descriptions, and executable Postman flows
+- [x] Define the v1 compatibility boundary so existing `/api/v1` request, response, and error semantics cannot change silently
+- [x] Freeze existing security, privacy, fail-closed, simulated-money, and modular-monolith boundaries
+- [x] Inventory stale architecture and release documentation before changing it
+- [x] Add executable development contracts for the approved v0.16.0 stabilization scope
 
 ### Increment 2 — PostgreSQL backup and restore rehearsal
 
@@ -924,8 +924,8 @@ Baseline: v0.15.0 publication-record merge
 
 ## v0.16.0 release exit criteria
 
-- [ ] `0.16.0-SNAPSHOT` development baseline is opened through a protected PR
-- [ ] `/api/v1` compatibility boundary is documented and executable where practical
+- [x] `0.16.0-SNAPSHOT` development baseline is opened through a protected PR
+- [x] `/api/v1` compatibility boundary is documented and executable where practical
 - [ ] PostgreSQL backup and restore rehearsal is repeatable and passes integrity checks
 - [ ] clean-install and previous-release-to-current Flyway rehearsals pass
 - [ ] Redis and Kafka outage/recovery procedures are documented and verified against existing failure contracts

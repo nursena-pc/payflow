@@ -12,6 +12,7 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Advanced the active development version to `0.16.0-SNAPSHOT`.
 - Opened the v0.16.0 stabilization, recovery-rehearsal, API-freeze, and supply-chain hardening milestone through issue #169 without adding new product features.
+- Froze the source-backed `/api/v1` compatibility baseline through issue #171, including OpenAPI/Postman comparison, security and failure-contract boundaries, and concrete documentation-drift follow-ups without changing runtime behavior.
 
 ## [0.15.0] - 2026-08-18
 

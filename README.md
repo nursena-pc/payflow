@@ -243,6 +243,12 @@ Work is tracked by [issue #169](https://github.com/nursena-pc/payflow/issues/169
 
 ## Implemented API
 
+The v0.16.0 stabilization line freezes the implementation-backed `/api/v1`
+surface in the [API compatibility baseline](docs/api-v1-compatibility.md).
+Breaking changes to the documented authentication, authorization, request,
+response, status/error, idempotency, anti-enumeration, or single-use semantics
+require an explicit reviewed compatibility checkpoint.
+
 | Method | Endpoint | Authentication | Description |
 |---|---|---|---|
 | `POST` | `/api/v1/auth/register` | Public | Registers a new user and stores a BCrypt password hash. |
