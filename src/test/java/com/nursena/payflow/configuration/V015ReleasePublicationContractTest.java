@@ -8,7 +8,7 @@ import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
 
-class V014ReleasePublicationContractTest {
+class V015ReleasePublicationContractTest {
 
     private static final Path README =
         Path.of("README.md");
@@ -20,7 +20,7 @@ class V014ReleasePublicationContractTest {
         Path.of("docs", "roadmap.md");
 
     private static final Path RELEASE_NOTES =
-        Path.of("docs", "releases", "v0.14.0.md");
+        Path.of("docs", "releases", "v0.15.0.md");
 
     private static final Path RELEASE_WORKFLOW =
         Path.of(
@@ -35,17 +35,17 @@ class V014ReleasePublicationContractTest {
 
         assertThat(Files.readString(README))
             .contains(
-                "The immutable v0.14.0 publication record remains anchored",
-                "## v0.14.0 release",
-                "annotated tag `v0.14.0`",
-                "d65929b98bb66b22f208d26f75a764e1ade78b6a",
-                "31728977714",
-                "100200050 bytes",
-                "A6533039C5DDBE610D9DDB986DDBDAFE192DD56BE664E86B65A72AECF51F116E"
+                "PayFlow v0.15.0 is the latest published release",
+                "## v0.15.0 release",
+                "annotated tag `v0.15.0`",
+                "c29a067ca3a64514444e17db59a2b862d26f5950",
+                "32172653513",
+                "100236578 bytes",
+                "7EDF5EAD1EB93966E750F917D9472B4383D2B3CDA7406A264AE78B106A779080"
             )
             .doesNotContain(
-                "v0.14.0 release preparation",
-                "The `0.14.0` release-preparation line"
+                "v0.15.0 is in protected release preparation",
+                "## v0.15.0 release preparation"
             );
     }
 
@@ -56,18 +56,17 @@ class V014ReleasePublicationContractTest {
         assertThat(Files.readString(CHANGELOG))
             .contains(
                 "## [Unreleased]",
-                "## [0.14.0] - 2026-08-12",
-                "[0.14.0]: https://github.com/nursena-pc/payflow/compare/v0.13.0...v0.14.0"
+                "## [0.15.0] - 2026-08-18",
+                "[0.15.0]: https://github.com/nursena-pc/payflow/compare/v0.14.0...v0.15.0"
             );
 
         assertThat(Files.readString(RELEASE_NOTES))
             .contains(
-                "# PayFlow v0.14.0",
-                "v0.13.0...v0.14.0",
-                "TOTP",
-                "rotation requires an exact purpose-bound step-up grant"
+                "# PayFlow v0.15.0",
+                "Registration remains deliberately unwired",
+                "v0.14.0...v0.15.0"
             )
-            .doesNotContain("0.14.0-SNAPSHOT");
+            .doesNotContain("0.15.0-SNAPSHOT");
     }
 
     @Test
@@ -76,19 +75,21 @@ class V014ReleasePublicationContractTest {
 
         assertThat(Files.readString(ROADMAP))
             .contains(
-                "## v0.14.0 — Released: MFA and Step-Up Authentication",
-                "- [x] Pass protected `build-and-test` and `docker-smoke` checks for every increment",
+                "## v0.15.0 — Released: Generalized Abuse Protection and Performance Evidence",
+                "- [x] Pass protected `build-and-test` and `docker-smoke` checks on the exact release-preparation PR head",
+                "- [x] Record immutable publication evidence after protected merge and publication",
                 "- [x] protected feature and release-preparation pull requests are merged",
-                "- [x] the v0.14.0 tag, JAR, checksum, and GitHub Release are published",
-                "release-preparation PR: `#147`",
-                "release-candidate commit: `1fba2dacc239d8c43149cebdf192e3086be356c3`",
-                "published merge and tag commit: `d65929b98bb66b22f208d26f75a764e1ade78b6a`",
-                "annotated tag object: `826c77a724915c386c375c2cc227597ae0331dda`",
-                "release workflow run: [`31728977714`]",
-                "published at: `2026-08-13T18:13:33Z`",
-                "published JAR size: `100200050` bytes",
-                "published JAR SHA-256: `A6533039C5DDBE610D9DDB986DDBDAFE192DD56BE664E86B65A72AECF51F116E`",
-                "release checksum verification: passed"
+                "- [x] the v0.15.0 tag, JAR, checksum, and GitHub Release are published",
+                "release-preparation PR: `#167`",
+                "release-candidate commit: `2f334ca28c78533e5bfc3a2dc5ee3c4a3d903976`",
+                "published merge and tag commit: `c29a067ca3a64514444e17db59a2b862d26f5950`",
+                "annotated tag object: `a1aa528b4933c69a3fa81c10a103154bd1d6a327`",
+                "32172653513",
+                "2026-08-18T18:52:43Z",
+                "9338113318",
+                "372572363",
+                "100236578",
+                "7EDF5EAD1EB93966E750F917D9472B4383D2B3CDA7406A264AE78B106A779080"
             );
     }
 

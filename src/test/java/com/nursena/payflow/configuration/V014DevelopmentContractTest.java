@@ -19,12 +19,12 @@ class V014DevelopmentContractTest {
     private static final Path ROADMAP =
         Path.of("docs", "roadmap.md");
     @Test
-    void shouldExposeV014PublishedReleaseStatus()
+    void shouldRetainV014PublishedReleaseRecord()
         throws IOException {
         assertThat(Files.readString(README))
             .contains(
-                "PayFlow v0.14.0 is the latest published release",
-                "The immutable v0.14.0 publication record is anchored to annotated tag `v0.14.0`",
+                "The immutable v0.14.0 publication record remains anchored to annotated tag `v0.14.0`",
+                "release workflow run [31728977714]",
                 "## v0.14.0 release",
                 "TOTP-based multi-factor authentication",
                 "digest-only login challenge",

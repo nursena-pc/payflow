@@ -72,7 +72,7 @@ class V015RegistrationProtectionDecisionContractTest {
     }
 
     @Test
-    void shouldPreserveRegistrationDecisionDuringIncrement7ReleasePreparation()
+    void shouldPreserveRegistrationDecisionAfterV015Publication()
         throws IOException {
 
         String roadmap = Files.readString(ROADMAP);
@@ -114,9 +114,9 @@ class V015RegistrationProtectionDecisionContractTest {
                 "- [x] Align OpenAPI, Postman, README, changelog, ADRs, threat model, and operations guidance",
                 "- [x] Add focused unit, Redis, HTTP, concurrency, redaction, and dependency-failure tests",
                 "- [x] Prepare versioned release notes",
-                "- [ ] Pass protected `build-and-test` and `docker-smoke` checks on the exact release-preparation PR head",
-                "- [ ] Record immutable publication evidence after protected merge and publication",
-                "the v0.15.0 tag, JAR, checksum, and GitHub Release are published"
+                "- [x] Pass protected `build-and-test` and `docker-smoke` checks on the exact release-preparation PR head",
+                "- [x] Record immutable publication evidence after protected merge and publication",
+                "- [x] the v0.15.0 tag, JAR, checksum, and GitHub Release are published"
             );
     }
 }
