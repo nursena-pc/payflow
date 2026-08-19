@@ -22,7 +22,7 @@ class RoadmapContractTest {
         Path.of("docs", "roadmap.md");
 
     @Test
-    void shouldAlignRoadmapWithPublishedRelease()
+    void shouldAlignRoadmapWithV016ActiveDevelopment()
         throws Exception {
 
         String projectVersion = readProjectVersion();
@@ -30,7 +30,7 @@ class RoadmapContractTest {
         String normalizedRoadmap = normalizeWhitespace(roadmap);
 
         assertThat(projectVersion)
-            .isEqualTo("0.15.0");
+            .isEqualTo("0.16.0-SNAPSHOT");
 
         assertThat(roadmap)
             .contains(
@@ -42,26 +42,26 @@ class RoadmapContractTest {
                 "## v0.13.0 — Released: Account Recovery and Secure Mail Delivery",
                 "## v0.14.0 — Released: MFA and Step-Up Authentication",
                 "## v0.15.0 — Released: Generalized Abuse Protection and Performance Evidence",
-                "c29a067ca3a64514444e17db59a2b862d26f5950",
-                "32172653513"
+                "## v0.16.0 — Active Development: Stabilization, Recovery Rehearsals, and API Freeze",
+                "Tracking issue: [#169]",
+                "8e1dffe61beeecca81466fee23ff217f862ce8e1"
             )
             .doesNotContain(
-                "0.14.0-SNAPSHOT",
                 "0.15.0-SNAPSHOT",
-                "## v0.14.0 — Release Candidate",
-                "## v0.14.0 — Release Preparation",
-                "## v0.15.0 — Active Development: Generalized Abuse Protection and Performance Evidence",
-                "## v0.15.0 — Release Preparation: Generalized Abuse Protection and Performance Evidence"
+                "## v0.16.0 — Release Preparation",
+                "## v0.16.0 — Released"
             );
 
         assertThat(normalizedRoadmap)
             .contains(
-                "standards-compatible TOTP authenticator",
-                "Persist only fixed-length recovery-code digests",
-                "purpose-bound step-up",
-                "generalized abuse protection",
-                "load and performance evidence",
-                "operational dashboards and alerts"
+                "`/api/v1` compatibility boundary",
+                "PostgreSQL backup and restore rehearsal",
+                "Flyway clean-install and upgrade rehearsal",
+                "Redis and Kafka outage/recovery operations",
+                "dependency vulnerability review",
+                "secret scanning",
+                "SBOM",
+                "clean-environment release rehearsal"
             );
     }
 

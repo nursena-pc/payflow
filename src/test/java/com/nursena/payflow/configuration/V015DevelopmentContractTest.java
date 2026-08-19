@@ -10,9 +10,6 @@ import org.junit.jupiter.api.Test;
 
 class V015DevelopmentContractTest {
 
-    private static final Path POM =
-        Path.of("pom.xml");
-
     private static final Path README =
         Path.of("README.md");
 
@@ -29,26 +26,20 @@ class V015DevelopmentContractTest {
         Path.of(".github", "workflows", "release.yml");
 
     @Test
-    void shouldExposeV015PublishedReleaseStatus()
+    void shouldRetainV015PublishedReleaseStatus()
         throws IOException {
-
-        assertThat(Files.readString(POM))
-            .contains("<version>0.15.0</version>")
-            .doesNotContain("0.15.0-SNAPSHOT");
 
         assertThat(Files.readString(README))
             .contains(
                 "PayFlow v0.15.0 is the latest published release",
-                "the Maven version is `0.15.0`",
                 "## v0.15.0 release",
-                "annotated tag `v0.15.0`",
+                "The immutable v0.15.0 publication record is anchored to annotated tag `v0.15.0`",
                 "c29a067ca3a64514444e17db59a2b862d26f5950",
                 "32172653513",
                 "100236578 bytes",
                 "7EDF5EAD1EB93966E750F917D9472B4383D2B3CDA7406A264AE78B106A779080"
             )
             .doesNotContain(
-                "0.15.0-SNAPSHOT",
                 "v0.15.0 is in protected release preparation",
                 "## v0.15.0 release preparation"
             );

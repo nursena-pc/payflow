@@ -112,7 +112,7 @@ Completed capabilities include:
 - operator-only, paginated command-audit queries and chronological command timelines
 - Prometheus metrics, Grafana dashboards, and alert rules for Kafka consumer failures
 
-OpenAPI documentation covers the implemented API, while executable Postman workflows remain aligned with released end-to-end flows. PayFlow v0.15.0 is the latest published release, and the Maven version is `0.15.0`. The release delivers generalized abuse protection, reproducible load and performance evidence, and operational dashboards and alerts without changing the simulated-money boundary.
+OpenAPI documentation covers the implemented API, while executable Postman workflows remain aligned with released end-to-end flows. PayFlow v0.15.0 is the latest published release, and the active development line uses `0.16.0-SNAPSHOT`. The v0.16.0 milestone focuses on stabilization, recovery rehearsals, API compatibility freeze, documentation consistency, dependency and supply-chain checks, and clean-environment verification without adding new product features.
 
 The immutable v0.15.0 publication record is anchored to annotated tag `v0.15.0`, merge commit `c29a067ca3a64514444e17db59a2b862d26f5950`, and successful release workflow run [32172653513](https://github.com/nursena-pc/payflow/actions/runs/32172653513). The published `payflow-0.15.0.jar` is 100236578 bytes and its independently verified SHA-256 is `7EDF5EAD1EB93966E750F917D9472B4383D2B3CDA7406A264AE78B106A779080`.
 
@@ -234,6 +234,13 @@ See the [v0.15.0 release notes](docs/releases/v0.15.0.md), [ADR 0015](docs/adr/0
 the [policy guide](docs/abuse-protection.md), the
 [operations runbook](docs/operations/abuse-protection-observability.md), and
 the committed [registration decision evidence](docs/performance/evidence/2026-08-17-registration-defer-f94ffa8.md).
+
+## v0.16.0 active development
+
+The active `0.16.0-SNAPSHOT` line is the stabilization stage before v1.0.0 release-candidate validation. It adds no new wallet, transfer, payment, identity-factor, or abuse-protection product feature, and it does not activate generalized registration protection.
+
+Work is tracked by [issue #169](https://github.com/nursena-pc/payflow/issues/169). The milestone covers a documented `/api/v1` compatibility boundary, repeatable PostgreSQL backup/restore and Flyway migration rehearsals, Redis and Kafka outage/recovery runbooks, OpenAPI/Postman/documentation drift review, dependency and secret scanning, SBOM/provenance evidence, and clean-environment release rehearsal. Existing modular-monolith, security, privacy, simulated-money, and fail-closed boundaries remain in force.
+
 ## Implemented API
 
 | Method | Endpoint | Authentication | Description |

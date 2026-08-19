@@ -2,7 +2,7 @@
 
 ## Current delivery focus
 
-PayFlow v0.15.0 is the latest tagged release. The Maven version is `0.15.0`.
+PayFlow v0.15.0 is the latest tagged release. The Maven version is `0.16.0-SNAPSHOT`.
 
 The v0.15.0 generalized abuse-protection release was published from verified
 merge commit `c29a067ca3a64514444e17db59a2b862d26f5950` through successful release workflow run `32172653513`.
@@ -10,6 +10,12 @@ The published `100236578`-byte JAR has independently verified SHA-256
 `7EDF5EAD1EB93966E750F917D9472B4383D2B3CDA7406A264AE78B106A779080`. The release delivers generalized abuse protection,
 reproducible load and performance evidence, and operational dashboards and
 alerts while preserving the existing simulated-money boundary.
+
+The active v0.16.0 stabilization line is tracked by issue `#169` from publication-record
+merge baseline `8e1dffe61beeecca81466fee23ff217f862ce8e1`. It is intentionally feature-frozen:
+recovery and migration rehearsals, `/api/v1` compatibility, dependency-failure
+operations, documentation consistency, supply-chain evidence, and clean-environment
+verification are in scope; new product behavior is not.
 
 The v0.14.0 publication remains anchored to merge/tag commit
 `d65929b98bb66b22f208d26f75a764e1ade78b6a` and release workflow run `31728977714`.
@@ -826,7 +832,113 @@ existing public behavior and no generalized registration limiter is added.
 - release checksum verification: passed
 - published release notes verification: exact match
 
-## Later v1.0 candidates
+## v0.16.0 — Active Development: Stabilization, Recovery Rehearsals, and API Freeze
 
-Later v1.0 candidates include backup/restore rehearsal, API freeze, SBOM
-generation, and release stabilization.
+Tracking issue: [#169](https://github.com/nursena-pc/payflow/issues/169)
+
+Baseline: v0.15.0 publication-record merge
+`8e1dffe61beeecca81466fee23ff217f862ce8e1`.
+
+### Increment 1 — Stabilization baseline and compatibility contract
+
+- [ ] Open the Maven development line at `0.16.0-SNAPSHOT` through a protected PR
+- [ ] Inventory implemented `/api/v1` endpoints, status/error contracts, OpenAPI descriptions, and executable Postman flows
+- [ ] Define the v1 compatibility boundary so existing `/api/v1` request, response, and error semantics cannot change silently
+- [ ] Freeze existing security, privacy, fail-closed, simulated-money, and modular-monolith boundaries
+- [ ] Inventory stale architecture and release documentation before changing it
+- [ ] Add executable development contracts for the approved v0.16.0 stabilization scope
+
+### Increment 2 — PostgreSQL backup and restore rehearsal
+
+- [ ] Define one repeatable local backup procedure for the PostgreSQL system of record
+- [ ] Restore into a clean isolated database/environment
+- [ ] Verify Flyway schema history and representative identity, session, wallet, transfer, ledger, outbox, DLQ, and audit data after restore
+- [ ] Verify application startup against the restored database
+- [ ] Document integrity checks, operator failure handling, and evidence-redaction boundaries
+- [ ] Keep secrets, credentials, and personal data out of committed rehearsal evidence
+
+### Increment 3 — Flyway clean-install and upgrade rehearsal
+
+- [ ] Prove a clean database reaches the current schema through the complete migration chain
+- [ ] Prove an approved previous-release schema/data set upgrades to the current schema without drift
+- [ ] Verify Flyway history and required database invariants after migration
+- [ ] Document recovery and rollback boundaries without claiming unsupported down-migrations
+- [ ] Keep migration rehearsal commands reproducible and isolated from developer data
+
+### Increment 4 — Redis and Kafka outage/recovery operations
+
+- [ ] Rehearse Redis outage and recovery for generalized abuse controls and the separate login limiter
+- [ ] Preserve existing fail-closed security behavior during dependency failure
+- [ ] Rehearse Kafka outage and recovery for transactional-outbox publication and consumer/DLQ paths
+- [ ] Verify PostgreSQL remains the durable source of truth where designed
+- [ ] Document observable symptoms, safe operator actions, recovery checks, and escalation conditions
+- [ ] Verify recovery procedures do not expose credentials, identities, raw client addresses, or payload content
+
+### Increment 5 — API, OpenAPI, Postman, and documentation drift review
+
+- [ ] Compare implemented `/api/v1` behavior with OpenAPI and Postman contracts
+- [ ] Align README, architecture documentation, ADR references, security guidance, operations guides, and roadmap with implementation
+- [ ] Resolve stale architecture documentation that still describes delivered capabilities as planned
+- [ ] Add executable documentation contracts only where they prevent meaningful compatibility or operations drift
+- [ ] Preserve the evidence-backed registration `DEFER` decision unless new evidence and a separately reviewed change justify activation
+
+### Increment 6 — Dependency and supply-chain evidence
+
+- [ ] Run a repository-appropriate dependency vulnerability review
+- [ ] Run secret scanning against committed content
+- [ ] Generate an SBOM with a documented tool and command
+- [ ] Record verifiable build/provenance inputs for the stabilization candidate
+- [ ] Review every critical/high finding explicitly
+- [ ] Do not suppress or retune findings only to make the release pass
+
+### Increment 7 — Clean-environment release rehearsal
+
+- [ ] Verify the project from a clean checkout/environment
+- [ ] Run the complete Maven verification suite
+- [ ] Run production-profile Docker smoke on the exact reviewed stabilization head
+- [ ] Verify executable JAR creation and checksum generation
+- [ ] Verify required production configuration fails fast when intentionally incomplete
+- [ ] Keep rehearsal evidence separate from immutable v1.0.0 publication
+
+### Increment 8 — v0.16.0 finalization and publication evidence
+
+- [ ] Align final README, changelog, roadmap, operations, security, OpenAPI, and Postman contracts from completed evidence only
+- [ ] Freeze Maven version `0.16.0` only on the reviewed release candidate
+- [ ] Pass protected `build-and-test` and `docker-smoke` checks on the exact release-preparation PR head
+- [ ] Publish the annotated `v0.16.0` tag from the exact approved merge commit
+- [ ] Publish and independently verify the executable JAR and SHA-256 checksum
+- [ ] Publish the GitHub Release from reviewed versioned release notes
+- [ ] Record immutable publication values only after publication
+
+## Explicit v0.16.0 non-goals
+
+- New wallet, transfer, payment, or transaction-history features
+- New abuse-protection algorithms, quota retuning, or generalized registration activation
+- Changes to the existing login-limiter semantics without a separately verified defect
+- New MFA factors, OAuth/OIDC, WebAuthn/passkeys, or active-authenticator replacement
+- Microservice extraction
+- Kubernetes, CDN, WAF, API-gateway, or distributed production deployment
+- Frontend implementation
+- Real-money operation, regulatory certification, or production-capacity claims
+- v1.0.0 publication itself
+
+## v0.16.0 release exit criteria
+
+- [ ] `0.16.0-SNAPSHOT` development baseline is opened through a protected PR
+- [ ] `/api/v1` compatibility boundary is documented and executable where practical
+- [ ] PostgreSQL backup and restore rehearsal is repeatable and passes integrity checks
+- [ ] clean-install and previous-release-to-current Flyway rehearsals pass
+- [ ] Redis and Kafka outage/recovery procedures are documented and verified against existing failure contracts
+- [ ] OpenAPI, Postman, README, architecture docs, ADRs, security/operations guidance, and implementation agree
+- [ ] dependency vulnerability and secret scans have no unresolved critical/high release blockers
+- [ ] an SBOM and build/provenance evidence are produced for the stabilization candidate
+- [ ] complete Maven verification passes with zero failures, errors, and skips
+- [ ] production Docker smoke passes on the exact reviewed stabilization head
+- [ ] clean-environment release rehearsal succeeds
+- [ ] protected CI checks pass before every merge
+- [ ] the v0.16.0 tag, JAR, checksum, GitHub Release, and immutable publication record are verified
+
+## v1.0.0 next stage
+
+v1.0.0 release-candidate validation begins only after the complete v0.16.0
+stabilization milestone and immutable publication record are complete.
