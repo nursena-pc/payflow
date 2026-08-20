@@ -128,6 +128,14 @@ v0.16.0 Increment 2 is tracked by [Issue #173](https://github.com/nursena-pc/pay
 
 See the [PostgreSQL backup/restore operations guide](docs/operations/postgresql-backup-restore.md) for prerequisites, source-selection safeguards, evidence boundaries, exact commands, and recovery limitations.
 
+## Flyway clean-install / upgrade rehearsal
+
+v0.16.0 Increment 3 is tracked by [Issue #175](https://github.com/nursena-pc/payflow/issues/175). The committed rehearsal proves a fresh PostgreSQL 17 database reaches the complete V1 through V24 schema and separately proves the immutable v0.13.0 / V17 release baseline upgrades through V18 through V24 while preserving deterministic synthetic representative data.
+
+The rehearsal rejects historical V1 through V17 migration drift, verifies the complete current Flyway history and database invariants, starts PayFlow against both resulting databases, and keeps recovery responsibility in the separate backup/restore boundary.
+
+See the [Flyway clean-install / upgrade operations guide](docs/operations/flyway-clean-upgrade.md) for the approved previous-release baseline, synthetic-data fingerprint contract, exact command, failure behavior, and rollback limitations.
+
 ## Structured logging
 
 PayFlow supports single-line JSON logs through the `structured-logging` and `production` Spring profiles. HTTP requests emit one bounded completion event containing the correlation ID, route template, method, status, duration, and outcome without logging bodies, query strings, authorization headers, cookies, raw URI paths, or financial/user data.

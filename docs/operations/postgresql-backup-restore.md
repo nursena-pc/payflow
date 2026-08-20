@@ -238,5 +238,6 @@ The successful final rehearsal recorded:
 The developer's persistent local volume was initially at Flyway V6. A safety
 backup was taken and that local source was upgraded to V24 as environment
 preparation before the successful final backup/restore probe. That preparation
-is **not** the v0.16.0 Increment 3 clean-install/previous-release upgrade
-rehearsal and does not mark Increment 3 complete.
+was **not** the v0.16.0 Increment 3 clean-install/previous-release upgrade
+rehearsal and did not by itself mark Increment 3 complete. Increment 3 is
+verified separately by the Flyway clean-install / upgrade rehearsal.

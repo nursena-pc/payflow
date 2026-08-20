@@ -10,6 +10,7 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Added a repeatable PostgreSQL 17 Flyway clean-install and previous-release upgrade rehearsal through issue #175, proving empty-database V1 through V24 installation, immutable v0.13.0 / V17 to V24 upgrade, historical migration immutability, deterministic synthetic-data preservation, current constraint behavior, and application startup without changing runtime API, security, or migration schema content.
 - Added a repeatable PostgreSQL 17 backup and isolated-restore rehearsal through issue #173, including custom-format backup tooling, clean-target restore, Flyway/public-table integrity checks, restored-database application startup, sanitized local evidence, and a focused operations guide without changing runtime API, security, or Flyway schema behavior.
 
 ### Changed
