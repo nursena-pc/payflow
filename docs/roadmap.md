@@ -850,12 +850,12 @@ Baseline: v0.15.0 publication-record merge
 
 ### Increment 2 — PostgreSQL backup and restore rehearsal
 
-- [ ] Define one repeatable local backup procedure for the PostgreSQL system of record
-- [ ] Restore into a clean isolated database/environment
-- [ ] Verify Flyway schema history and representative identity, session, wallet, transfer, ledger, outbox, DLQ, and audit data after restore
-- [ ] Verify application startup against the restored database
-- [ ] Document integrity checks, operator failure handling, and evidence-redaction boundaries
-- [ ] Keep secrets, credentials, and personal data out of committed rehearsal evidence
+- [x] Define one repeatable local backup procedure for the PostgreSQL system of record
+- [x] Restore into a clean isolated database/environment
+- [x] Verify Flyway schema history and representative identity, session, wallet, transfer, ledger, outbox, DLQ, and audit data after restore
+- [x] Verify application startup against the restored database
+- [x] Document integrity checks, operator failure handling, and evidence-redaction boundaries
+- [x] Keep secrets, credentials, and personal data out of committed rehearsal evidence
 
 ### Increment 3 — Flyway clean-install and upgrade rehearsal
 
@@ -926,7 +926,7 @@ Baseline: v0.15.0 publication-record merge
 
 - [x] `0.16.0-SNAPSHOT` development baseline is opened through a protected PR
 - [x] `/api/v1` compatibility boundary is documented and executable where practical
-- [ ] PostgreSQL backup and restore rehearsal is repeatable and passes integrity checks
+- [x] PostgreSQL backup and restore rehearsal is repeatable and passes integrity checks
 - [ ] clean-install and previous-release-to-current Flyway rehearsals pass
 - [ ] Redis and Kafka outage/recovery procedures are documented and verified against existing failure contracts
 - [ ] OpenAPI, Postman, README, architecture docs, ADRs, security/operations guidance, and implementation agree

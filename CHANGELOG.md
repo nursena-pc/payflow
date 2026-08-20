@@ -8,6 +8,10 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Added a repeatable PostgreSQL 17 backup and isolated-restore rehearsal through issue #173, including custom-format backup tooling, clean-target restore, Flyway/public-table integrity checks, restored-database application startup, sanitized local evidence, and a focused operations guide without changing runtime API, security, or Flyway schema behavior.
+
 ### Changed
 
 - Advanced the active development version to `0.16.0-SNAPSHOT`.
