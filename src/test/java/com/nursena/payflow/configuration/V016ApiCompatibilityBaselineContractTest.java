@@ -216,7 +216,7 @@ class V016ApiCompatibilityBaselineContractTest {
     }
 
     @Test
-    void shouldMarkIncrementOneCompleteWithoutStartingLaterWork()
+    void shouldKeepCompatibilityCheckpointHistoricalDuringRecoveryWork()
         throws IOException {
 
         String roadmap = Files.readString(ROADMAP);
@@ -234,7 +234,7 @@ class V016ApiCompatibilityBaselineContractTest {
             )
             .contains(
                 "### Increment 2 — PostgreSQL backup and restore rehearsal",
-                "- [ ] Define one repeatable local backup procedure for the PostgreSQL system of record"
+                "- [x] Define one repeatable local backup procedure for the PostgreSQL system of record"
             );
 
         assertThat(Files.readString(CHANGELOG))

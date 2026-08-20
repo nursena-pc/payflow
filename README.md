@@ -122,6 +122,12 @@ The immutable v0.13.0 publication record remains anchored to annotated tag `v0.1
 
 See the [v0.15.0 release notes](docs/releases/v0.15.0.md), the [published GitHub Release](https://github.com/nursena-pc/payflow/releases/tag/v0.15.0), the [abuse-protection operations guide](docs/operations/abuse-protection-observability.md), [ADR 0015](docs/adr/0015-generalized-abuse-protection.md), the [v0.14.0 release notes](docs/releases/v0.14.0.md), and the [roadmap](docs/roadmap.md).
 
+## PostgreSQL backup/restore rehearsal
+
+v0.16.0 Increment 2 is tracked by [Issue #173](https://github.com/nursena-pc/payflow/issues/173). The committed local procedure creates a PostgreSQL 17 custom-format backup, restores only into a clean isolated target, verifies Flyway and persistence fingerprints, and starts PayFlow against the restored database without changing runtime API or security behavior.
+
+See the [PostgreSQL backup/restore operations guide](docs/operations/postgresql-backup-restore.md) for prerequisites, source-selection safeguards, evidence boundaries, exact commands, and recovery limitations.
+
 ## Structured logging
 
 PayFlow supports single-line JSON logs through the `structured-logging` and `production` Spring profiles. HTTP requests emit one bounded completion event containing the correlation ID, route template, method, status, duration, and outcome without logging bodies, query strings, authorization headers, cookies, raw URI paths, or financial/user data.
