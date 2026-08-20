@@ -116,7 +116,7 @@ class V016PostgresBackupRestoreContractTest {
                 "Flyway latest `V24`",
                 "HTTP `200`",
                 "644a8d8573a7efe224d9e4e03396f1818ed0cf92d9d64a202fa46e34fa168b4f",
-                "does not mark Increment 3 complete"
+                "did not by itself mark Increment 3 complete"
             );
 
         assertThat(Files.readString(GITIGNORE))
@@ -124,7 +124,7 @@ class V016PostgresBackupRestoreContractTest {
     }
 
     @Test
-    void shouldMarkOnlyPostgresBackupRestoreIncrementComplete()
+    void shouldKeepPostgresBackupRestoreIncrementHistorical()
         throws IOException {
 
         String roadmap = Files.readString(ROADMAP);
@@ -146,7 +146,8 @@ class V016PostgresBackupRestoreContractTest {
             .doesNotContain("- [ ]");
 
         assertThat(incrementThree)
-            .contains("- [ ]");
+            .contains("- [x]")
+            .doesNotContain("- [ ]");
 
         assertThat(roadmap)
             .contains(

@@ -859,11 +859,11 @@ Baseline: v0.15.0 publication-record merge
 
 ### Increment 3 — Flyway clean-install and upgrade rehearsal
 
-- [ ] Prove a clean database reaches the current schema through the complete migration chain
-- [ ] Prove an approved previous-release schema/data set upgrades to the current schema without drift
-- [ ] Verify Flyway history and required database invariants after migration
-- [ ] Document recovery and rollback boundaries without claiming unsupported down-migrations
-- [ ] Keep migration rehearsal commands reproducible and isolated from developer data
+- [x] Prove a clean database reaches the current schema through the complete migration chain
+- [x] Prove an approved previous-release schema/data set upgrades to the current schema without drift
+- [x] Verify Flyway history and required database invariants after migration
+- [x] Document recovery and rollback boundaries without claiming unsupported down-migrations
+- [x] Keep migration rehearsal commands reproducible and isolated from developer data
 
 ### Increment 4 — Redis and Kafka outage/recovery operations
 
@@ -927,7 +927,7 @@ Baseline: v0.15.0 publication-record merge
 - [x] `0.16.0-SNAPSHOT` development baseline is opened through a protected PR
 - [x] `/api/v1` compatibility boundary is documented and executable where practical
 - [x] PostgreSQL backup and restore rehearsal is repeatable and passes integrity checks
-- [ ] clean-install and previous-release-to-current Flyway rehearsals pass
+- [x] clean-install and previous-release-to-current Flyway rehearsals pass
 - [ ] Redis and Kafka outage/recovery procedures are documented and verified against existing failure contracts
 - [ ] OpenAPI, Postman, README, architecture docs, ADRs, security/operations guidance, and implementation agree
 - [ ] dependency vulnerability and secret scans have no unresolved critical/high release blockers
