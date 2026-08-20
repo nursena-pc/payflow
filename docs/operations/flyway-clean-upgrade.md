@@ -45,14 +45,18 @@ through V17 blob drift.
 Before running:
 
 - Docker must be available.
-- Java 21 and the Maven wrapper must be available.
+- `JAVA_HOME` must point to the Java 21 JDK used by PayFlow, and the Maven
+  wrapper must be available.
 - immutable tag `v0.13.0` must exist locally at the reviewed commit.
 - HEAD must be attached to a branch and the Git working tree must be clean.
 - PostgreSQL 17 container images must be available.
 
-The procedure never uses the developer's persistent PayFlow database. It starts
-two separate loopback-only, ephemeral `postgres:17-alpine` containers with
-random process-local passwords:
+The procedure never uses the developer's persistent PayFlow database. Application
+startup resolves `JAVA_HOME/bin/java.exe`, verifies that it is Java 21, and
+never falls back to an unrelated bare `java` earlier on `PATH`.
+
+The procedure starts two separate loopback-only, ephemeral
+`postgres:17-alpine` containers with random process-local passwords:
 
 - one clean-install target;
 - one previous-release upgrade target.
@@ -155,6 +159,8 @@ Success requires:
 The rehearsal fails rather than repairing history when it sees:
 
 - a dirty or detached Git state;
+- missing `JAVA_HOME`, a missing `JAVA_HOME/bin/java.exe`, or a `JAVA_HOME`
+  runtime whose major version is not Java 21;
 - an unexpected immutable v0.13.0 tag target;
 - missing, extra, duplicated, renamed, or failed Flyway history;
 - historical V1 through V17 blob drift;

@@ -79,13 +79,17 @@ class V016FlywayCleanUpgradeContractTest {
                 "payflow_upgrade",
                 ".runtime\\flyway-rehearsal",
                 "ExternalWorktreeRoot",
-                "worktree','add','--detach"
+                "worktree','add','--detach",
+                "Resolve-Java21",
+                "JAVA_HOME",
+                "-FilePath $javaExecutable"
             )
             .doesNotContain(
                 "docker compose down -v",
                 "docker volume rm",
                 "DROP DATABASE",
-                "git reset --hard"
+                "git reset --hard",
+                "-FilePath 'java'"
             );
     }
 
@@ -190,7 +194,9 @@ class V016FlywayCleanUpgradeContractTest {
                 "PostgreSQL backup/restore procedure",
                 "production RPO/RTO",
                 "7709c3e1f56d8d5128cbcd98318b5a1d0b8aaab05d1ce41196646dd2ce7d585e",
-                "must not contain real email addresses"
+                "must not contain real email addresses",
+                "`JAVA_HOME` must point to the Java 21 JDK",
+                "never falls back to an unrelated bare `java`"
             );
     }
 

@@ -294,6 +294,49 @@ function Restore-Env([hashtable]$Old) {
     }
 }
 
+function Resolve-Java21 {
+    if ([string]::IsNullOrWhiteSpace($env:JAVA_HOME)) {
+        throw 'JAVA_HOME must point to the Java 21 JDK used by PayFlow.'
+    }
+
+    $javaExecutable = Join-Path `
+        $env:JAVA_HOME `
+        'bin\java.exe'
+
+    if (-not (
+        Test-Path `
+            -LiteralPath $javaExecutable `
+            -PathType Leaf
+    )) {
+        throw "JAVA_HOME does not contain bin\java.exe: $env:JAVA_HOME"
+    }
+
+    $version = Run-Captured `
+        $javaExecutable `
+        @('-version')
+
+    if ($version.Code -ne 0) {
+        throw "JAVA_HOME Java version check failed: $($version.Text)"
+    }
+
+    $match = [regex]::Match(
+        $version.Text,
+        '(?im)^(?:openjdk|java) version "([0-9]+)(?:\.|")'
+    )
+
+    if (-not $match.Success) {
+        throw "Could not parse JAVA_HOME Java version: $($version.Text)"
+    }
+
+    $major = [int] $match.Groups[1].Value
+
+    if ($major -ne 21) {
+        throw "Flyway rehearsal requires JAVA_HOME Java 21; got Java $major."
+    }
+
+    return $javaExecutable
+}
+
 function Run-App(
     [string]$Jar,[string]$Url,[string]$User,[string]$Password,
     [string]$LogPrefix,[string]$Label
@@ -316,10 +359,13 @@ function Run-App(
         MANAGEMENT_HEALTH_REDIS_ENABLED = 'false'
     }
 
+    $javaExecutable = Resolve-Java21
+    Write-Host "$Label runtime: JAVA_HOME Java 21"
+
     $proc = $null
     try {
         $proc = Start-Process `
-            -FilePath 'java' `
+            -FilePath $javaExecutable `
             -ArgumentList @('-jar',$Jar) `
             -PassThru `
             -RedirectStandardOutput "$LogPrefix.stdout.log" `
