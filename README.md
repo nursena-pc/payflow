@@ -136,6 +136,14 @@ The rehearsal rejects historical V1 through V17 migration drift, verifies the co
 
 See the [Flyway clean-install / upgrade operations guide](docs/operations/flyway-clean-upgrade.md) for the approved previous-release baseline, synthetic-data fingerprint contract, exact command, failure behavior, and rollback limitations.
 
+## Redis/Kafka outage-recovery rehearsal
+
+v0.16.0 Increment 4 is tracked by [Issue #178](https://github.com/nursena-pc/payflow/issues/178). The committed rehearsal uses isolated Testcontainers targets to verify Redis fail-closed behavior and recovery, PostgreSQL-backed Kafka outbox durability, consumer/DLT persistence, replay recovery, and the documented at-least-once acknowledgement-ambiguity boundary without retuning runtime semantics.
+
+Registration abuse protection remains deferred, the separate login limiter keeps its existing contract, and PostgreSQL remains the durable system of record. The rehearsal does not claim Redis/Kafka high availability, exactly-once end-to-end delivery, zero data loss, production RPO/RTO, or real-money operation.
+
+See the [Redis/Kafka outage-recovery operations guide](docs/operations/redis-kafka-outage-recovery.md) for the exact command, observable symptoms, safe operator actions, recovery checks, idempotency boundary, privacy requirements, and limitations.
+
 ## Structured logging
 
 PayFlow supports single-line JSON logs through the `structured-logging` and `production` Spring profiles. HTTP requests emit one bounded completion event containing the correlation ID, route template, method, status, duration, and outcome without logging bodies, query strings, authorization headers, cookies, raw URI paths, or financial/user data.
