@@ -134,43 +134,15 @@ compatibility analysis, executable verification, and protected review.
 
 ## OpenAPI comparison
 
-The current generated OpenAPI contract is source-backed by
-`OpenApiJsonContractIntegrationTest` and exposes the same **28 unique
-`/api/v1` paths** as this baseline. Two of those paths support two methods,
-giving the **30 canonical operations** above.
+The generated OpenAPI contract continues to expose the same **28 unique `/api/v1` paths** and the same 30 method/path operations frozen by this baseline. Two paths intentionally support two methods.
 
-Current strengths:
+Increment 5 alignment changes documentation metadata only: `OpenApiConfiguration` now reports `info.version = 0.16.0-SNAPSHOT`, matching the active Maven development line. This value is build/development metadata; it does not rename `/api/v1`, introduce `/api/v2`, or authorize a compatibility break.
 
-- exact route-path presence is executable
-- registration, login, account-action, refresh, wallet, transfer, transaction,
-  dead-letter, and selected security/status contracts are explicitly tested
-- logout-all has a dedicated OpenAPI integration contract
-- Bearer JWT configuration is explicit
-
-Recorded OpenAPI follow-up items for the later documentation-drift alignment
-increment:
-
-1. `OpenApiConfiguration` still reports `info.version = 0.2.0`; this predates
-   the current v0.16.0 development line and must be reviewed rather than
-   silently interpreted as the application release version.
-2. MFA enrollment/status/cancel/disable/recovery-code controller operations
-   rely more heavily on generated/inferred OpenAPI metadata than the explicitly
-   annotated identity, wallet, transfer, and operator controllers. Their
-   response/security descriptions should be reviewed against the compatibility
-   table above.
-3. This checkpoint records those documentation gaps but does not add runtime
-   behavior or broadly rewrite controller documentation.
+`OpenApiJsonContractIntegrationTest` remains the executable authority for exact path presence, bearer/public security placement, and the material response-code contracts already covered by the stabilization baseline.
 
 ## Postman comparison
 
-The standard, MFA, and login-rate-limit collections together currently contain
-**25 unique canonical `/api/v1` operations** from this 30-operation baseline.
-
-There are no verified Postman-only API operations once the two concatenated
-operator audit routes are resolved correctly from source.
-
-The five implemented operations not currently represented as Postman requests
-are:
+At the #171 freeze checkpoint, the standard, MFA, and login-rate-limit collections together contained **25 unique canonical `/api/v1` operations** from this 30-operation baseline. The five implemented operations recorded then as **known executable-workflow coverage gaps** were:
 
 - `POST /api/v1/auth/email-verification/confirm`
 - `POST /api/v1/auth/refresh`
@@ -178,36 +150,22 @@ are:
 - `POST /api/v1/auth/logout-all`
 - `DELETE /api/v1/users/me/mfa/enrollment`
 
-These are recorded as **known executable-workflow coverage gaps**, not missing
-API endpoints. The existing collections are scenario-oriented rather than an
-exhaustive endpoint manifest. This inventory does not claim an omission is
-intentional unless existing workflow documentation supports that conclusion.
-Later Postman alignment may add coverage without changing the compatibility
-surface.
+Increment 5 alignment adds `postman/PayFlow.api-compatibility.postman_collection.json` as a deliberately manual collection for exactly those five lifecycle-sensitive operations. Across the four executable collections, the current committed Postman assets now cover **30 unique canonical `/api/v1` operations** with no Postman-only operation.
+
+The compatibility collection commits no credential value. Email-verification and refresh credentials remain empty secret environment values, while access and MFA tokens must be supplied or produced locally. The standard scenario workflow remains non-destructive; the compatibility collection makes refresh/logout and pending-MFA cancellation explicit manual branches rather than silently changing the normal run order.
+
+README contains 36 raw API table representations because the six Kafka operator operations are repeated in a later operations section; two of those repeated rows include query-string examples. Normalization still yields the same 30 canonical operations, so raw markdown row count is not treated as an API count.
 
 ## Documentation-drift inventory
 
-This checkpoint intentionally does not broadly rewrite architecture
-documentation. The following concrete follow-up items are frozen for the later
-v0.16 documentation-alignment increment:
+Increment 5 alignment resolves the concrete documentation drift recorded at the #171 checkpoint without changing product behavior:
 
-1. `docs/architecture.md` still says transactional outbox persistence is
-   "planned for a later milestone", while the delivered platform and README
-   describe transactional outbox persistence and Kafka publication as
-   implemented.
-2. The architecture package-convention example still lists `notification` and
-   `audit` as top-level capability packages even though the current source tree
-   uses delivered packages such as `outbox`, `eventprocessing`,
-   `maildelivery`, `abuseprotection`, and `observability`.
-3. The architecture document does not yet describe several delivered modules
-   and their current boundaries with the same completeness as older wallet,
-   transaction, ledger, and client-context sections.
-4. `OpenApiConfiguration` still contains the historical `0.2.0` metadata
-   version and requires an explicit documentation-version decision.
+1. `docs/architecture.md` now describes transactional outbox persistence, retryable Kafka publication, idempotent event processing, DLT/replay, mail delivery, abuse protection, and observability as delivered modular-monolith capabilities rather than future placeholders.
+2. The architecture package inventory now matches current top-level source packages such as `abuseprotection`, `eventprocessing`, `maildelivery`, `observability`, and `outbox`; obsolete `notification` and `audit` top-level examples are removed.
+3. OpenAPI metadata now uses the active `0.16.0-SNAPSHOT` development version instead of the historical `0.2.0` text while preserving the frozen `/api/v1` route contract.
+4. Postman coverage now maps all 30 canonical operations while keeping secret-bearing and destructive flows manually gated.
 
-These are documentation follow-ups. They are not authorization to redesign the
-modular monolith, extract microservices, change the database model, or change
-the public API.
+The alignment does not activate generalized registration abuse protection, change the separate login limiter, redesign DTOs, add product endpoints, alter retry policy, rewrite migrations, extract microservices, or make real-money/HA/production-certification claims.
 
 ## Stabilization decision
 

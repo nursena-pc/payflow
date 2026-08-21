@@ -16,6 +16,7 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- Aligned v0.16.0 API/OpenAPI/Postman/architecture documentation through issue #180: OpenAPI metadata now follows `0.16.0-SNAPSHOT`, a manual compatibility collection closes the five previously recorded Postman operation gaps, and architecture guidance now describes delivered outbox/event-processing/mail/abuse/observability boundaries without changing runtime product or security semantics.
 - Advanced the active development version to `0.16.0-SNAPSHOT`.
 - Opened the v0.16.0 stabilization, recovery-rehearsal, API-freeze, and supply-chain hardening milestone through issue #169 without adding new product features.
 - Froze the source-backed `/api/v1` compatibility baseline through issue #171, including OpenAPI/Postman comparison, security and failure-contract boundaries, and concrete documentation-drift follow-ups without changing runtime behavior.

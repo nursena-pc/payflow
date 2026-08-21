@@ -1,6 +1,6 @@
 # PayFlow Postman Collection
 
-The Postman assets provide an executable local workflow for the PayFlow simulated digital-wallet API, manually gated Kafka dead-letter operations, and a separate deliberately disruptive login rate-limit verification workflow.
+The Postman assets provide an executable local workflow for the PayFlow simulated digital-wallet API, manually gated Kafka dead-letter operations, a separate deliberately disruptive login rate-limit verification workflow, and a dedicated manual compatibility-coverage collection for lifecycle-sensitive operations.
 
 ## Import
 
@@ -20,6 +20,16 @@ security workflow. It uses the shared local environment but requires
 `mfaEmail`, `mfaPassword`, `mfaAccessToken`, and fresh `mfaCode` values to be
 supplied locally. Committed MFA credential variables are empty.
 
+Import `PayFlow.api-compatibility.postman_collection.json` separately for
+the five source-backed operations that were not represented in the earlier
+scenario collections: email-verification confirmation, refresh rotation,
+current-session logout, logout-all, and pending MFA-enrollment cancellation.
+The collection is intentionally manual. `emailVerificationCredential` and
+`refreshToken` are empty secret environment values; `accessToken` and
+`mfaAccessToken` must also be supplied or produced locally before the
+corresponding request is sent. Across the four executable collections, all
+30 canonical `/api/v1` operations are represented without introducing a
+Postman-only API operation.
 ## Prerequisites
 
 ```bash
@@ -133,7 +143,9 @@ Run `Create Transfer`, then run `Replay Last Transfer` without rerunning the fir
 
 ## Security
 
-The repository contains no real JWTs, password-recovery credentials, privileged operator credentials, personal credentials, or production secrets. `operatorAccessToken`, `deadLetterRecordId`, `auditCommandId`, and `auditOperatorId` are intentionally empty in the committed environment.
+The repository contains no real JWTs, password-recovery credentials, privileged operator credentials, personal credentials, or production secrets.
+
+`emailVerificationCredential` and `refreshToken` are committed only as empty secret environment values for the manual compatibility collection. Never export or commit the environment after populating them. `operatorAccessToken`, `deadLetterRecordId`, `auditCommandId`, and `auditOperatorId` are intentionally empty in the committed environment.
 
 Never commit a Postman environment exported after it contains a live user or admin token. Treat an admin JWT as a privileged credential and keep it in a local environment or another trusted secret store.
 

@@ -112,7 +112,7 @@ Completed capabilities include:
 - operator-only, paginated command-audit queries and chronological command timelines
 - Prometheus metrics, Grafana dashboards, and alert rules for Kafka consumer failures
 
-OpenAPI documentation covers the implemented API, while executable Postman workflows remain aligned with released end-to-end flows. PayFlow v0.15.0 is the latest published release, and the active development line uses `0.16.0-SNAPSHOT`. The v0.16.0 milestone focuses on stabilization, recovery rehearsals, API compatibility freeze, documentation consistency, dependency and supply-chain checks, and clean-environment verification without adding new product features.
+OpenAPI documentation covers the implemented API. Across the committed standard, MFA, login-rate-limit, and compatibility-coverage collections, Postman represents all 30 canonical `/api/v1` operations while keeping lifecycle-sensitive and privileged requests manually gated. PayFlow v0.15.0 is the latest published release, and the active development line uses `0.16.0-SNAPSHOT`. The v0.16.0 milestone focuses on stabilization, recovery rehearsals, API compatibility freeze, documentation consistency, dependency and supply-chain checks, and clean-environment verification without adding new product features.
 
 The immutable v0.15.0 publication record is anchored to annotated tag `v0.15.0`, merge commit `c29a067ca3a64514444e17db59a2b862d26f5950`, and successful release workflow run [32172653513](https://github.com/nursena-pc/payflow/actions/runs/32172653513). The published `payflow-0.15.0.jar` is 100236578 bytes and its independently verified SHA-256 is `7EDF5EAD1EB93966E750F917D9472B4383D2B3CDA7406A264AE78B106A779080`.
 
@@ -432,6 +432,7 @@ Import:
 
 - `postman/PayFlow.postman_collection.json`
 - `postman/PayFlow.mfa.postman_collection.json` for the MFA and step-up security workflow
+- `postman/PayFlow.api-compatibility.postman_collection.json` for the five manually gated compatibility-coverage operations
 - `postman/PayFlow.local.postman_environment.json`
 - `postman/PayFlow.login-rate-limit.postman_collection.json` for the separate, deliberately disruptive login-limiter workflow
 

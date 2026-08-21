@@ -876,11 +876,11 @@ Baseline: v0.15.0 publication-record merge
 
 ### Increment 5 — API, OpenAPI, Postman, and documentation drift review
 
-- [ ] Compare implemented `/api/v1` behavior with OpenAPI and Postman contracts
-- [ ] Align README, architecture documentation, ADR references, security guidance, operations guides, and roadmap with implementation
-- [ ] Resolve stale architecture documentation that still describes delivered capabilities as planned
-- [ ] Add executable documentation contracts only where they prevent meaningful compatibility or operations drift
-- [ ] Preserve the evidence-backed registration `DEFER` decision unless new evidence and a separately reviewed change justify activation
+- [x] Compare implemented `/api/v1` behavior with OpenAPI and Postman contracts
+- [x] Align README, architecture documentation, ADR references, security guidance, operations guides, and roadmap with implementation
+- [x] Resolve stale architecture documentation that still describes delivered capabilities as planned
+- [x] Add executable documentation contracts only where they prevent meaningful compatibility or operations drift
+- [x] Preserve the evidence-backed registration `DEFER` decision unless new evidence and a separately reviewed change justify activation
 
 ### Increment 6 — Dependency and supply-chain evidence
 
