@@ -184,7 +184,7 @@ class V016ApiCompatibilityBaselineContractTest {
     }
 
     @Test
-    void shouldInventoryDocumentationDriftWithoutRewritingIt()
+    void shouldRecordResolvedDocumentationAlignment()
         throws IOException {
 
         String baseline = Files.readString(BASELINE);
@@ -194,27 +194,34 @@ class V016ApiCompatibilityBaselineContractTest {
 
         assertThat(architecture)
             .contains(
+                "Transactional outbox persistence is implemented",
+                "`abuseprotection`",
+                "`eventprocessing`",
+                "`maildelivery`",
+                "`observability`",
+                "`outbox`"
+            )
+            .doesNotContain(
                 "Transactional outbox persistence is planned for a later milestone",
-                "├── notification",
-                "├── audit"
+                "notification",
+                "future messaging integrations"
             );
 
         assertThat(openApiConfiguration)
             .contains(
                 "API_VERSION",
-                "\"0.2.0\""
-            );
+                "\"0.16.0-SNAPSHOT\""
+            )
+            .doesNotContain("\"0.2.0\"");
 
         assertThat(baseline)
             .contains(
-                "documentation-alignment increment",
-                "transactional outbox persistence is",
-                "`notification` and",
-                "`audit`",
-                "historical `0.2.0` metadata"
+                "Increment 5 alignment",
+                "**30 unique canonical `/api/v1` operations**",
+                "PayFlow.api-compatibility.postman_collection.json",
+                "`0.16.0-SNAPSHOT`"
             );
     }
-
     @Test
     void shouldKeepCompatibilityCheckpointHistoricalDuringRecoveryWork()
         throws IOException {

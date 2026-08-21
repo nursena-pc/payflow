@@ -12,53 +12,29 @@ adapter -> application -> domain
 
 The domain model has no Spring, JPA, Kafka, Redis, or HTTP dependencies.
 
-Application services coordinate use cases and depend on input and output ports. Adapters translate between the application core and infrastructure concerns such as HTTP, PostgreSQL, security, and future messaging integrations.
+Application services coordinate use cases and depend on input and output ports. Adapters translate between the application core and delivered infrastructure concerns such as HTTP, PostgreSQL, Redis, Kafka, SMTP, security, and observability.
 
 ## Package convention
 
+The current top-level capability packages are source-backed:
+
 ```text
 com.nursena.payflow
-├── user
-│   ├── domain
-│   ├── application
-│   │   ├── port.in
-│   │   └── port.out
-│   └── adapter
-│       ├── in.web
-│       └── out
-├── wallet
-│   ├── domain
-│   ├── application
-│   │   ├── port.in
-│   │   └── port.out
-│   └── adapter
-│       ├── in.web
-│       └── out.persistence
-├── transaction
-│   ├── domain
-│   ├── application
-│   │   ├── port.in
-│   │   └── port.out
-│   └── adapter
-│       ├── in.web
-│       └── out.persistence
-├── ledger
-│   ├── domain
-│   ├── application
-│   │   └── port.out
-│   └── adapter
-│       └── out.persistence
-├── clientcontext
-│   ├── domain
-│   └── adapter
-│       └── in.web
-├── notification
-├── audit
-├── common
-└── configuration
+|-- abuseprotection
+|-- clientcontext
+|-- common
+|-- configuration
+|-- eventprocessing
+|-- ledger
+|-- maildelivery
+|-- observability
+|-- outbox
+|-- transaction
+|-- user
+`-- wallet
 ```
 
-Packages that represent future capabilities may remain empty until a concrete use case requires them. Infrastructure is not added only to demonstrate a technology.
+Business capabilities use domain, application/port, and adapter boundaries where the capability requires them; infrastructure-focused packages keep infrastructure concerns outside domain code. The package inventory describes delivered code rather than reserving empty top-level packages for speculative future capabilities.
 
 ## Module responsibilities
 
@@ -80,20 +56,34 @@ effective address through `ClientAddressResolver`.
 
 The user module owns:
 
-- registration
-- normalized email identity
-- password-hash persistence
-- authentication
-- RSA-signed JWT creation
-- adapter-local signing-key retrieval and startup validation
-- stable JWT key identifiers and active/previous verification overlap
+- registration and normalized email identity
+- password-hash persistence and authentication
+- email-verification and password-recovery credential lifecycles
+- opaque refresh-session rotation, reuse detection, and family revocation
+- RSA-signed JWT creation with active/previous signing-key overlap
 - authenticated current-user profile
+- TOTP enrollment, MFA login challenges, recovery codes, and step-up grants
+- the separate Redis-backed password-login limiter compatibility boundary
 
-JWT key resources, PEM parsing, Nimbus selection, and deployment rotation stay
-inside the outbound security adapter. Application and domain code depend only
-on the existing access-token generation port. Production key rings contain one
-active signer and at most one verification-only previous key; verification is
-pinned to RS256 and requires a configured `kid`.
+JWT key resources, PEM parsing, Nimbus selection, and deployment rotation stay inside the outbound security adapter. Application and domain code depend on application-facing token and persistence ports rather than key-file or servlet details.
+
+### Abuse-protection module
+
+The `abuseprotection` capability owns the generalized bounded policy and Redis enforcement used by the reviewed account-action, MFA-challenge, and step-up flows. Redis stores only expiring derived control state and low-cardinality decision data. Registration remains outside generalized abuse-protection wiring under the evidence-backed `DEFER` decision, and the password-login limiter remains a separate compatibility contract.
+
+### Mail-delivery module
+
+The `maildelivery` capability owns protected account-action mail persistence and SMTP dispatch. Provider-ready verification/recovery content is encrypted before PostgreSQL persistence, leased for delivery after commit, decrypted only in memory, and erased after terminal outcomes.
+
+### Outbox and event-processing modules
+
+The `outbox` capability persists transfer-completed publication intent in the same PostgreSQL unit of work as the completed transfer and publishes after commit through a leased retryable Kafka publisher. The `eventprocessing` capability owns idempotent event consumption, durable dead-letter intake, controlled replay/discard lifecycle handling, and append-only operator command audit evidence.
+
+Kafka delivery is intentionally treated as at-least-once. A producer acknowledgement timeout can leave publication outcome ambiguous, so downstream PostgreSQL idempotency is the durable duplicate-processing boundary rather than an exactly-once broker claim.
+
+### Observability module
+
+The `observability` capability owns trustworthy request correlation, bounded request-completion events, structured logging/redaction support, and adapter-side operational metrics. Credentials, raw client addresses, request bodies, financial values, and other sensitive high-cardinality values remain outside logs and metric labels.
 
 ### Wallet module
 
@@ -200,11 +190,13 @@ The rollback behavior is verified against PostgreSQL by forcing ledger persisten
 
 ## Transactional outbox strategy
 
-Transactional outbox persistence is planned for a later milestone and is not part of the current transfer transaction.
+Transactional outbox persistence is implemented as part of the current transfer transaction.
 
-When implemented, the outbox record will be written in the same PostgreSQL transaction as the completed transfer. Kafka publication will happen after commit through a separate publisher.
+A completed transfer and its publication intent are persisted in the same PostgreSQL unit of work. Kafka publication happens after commit through a separate leased, retryable publisher; the transfer use case does not publish directly to Kafka inside the database transaction.
 
-The transfer use case will not publish directly to Kafka inside the database transaction.
+PostgreSQL remains the system of record for transfer, ledger, outbox, dead-letter, replay, and processing evidence where designed. Kafka delivery has an at-least-once delivery boundary: an acknowledgement timeout can make a send outcome ambiguous and a later retry may produce duplicate broker delivery. Durable processed-event and audit/idempotency state prevents a second financial movement or a second effective processing result.
+
+Redis is not a system of record. It remains limited to bounded, explicitly expiring abuse-control state, including the separate password-login limiter and generalized abuse-protection decisions.
 
 ## Concurrency strategy
 
@@ -300,6 +292,8 @@ Clients cannot supply the source user or source wallet identifier for:
 This prevents a client from accessing or changing another user's data by supplying a different user or wallet identifier in request input.
 
 Spring Security uses a deny-by-default policy. New routes remain inaccessible until they are explicitly classified as public or authenticated.
+
+/api/v1/operations/** remains restricted to the application-owned PAYFLOW_OPERATIONS authority derived from the exact administrative JWT role contract. Registration remains outside generalized abuse-protection wiring under the reviewed DEFER decision; the password-login limiter remains a separate compatibility contract with unchanged fail-closed behavior.
 
 ### Trusted client-address boundary
 

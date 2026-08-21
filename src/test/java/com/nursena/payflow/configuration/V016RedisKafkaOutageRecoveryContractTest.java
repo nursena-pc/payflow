@@ -196,7 +196,9 @@ class V016RedisKafkaOutageRecoveryContractTest {
             .contains(
                 "- [x] Redis and Kafka outage/recovery procedures are documented and verified against existing failure contracts",
                 "### Increment 5",
-                "- [ ] Compare implemented `/api/v1` behavior with OpenAPI and Postman contracts"
+                "- [x] Compare implemented `/api/v1` behavior with OpenAPI and Postman contracts",
+                "### Increment 6",
+                "- [ ] Run a repository-appropriate dependency vulnerability review"
             );
 
         assertThat(Files.readString(README))
