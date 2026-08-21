@@ -867,12 +867,12 @@ Baseline: v0.15.0 publication-record merge
 
 ### Increment 4 — Redis and Kafka outage/recovery operations
 
-- [ ] Rehearse Redis outage and recovery for generalized abuse controls and the separate login limiter
-- [ ] Preserve existing fail-closed security behavior during dependency failure
-- [ ] Rehearse Kafka outage and recovery for transactional-outbox publication and consumer/DLQ paths
-- [ ] Verify PostgreSQL remains the durable source of truth where designed
-- [ ] Document observable symptoms, safe operator actions, recovery checks, and escalation conditions
-- [ ] Verify recovery procedures do not expose credentials, identities, raw client addresses, or payload content
+- [x] Rehearse Redis outage and recovery for generalized abuse controls and the separate login limiter
+- [x] Preserve existing fail-closed security behavior during dependency failure
+- [x] Rehearse Kafka outage and recovery for transactional-outbox publication and consumer/DLQ paths
+- [x] Verify PostgreSQL remains the durable source of truth where designed
+- [x] Document observable symptoms, safe operator actions, recovery checks, and escalation conditions
+- [x] Verify recovery procedures do not expose credentials, identities, raw client addresses, or payload content
 
 ### Increment 5 — API, OpenAPI, Postman, and documentation drift review
 
@@ -928,7 +928,7 @@ Baseline: v0.15.0 publication-record merge
 - [x] `/api/v1` compatibility boundary is documented and executable where practical
 - [x] PostgreSQL backup and restore rehearsal is repeatable and passes integrity checks
 - [x] clean-install and previous-release-to-current Flyway rehearsals pass
-- [ ] Redis and Kafka outage/recovery procedures are documented and verified against existing failure contracts
+- [x] Redis and Kafka outage/recovery procedures are documented and verified against existing failure contracts
 - [ ] OpenAPI, Postman, README, architecture docs, ADRs, security/operations guidance, and implementation agree
 - [ ] dependency vulnerability and secret scans have no unresolved critical/high release blockers
 - [ ] an SBOM and build/provenance evidence are produced for the stabilization candidate
