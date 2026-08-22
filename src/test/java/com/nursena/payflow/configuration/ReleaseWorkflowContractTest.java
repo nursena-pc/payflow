@@ -40,7 +40,7 @@ class ReleaseWorkflowContractTest {
                 "contents: write",
                 "actions/checkout@v6",
                 "actions/setup-java@v5",
-                "mvn -B -ntp clean verify",
+                "./mvnw -B -ntp clean verify",
                 "sha256sum",
                 "actions/upload-artifact@v7",
                 "gh release create",

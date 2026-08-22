@@ -245,7 +245,7 @@ class V012ReleasePublicationContractTest {
             .contains(
                 "name: Release",
                 "v[0-9]+.[0-9]+.[0-9]+",
-                "mvn -B -ntp clean verify",
+                "./mvnw -B -ntp clean verify",
                 "sha256sum",
                 "actions/upload-artifact@v7",
                 "gh release create",

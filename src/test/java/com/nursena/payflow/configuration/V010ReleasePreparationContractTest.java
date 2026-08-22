@@ -131,7 +131,7 @@ class V010ReleasePreparationContractTest {
                             "tags:",
                             "v[0-9]+.[0-9]+.[0-9]+",
                             "contents: write",
-                            "mvn -B -ntp clean verify",
+                            "./mvnw -B -ntp clean verify",
                             "sha256sum",
                             "actions/upload-artifact@v7",
                             "gh release create",

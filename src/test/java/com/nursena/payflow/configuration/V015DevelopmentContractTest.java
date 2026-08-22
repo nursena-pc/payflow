@@ -104,7 +104,7 @@ class V015DevelopmentContractTest {
                 "Release tags cannot publish a snapshot version",
                 "git fetch --no-tags origin main:refs/remotes/origin/main",
                 "git merge-base --is-ancestor",
-                "mvn -B -ntp clean verify",
+                "./mvnw -B -ntp clean verify",
                 "sha256sum",
                 "gh release create",
                 "--verify-tag"

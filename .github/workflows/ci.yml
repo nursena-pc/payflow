@@ -25,7 +25,7 @@ jobs:
           cache: maven
 
       - name: Verify
-        run: mvn -B -ntp clean verify
+        run: ./mvnw -B -ntp clean verify
 
       - name: Upload test reports
         if: always()
