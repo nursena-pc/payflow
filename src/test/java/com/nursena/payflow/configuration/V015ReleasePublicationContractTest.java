@@ -101,7 +101,7 @@ class V015ReleasePublicationContractTest {
             .contains(
                 "Release tags cannot publish a snapshot version",
                 "git merge-base --is-ancestor",
-                "mvn -B -ntp clean verify",
+                "./mvnw -B -ntp clean verify",
                 "sha256sum",
                 "gh release create",
                 "--verify-tag"

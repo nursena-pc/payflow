@@ -1,0 +1,118 @@
+{
+  "schemaVersion": 1,
+  "scanner": {
+    "name": "gitleaks",
+    "version": "8.30.1",
+    "image": "ghcr.io/gitleaks/gitleaks@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f"
+  },
+  "review": {
+    "sourceHead": "54226bc9625326a4dbcde0cec525867e3003b973",
+    "snapshotFindingCount": 10,
+    "historyFindingCount": 10,
+    "newSnapshotLocations": 0,
+    "manualReviewRows": 0,
+    "snapshotSafeEvidenceSha256": "4b90a25357f5e57d388f099de307702dacaa87c8259869305e4ad15cde702aa4",
+    "historySafeEvidenceSha256": "dd587101803b96b64f4fb7d74928d90f3f1be794f137b1a1b3036259e0923638",
+    "adjudicationEvidenceSha256": "f3997a023f9a2560dccf592102d8398e73d371970cb28f262a77395372ba310a"
+  },
+  "policy": {
+    "mode": "exact-reviewed-finding-baseline",
+    "allowlistApplied": false,
+    "suppressionApplied": false,
+    "rawFindingMaterialCommitted": false,
+    "newMovedOrChangedFinding": "fail",
+    "missingReviewedFinding": "fail-until-baseline-is-explicitly-reviewed"
+  },
+  "findings": [
+    {
+      "ruleId": "generic-api-key",
+      "path": ".github/workflows/docker-smoke.yml",
+      "startLine": 16,
+      "endLine": 16,
+      "lineDigestSha256": "e9bccc41c033194db16d261950d73c846629c392028658df84e978a3594bd258",
+      "classification": "synthetic-ci-fixture",
+      "rationale": "Deterministic Docker-smoke-only encryption fixture; not production, user-specific, or environment-specific secret material."
+    },
+    {
+      "ruleId": "generic-api-key",
+      "path": ".github/workflows/docker-smoke.yml",
+      "startLine": 17,
+      "endLine": 17,
+      "lineDigestSha256": "7b789ebcfd744c5c08523c7d3b234b444caf4d2d0f9c84e9e4f80f7bea6bf1c9",
+      "classification": "synthetic-ci-fixture",
+      "rationale": "Deterministic Docker-smoke-only encryption fixture; not production, user-specific, or environment-specific secret material."
+    },
+    {
+      "ruleId": "generic-api-key",
+      "path": "README.md",
+      "startLine": 264,
+      "endLine": 264,
+      "lineDigestSha256": "e1a62ffcd5730239da31a8011aaf08a520d125f081359bf7a73dad476a4d29a9",
+      "classification": "documentation-false-positive",
+      "rationale": "Project roadmap prose; the reviewed line contains no credential or secret value."
+    },
+    {
+      "ruleId": "generic-api-key",
+      "path": "src/main/java/com/nursena/payflow/configuration/OpenApiExamples.java",
+      "startLine": 24,
+      "endLine": 24,
+      "lineDigestSha256": "4914093358b81385228ca23b27ac9db3d4f3ea6554d56ab4fb27c148086a8a09",
+      "classification": "openapi-example-fixture",
+      "rationale": "Documentation-only authentication response example in OpenApiExamples; deterministic synthetic value."
+    },
+    {
+      "ruleId": "generic-api-key",
+      "path": "src/main/java/com/nursena/payflow/configuration/OpenApiExamples.java",
+      "startLine": 27,
+      "endLine": 27,
+      "lineDigestSha256": "69b0246743efa1452a1049abb12aff16602adda9f867dbb269d3b8f3b8ec6042",
+      "classification": "openapi-example-fixture",
+      "rationale": "Documentation-only authentication response example in OpenApiExamples; deterministic synthetic value."
+    },
+    {
+      "ruleId": "generic-api-key",
+      "path": "src/main/java/com/nursena/payflow/configuration/OpenApiExamples.java",
+      "startLine": 35,
+      "endLine": 35,
+      "lineDigestSha256": "4914093358b81385228ca23b27ac9db3d4f3ea6554d56ab4fb27c148086a8a09",
+      "classification": "openapi-example-fixture",
+      "rationale": "Documentation-only authentication response example in OpenApiExamples; deterministic synthetic value."
+    },
+    {
+      "ruleId": "generic-api-key",
+      "path": "src/main/java/com/nursena/payflow/configuration/OpenApiExamples.java",
+      "startLine": 38,
+      "endLine": 38,
+      "lineDigestSha256": "974383fb2915bf4274d64cfc57728c91452a25cbfeb28707135101ba0b553771",
+      "classification": "openapi-example-fixture",
+      "rationale": "Documentation-only authentication response example in OpenApiExamples; deterministic synthetic value."
+    },
+    {
+      "ruleId": "generic-api-key",
+      "path": "src/test/java/com/nursena/payflow/user/adapter/in/web/RevokeCurrentRefreshSessionControllerTest.java",
+      "startLine": 59,
+      "endLine": 59,
+      "lineDigestSha256": "b9d6e3637ce2496cf45e5adbd88f20afa987ca69a6d15dc43044dbdee8580818",
+      "classification": "controller-test-fixture",
+      "rationale": "Deterministic refresh-credential fixture used only by a controller test."
+    },
+    {
+      "ruleId": "generic-api-key",
+      "path": "src/test/java/com/nursena/payflow/user/adapter/in/web/RotateRefreshCredentialsControllerTest.java",
+      "startLine": 89,
+      "endLine": 89,
+      "lineDigestSha256": "b9d6e3637ce2496cf45e5adbd88f20afa987ca69a6d15dc43044dbdee8580818",
+      "classification": "controller-test-fixture",
+      "rationale": "Deterministic refresh-credential fixture used only by a controller test."
+    },
+    {
+      "ruleId": "generic-api-key",
+      "path": "src/test/java/com/nursena/payflow/user/adapter/in/web/RotateRefreshCredentialsControllerTest.java",
+      "startLine": 217,
+      "endLine": 217,
+      "lineDigestSha256": "b9d6e3637ce2496cf45e5adbd88f20afa987ca69a6d15dc43044dbdee8580818",
+      "classification": "controller-test-fixture",
+      "rationale": "Deterministic refresh-credential fixture used only by a controller test."
+    }
+  ]
+}

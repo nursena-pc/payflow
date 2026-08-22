@@ -98,7 +98,7 @@ class V011ReleasePublicationContractTest {
             .contains(
                 "name: Release",
                 "v[0-9]+.[0-9]+.[0-9]+",
-                "mvn -B -ntp clean verify",
+                "./mvnw -B -ntp clean verify",
                 "sha256sum",
                 "gh release create",
                 "--verify-tag"

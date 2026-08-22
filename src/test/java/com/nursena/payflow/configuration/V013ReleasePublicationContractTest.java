@@ -120,7 +120,7 @@ class V013ReleasePublicationContractTest {
                 "git fetch --no-tags origin main:refs/remotes/origin/main",
                 "git merge-base --is-ancestor",
                 "Tag commit ${GITHUB_SHA} is not reachable from origin/main",
-                "mvn -B -ntp clean verify",
+                "./mvnw -B -ntp clean verify",
                 "sha256sum",
                 "gh release create",
                 "--verify-tag"
