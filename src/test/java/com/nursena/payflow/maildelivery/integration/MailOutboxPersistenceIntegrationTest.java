@@ -2,6 +2,7 @@ package com.nursena.payflow.maildelivery.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.nio.ByteBuffer;
 import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
@@ -152,8 +153,14 @@ class MailOutboxPersistenceIntegrationTest {
     @Test
     void shouldSupersedeOlderUnresolvedMessageForSamePurpose() {
         UUID userId = UUID.randomUUID();
-        UUID firstCredentialId = UUID.randomUUID();
-        UUID secondCredentialId = UUID.randomUUID();
+        UUID firstCredentialId =
+            UUID.fromString(
+                "00000000-0000-0000-0000-000000000005"
+            );
+        UUID secondCredentialId =
+            UUID.fromString(
+                "00000000-0000-0001-0000-000000000105"
+            );
         insertUser(userId);
         insertCredential(firstCredentialId, userId, "PASSWORD_RECOVERY");
 
@@ -257,11 +264,8 @@ class MailOutboxPersistenceIntegrationTest {
         UUID userId,
         String purpose
     ) {
-        byte[] digest = new byte[32];
-        long bits = credentialId.getLeastSignificantBits();
-        for (int index = 0; index < digest.length; index++) {
-            digest[index] = (byte) (bits + index);
-        }
+        byte[] digest =
+            credentialDigest(credentialId);
         jdbcTemplate.update(
             """
             INSERT INTO account_action_credentials (
@@ -279,6 +283,22 @@ class MailOutboxPersistenceIntegrationTest {
         );
     }
 
+    private static byte[] credentialDigest(
+        UUID credentialId
+    ) {
+        long most =
+            credentialId.getMostSignificantBits();
+        long least =
+            credentialId.getLeastSignificantBits();
+
+        return ByteBuffer
+            .allocate(32)
+            .putLong(most)
+            .putLong(least)
+            .putLong(~most)
+            .putLong(~least)
+            .array();
+    }
     private record MailRow(
         String status,
         int attemptCount,
