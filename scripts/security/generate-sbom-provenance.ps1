@@ -372,7 +372,7 @@ $IgnoreProbe = Invoke-Captured `
     -Arguments @(
         'check-ignore',
         '-q',
-        '.runtime'
+        '.runtime/'
     )
 
 if ($IgnoreProbe.ExitCode -ne 0) {
