@@ -299,7 +299,7 @@ $RuntimeDir =
 
 $IgnoreProbe = Invoke-Captured `
     -FilePath 'git' `
-    -Arguments @('check-ignore', '-q', '.runtime')
+    -Arguments @('check-ignore', '-q', '.runtime/')
 
 if ($IgnoreProbe.ExitCode -ne 0) {
     throw '.runtime must remain ignored before secret-scan evidence is written.'
