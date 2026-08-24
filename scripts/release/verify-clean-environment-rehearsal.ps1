@@ -22,7 +22,10 @@
 param(
     [Parameter(Mandatory)]
     [ValidatePattern('^[0-9a-f]{40}$')]
-    [string] $ExpectedHead
+    [string] $ExpectedHead,
+
+    [ValidatePattern('^[0-9]+\.[0-9]+\.[0-9]+$')]
+    [string] $ExpectedReleaseCandidateVersion
 )
 
 $ErrorActionPreference = 'Stop'
@@ -522,8 +525,22 @@ try {
             -WorkingDirectory $Worktree
     ).Text.Trim()
 
-    if ($ProjectVersion -notmatch '^[0-9]+\.[0-9]+\.[0-9]+-SNAPSHOT$') {
-        throw "Release rehearsal expects a snapshot project version; got $ProjectVersion."
+    $ReleaseCandidateMode =
+        $PSBoundParameters.ContainsKey(
+            'ExpectedReleaseCandidateVersion'
+        )
+
+    if ($ReleaseCandidateMode) {
+        Assert-Equal `
+            -Label 'Release-candidate project version' `
+            -Actual $ProjectVersion `
+            -Expected $ExpectedReleaseCandidateVersion
+    }
+    elseif (
+        $ProjectVersion -notmatch
+            '^[0-9]+\.[0-9]+\.[0-9]+-SNAPSHOT$'
+    ) {
+        throw "Default release rehearsal mode expects a snapshot project version; got $ProjectVersion."
     }
 
     $MvnwMode = (
