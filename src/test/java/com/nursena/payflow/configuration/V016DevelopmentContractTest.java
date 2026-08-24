@@ -23,7 +23,7 @@ class V016DevelopmentContractTest {
         Path.of("docs", "roadmap.md");
 
     @Test
-    void shouldRecordV016ReleaseCandidateState()
+    void shouldRecordV016PublishedReleaseState()
         throws IOException {
 
         assertThat(Files.readString(POM))
@@ -36,9 +36,14 @@ class V016DevelopmentContractTest {
 
         assertThat(Files.readString(README))
             .contains(
-                "PayFlow v0.15.0 remains the latest published release",
-                "reviewed v0.16.0 release candidate uses Maven version `0.16.0`",
-                "issue #186",
+                "PayFlow v0.16.0 is the latest published release",
+                "annotated tag `v0.16.0`",
+                "8308e190960525924a550dafc8dcfcf61d4250d0",
+                "da8cefa9772d8e009b5ef1e5ab53d03bc44b1c13",
+                "32757038003",
+                "375880233",
+                "100566879 bytes",
+                "8c542fc6928179345e5cda3d0f66d1481f7277a88096a52a69952ed95f2958e6",
                 "/api/v1",
                 "PostgreSQL backup/restore",
                 "Flyway migration rehearsals",
@@ -46,7 +51,9 @@ class V016DevelopmentContractTest {
                 "clean-environment release rehearsal"
             )
             .doesNotContain(
-                "the active development line uses `0.16.0-SNAPSHOT`"
+                "the active development line uses `0.16.0-SNAPSHOT`",
+                "PayFlow v0.15.0 remains the latest published release",
+                "No v0.16.0 tag or GitHub Release has been published yet"
             );
     }
 
@@ -56,7 +63,7 @@ class V016DevelopmentContractTest {
 
         assertThat(Files.readString(ROADMAP))
             .contains(
-                "## v0.16.0 — Release Preparation: Stabilization, Recovery Rehearsals, and API Freeze",
+                "## v0.16.0 — Released: Stabilization, Recovery Rehearsals, and API Freeze",
                 "Release-finalization issue: [#186]",
                 "Tracking issue: [#169]",
                 "### Increment 1 — Stabilization baseline and compatibility contract",
@@ -97,7 +104,8 @@ class V016DevelopmentContractTest {
                 "Advanced the active development version to `0.16.0-SNAPSHOT`",
                 "issue #169",
                 "## [0.15.0] - 2026-08-18",
-                "[Unreleased]: https://github.com/nursena-pc/payflow/compare/v0.15.0...HEAD"
+                "[0.16.0]: https://github.com/nursena-pc/payflow/compare/v0.15.0...v0.16.0",
+                "[Unreleased]: https://github.com/nursena-pc/payflow/compare/v0.16.0...HEAD"
             );
 
         assertThat(Files.readString(ROADMAP))

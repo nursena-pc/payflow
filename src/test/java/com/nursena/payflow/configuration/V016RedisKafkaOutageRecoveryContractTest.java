@@ -177,7 +177,7 @@ class V016RedisKafkaOutageRecoveryContractTest {
     }
 
     @Test
-    void shouldMarkIncrementFourCompleteAndKeepLaterWorkOpen()
+    void shouldRetainIncrementFourCompletionInPublishedRoadmap()
         throws IOException {
 
         String roadmap = Files.readString(ROADMAP);
@@ -197,8 +197,7 @@ class V016RedisKafkaOutageRecoveryContractTest {
                 "- [x] Redis and Kafka outage/recovery procedures are documented and verified against existing failure contracts",
                 "### Increment 5",
                 "- [x] Compare implemented `/api/v1` behavior with OpenAPI and Postman contracts",
-                "### Increment 6",
-                "- [ ] Run a repository-appropriate dependency vulnerability review"
+                "### Increment 6"
             );
 
         assertThat(Files.readString(README))

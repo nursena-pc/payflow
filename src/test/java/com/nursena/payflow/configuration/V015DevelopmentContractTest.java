@@ -31,9 +31,8 @@ class V015DevelopmentContractTest {
 
         assertThat(Files.readString(README))
             .contains(
-                "PayFlow v0.15.0 remains the latest published release",
+                "The immutable v0.15.0 publication record remains anchored to annotated tag `v0.15.0`",
                 "## v0.15.0 release",
-                "The immutable v0.15.0 publication record is anchored to annotated tag `v0.15.0`",
                 "c29a067ca3a64514444e17db59a2b862d26f5950",
                 "32172653513",
                 "100236578 bytes",
@@ -53,8 +52,7 @@ class V015DevelopmentContractTest {
             .contains(
                 "## [Unreleased]",
                 "## [0.15.0] - 2026-08-18",
-                "[0.15.0]: https://github.com/nursena-pc/payflow/compare/v0.14.0...v0.15.0",
-                "[Unreleased]: https://github.com/nursena-pc/payflow/compare/v0.15.0...HEAD"
+                "[0.15.0]: https://github.com/nursena-pc/payflow/compare/v0.14.0...v0.15.0"
             );
 
         assertThat(Files.readString(RELEASE_NOTES))
