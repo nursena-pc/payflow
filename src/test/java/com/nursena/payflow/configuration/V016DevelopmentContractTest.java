@@ -23,25 +23,30 @@ class V016DevelopmentContractTest {
         Path.of("docs", "roadmap.md");
 
     @Test
-    void shouldOpenV016DevelopmentLine()
+    void shouldRecordV016ReleaseCandidateState()
         throws IOException {
 
         assertThat(Files.readString(POM))
             .contains(
+                "<version>0.16.0</version>"
+            )
+            .doesNotContain(
                 "<version>0.16.0-SNAPSHOT</version>"
             );
 
         assertThat(Files.readString(README))
             .contains(
-                "PayFlow v0.15.0 is the latest published release",
-                "the active development line uses `0.16.0-SNAPSHOT`",
-                "## v0.16.0 active development",
-                "issue #169",
+                "PayFlow v0.15.0 remains the latest published release",
+                "reviewed v0.16.0 release candidate uses Maven version `0.16.0`",
+                "issue #186",
                 "/api/v1",
                 "PostgreSQL backup/restore",
                 "Flyway migration rehearsals",
                 "SBOM/provenance evidence",
                 "clean-environment release rehearsal"
+            )
+            .doesNotContain(
+                "the active development line uses `0.16.0-SNAPSHOT`"
             );
     }
 
@@ -51,7 +56,8 @@ class V016DevelopmentContractTest {
 
         assertThat(Files.readString(ROADMAP))
             .contains(
-                "## v0.16.0 — Active Development: Stabilization, Recovery Rehearsals, and API Freeze",
+                "## v0.16.0 — Release Preparation: Stabilization, Recovery Rehearsals, and API Freeze",
+                "Release-finalization issue: [#186]",
                 "Tracking issue: [#169]",
                 "### Increment 1 — Stabilization baseline and compatibility contract",
                 "### Increment 2 — PostgreSQL backup and restore rehearsal",

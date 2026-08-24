@@ -210,7 +210,7 @@ class V016ApiCompatibilityBaselineContractTest {
         assertThat(openApiConfiguration)
             .contains(
                 "API_VERSION",
-                "\"0.16.0-SNAPSHOT\""
+                "\"0.16.0\""
             )
             .doesNotContain("\"0.2.0\"");
 

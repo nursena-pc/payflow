@@ -112,7 +112,7 @@ Completed capabilities include:
 - operator-only, paginated command-audit queries and chronological command timelines
 - Prometheus metrics, Grafana dashboards, and alert rules for Kafka consumer failures
 
-OpenAPI documentation covers the implemented API. Across the committed standard, MFA, login-rate-limit, and compatibility-coverage collections, Postman represents all 30 canonical `/api/v1` operations while keeping lifecycle-sensitive and privileged requests manually gated. PayFlow v0.15.0 is the latest published release, and the active development line uses `0.16.0-SNAPSHOT`. The v0.16.0 milestone focuses on stabilization, recovery rehearsals, API compatibility freeze, documentation consistency, dependency and supply-chain checks, and clean-environment verification without adding new product features.
+OpenAPI documentation covers the implemented API. Across the committed standard, MFA, login-rate-limit, and compatibility-coverage collections, Postman represents all 30 canonical `/api/v1` operations while keeping lifecycle-sensitive and privileged requests manually gated. PayFlow v0.15.0 remains the latest published release, and the reviewed v0.16.0 release candidate uses Maven version `0.16.0`. Release finalization is tracked by issue #186; the v0.16.0 milestone remains feature-frozen around stabilization, recovery rehearsals, API compatibility, documentation consistency, dependency and supply-chain evidence, and clean-environment release rehearsal. No v0.16.0 tag or GitHub Release has been published yet.
 
 The immutable v0.15.0 publication record is anchored to annotated tag `v0.15.0`, merge commit `c29a067ca3a64514444e17db59a2b862d26f5950`, and successful release workflow run [32172653513](https://github.com/nursena-pc/payflow/actions/runs/32172653513). The published `payflow-0.15.0.jar` is 100236578 bytes and its independently verified SHA-256 is `7EDF5EAD1EB93966E750F917D9472B4383D2B3CDA7406A264AE78B106A779080`.
 
@@ -257,7 +257,7 @@ the [policy guide](docs/abuse-protection.md), the
 [operations runbook](docs/operations/abuse-protection-observability.md), and
 the committed [registration decision evidence](docs/performance/evidence/2026-08-17-registration-defer-f94ffa8.md).
 
-## v0.16.0 active development
+## v0.16.0 release preparation
 
 The active `0.16.0-SNAPSHOT` line is the stabilization stage before v1.0.0 release-candidate validation. It adds no new wallet, transfer, payment, identity-factor, or abuse-protection product feature, and it does not activate generalized registration protection.
 
