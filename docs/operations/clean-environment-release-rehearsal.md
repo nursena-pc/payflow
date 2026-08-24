@@ -24,6 +24,24 @@ powershell.exe `
 Run it only from a clean reviewed commit. The script rejects a dirty source
 working tree or an unexpected `HEAD`.
 
+The default invocation remains the development-line snapshot rehearsal. For an
+explicit non-SNAPSHOT release candidate, bind the expected semantic version:
+
+```powershell
+$Head = git rev-parse HEAD
+
+powershell.exe `
+  -NoProfile `
+  -ExecutionPolicy Bypass `
+  -File scripts/release/verify-clean-environment-rehearsal.ps1 `
+  -ExpectedHead $Head `
+  -ExpectedReleaseCandidateVersion '0.16.0'
+```
+
+Release-candidate mode is opt-in and fail-closed: the resolved Maven project
+version must exactly equal the supplied non-SNAPSHOT semantic version. Omitting
+the parameter preserves the existing `x.y.z-SNAPSHOT` requirement.
+
 ## What the rehearsal proves
 
 The script creates a detached Git worktree for the exact supplied commit and
@@ -37,7 +55,7 @@ It then verifies:
 - release workflow use of `./mvnw`, executable JAR/checksum assets, and the
   GitHub Release command contract;
 - complete Maven verification with zero failures, errors, or skipped tests;
-- executable snapshot JAR creation and a sha256sum-compatible checksum record;
+- executable JAR creation for the resolved project version and a sha256sum-compatible checksum record;
 - the committed Gitleaks baseline;
 - the committed vulnerability review and local SBOM/provenance evidence with no
   unresolved Critical/High blocker and no suppression/retuning;

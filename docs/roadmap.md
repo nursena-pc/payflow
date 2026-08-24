@@ -2,7 +2,7 @@
 
 ## Current delivery focus
 
-PayFlow v0.15.0 is the latest tagged release. The Maven version is `0.16.0-SNAPSHOT`.
+PayFlow v0.15.0 remains the latest tagged release. The reviewed v0.16.0 release-finalization candidate uses Maven version `0.16.0`; no v0.16.0 tag or GitHub Release has been published yet.
 
 The v0.15.0 generalized abuse-protection release was published from verified
 merge commit `c29a067ca3a64514444e17db59a2b862d26f5950` through successful release workflow run `32172653513`.
@@ -11,11 +11,12 @@ The published `100236578`-byte JAR has independently verified SHA-256
 reproducible load and performance evidence, and operational dashboards and
 alerts while preserving the existing simulated-money boundary.
 
-The active v0.16.0 stabilization line is tracked by issue `#169` from publication-record
-merge baseline `8e1dffe61beeecca81466fee23ff217f862ce8e1`. It is intentionally feature-frozen:
-recovery and migration rehearsals, `/api/v1` compatibility, dependency-failure
-operations, documentation consistency, supply-chain evidence, and clean-environment
-verification are in scope; new product behavior is not.
+The v0.16.0 stabilization line tracked by issue `#169` has completed its feature-frozen
+compatibility, recovery, migration, dependency-failure, documentation, supply-chain,
+and clean-environment increments. Release finalization and immutable publication are
+tracked by issue `#186`. Publication-only values such as the final tag target, release
+workflow run, published artifact size, and independently verified published SHA-256
+remain intentionally unrecorded until those values exist.
 
 The v0.14.0 publication remains anchored to merge/tag commit
 `d65929b98bb66b22f208d26f75a764e1ade78b6a` and release workflow run `31728977714`.
@@ -832,9 +833,10 @@ existing public behavior and no generalized registration limiter is added.
 - release checksum verification: passed
 - published release notes verification: exact match
 
-## v0.16.0 — Active Development: Stabilization, Recovery Rehearsals, and API Freeze
+## v0.16.0 — Release Preparation: Stabilization, Recovery Rehearsals, and API Freeze
 
 Tracking issue: [#169](https://github.com/nursena-pc/payflow/issues/169)
+Release-finalization issue: [#186](https://github.com/nursena-pc/payflow/issues/186)
 
 Baseline: v0.15.0 publication-record merge
 `8e1dffe61beeecca81466fee23ff217f862ce8e1`.

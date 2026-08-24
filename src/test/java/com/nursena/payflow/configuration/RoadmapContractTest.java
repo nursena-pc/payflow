@@ -22,7 +22,7 @@ class RoadmapContractTest {
         Path.of("docs", "roadmap.md");
 
     @Test
-    void shouldAlignRoadmapWithV016ActiveDevelopment()
+    void shouldAlignRoadmapWithV016ReleasePreparation()
         throws Exception {
 
         String projectVersion = readProjectVersion();
@@ -30,25 +30,26 @@ class RoadmapContractTest {
         String normalizedRoadmap = normalizeWhitespace(roadmap);
 
         assertThat(projectVersion)
-            .isEqualTo("0.16.0-SNAPSHOT");
+            .isEqualTo("0.16.0");
 
         assertThat(roadmap)
             .contains(
-                "PayFlow v0.15.0 is the latest tagged release",
-                "The Maven version is `" + projectVersion + "`",
+                "PayFlow v0.15.0 remains the latest tagged release",
+                "release-finalization candidate uses Maven version `" + projectVersion + "`",
                 "## v0.10.0 — Released: Trusted Client Context",
                 "## v0.11.0 — Released: Structured Logging and Request Correlation",
                 "## v0.12.0 — Released: JWT Signing-Key Rotation",
                 "## v0.13.0 — Released: Account Recovery and Secure Mail Delivery",
                 "## v0.14.0 — Released: MFA and Step-Up Authentication",
                 "## v0.15.0 — Released: Generalized Abuse Protection and Performance Evidence",
-                "## v0.16.0 — Active Development: Stabilization, Recovery Rehearsals, and API Freeze",
+                "## v0.16.0 — Release Preparation: Stabilization, Recovery Rehearsals, and API Freeze",
                 "Tracking issue: [#169]",
+                "Release-finalization issue: [#186]",
                 "8e1dffe61beeecca81466fee23ff217f862ce8e1"
             )
             .doesNotContain(
                 "0.15.0-SNAPSHOT",
-                "## v0.16.0 — Release Preparation",
+                "## v0.16.0 — Active Development: Stabilization, Recovery Rehearsals, and API Freeze",
                 "## v0.16.0 — Released"
             );
 

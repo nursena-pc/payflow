@@ -8,6 +8,8 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-08-24
+
 ### Added
 
 - Added a repeatable isolated Redis/Kafka outage-recovery rehearsal through issue #178, proving login fail-closed behavior, non-registration abuse side-effect suppression, automatic Redis recovery, PostgreSQL-backed outbox retry/recovery, durable DLT intake and replay recovery, acknowledgement ambiguity handling, and single-record idempotent processing without changing runtime API, security, retry, migration, or product semantics.
@@ -16,10 +18,23 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
-- Aligned v0.16.0 API/OpenAPI/Postman/architecture documentation through issue #180: OpenAPI metadata now follows `0.16.0-SNAPSHOT`, a manual compatibility collection closes the five previously recorded Postman operation gaps, and architecture guidance now describes delivered outbox/event-processing/mail/abuse/observability boundaries without changing runtime product or security semantics.
+- Aligned v0.16.0 API/OpenAPI/Postman/architecture documentation through issue #180: OpenAPI metadata now follows release version `0.16.0`, a manual compatibility collection closes the five previously recorded Postman operation gaps, and architecture guidance now describes delivered outbox/event-processing/mail/abuse/observability boundaries without changing runtime product or security semantics.
 - Advanced the active development version to `0.16.0-SNAPSHOT`.
 - Opened the v0.16.0 stabilization, recovery-rehearsal, API-freeze, and supply-chain hardening milestone through issue #169 without adding new product features.
 - Froze the source-backed `/api/v1` compatibility baseline through issue #171, including OpenAPI/Postman comparison, security and failure-contract boundaries, and concrete documentation-drift follow-ups without changing runtime behavior.
+### Security and supply chain
+
+- Added repeatable committed-content secret scanning, vulnerability review, SBOM generation, and local build/provenance evidence through issue #182 without claiming signing, SLSA provenance, reproducible builds, attestation, or production certification.
+- Remediated the reviewed Critical/High dependency blockers while retaining explicit visibility into remaining lower-severity findings; the release does not claim a vulnerability-free dependency graph.
+- Preserved the reviewed Gitleaks baseline while requiring zero new committed-content secret locations.
+- Preserved registration as evidence-backed `DEFER` and left the existing password-login limiter semantics unchanged.
+
+### Release verification
+
+- Added the repeatable clean-environment release rehearsal through issue #184, including fresh-checkout Maven verification, executable JAR/checksum evidence, required-configuration fail-fast checks, production-profile Docker smoke, and bounded local evidence.
+- The merged Increment 7 checkpoint passed 1,622 Maven tests with zero failures, errors, or skipped tests; exact-head CI #262 and Docker Smoke #60 passed before PR #185 merged.
+- Stabilized the mail-outbox persistence regression fixture by deriving its synthetic 32-byte credential digest from the full UUID rather than a lossy low-byte pattern, removing a random uniqueness collision without changing production code.
+- Immutable v0.16.0 tag target, release workflow run, published artifact size, and independently verified published SHA-256 remain intentionally absent until actual publication.
 
 ## [0.15.0] - 2026-08-18
 

@@ -31,7 +31,7 @@ class V015DevelopmentContractTest {
 
         assertThat(Files.readString(README))
             .contains(
-                "PayFlow v0.15.0 is the latest published release",
+                "PayFlow v0.15.0 remains the latest published release",
                 "## v0.15.0 release",
                 "The immutable v0.15.0 publication record is anchored to annotated tag `v0.15.0`",
                 "c29a067ca3a64514444e17db59a2b862d26f5950",
