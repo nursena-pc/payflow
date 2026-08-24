@@ -22,7 +22,7 @@ class RoadmapContractTest {
         Path.of("docs", "roadmap.md");
 
     @Test
-    void shouldAlignRoadmapWithV016ReleasePreparation()
+    void shouldAlignRoadmapWithV016PublishedRelease()
         throws Exception {
 
         String projectVersion = readProjectVersion();
@@ -34,23 +34,30 @@ class RoadmapContractTest {
 
         assertThat(roadmap)
             .contains(
-                "PayFlow v0.15.0 remains the latest tagged release",
-                "release-finalization candidate uses Maven version `" + projectVersion + "`",
+                "PayFlow v0.16.0 is the latest tagged and published release",
+                "published merge and tag commit: `da8cefa9772d8e009b5ef1e5ab53d03bc44b1c13`",
+                "annotated tag object: `8308e190960525924a550dafc8dcfcf61d4250d0`",
+                "release workflow run: [`32757038003`]",
+                "GitHub Release ID: `375880233`",
+                "published JAR size: `100566879` bytes",
+                "published JAR SHA-256: `8c542fc6928179345e5cda3d0f66d1481f7277a88096a52a69952ed95f2958e6`",
                 "## v0.10.0 — Released: Trusted Client Context",
                 "## v0.11.0 — Released: Structured Logging and Request Correlation",
                 "## v0.12.0 — Released: JWT Signing-Key Rotation",
                 "## v0.13.0 — Released: Account Recovery and Secure Mail Delivery",
                 "## v0.14.0 — Released: MFA and Step-Up Authentication",
                 "## v0.15.0 — Released: Generalized Abuse Protection and Performance Evidence",
-                "## v0.16.0 — Release Preparation: Stabilization, Recovery Rehearsals, and API Freeze",
+                "## v0.16.0 — Released: Stabilization, Recovery Rehearsals, and API Freeze",
                 "Tracking issue: [#169]",
                 "Release-finalization issue: [#186]",
                 "8e1dffe61beeecca81466fee23ff217f862ce8e1"
             )
             .doesNotContain(
                 "0.15.0-SNAPSHOT",
+                "PayFlow v0.15.0 remains the latest tagged release",
+                "release-finalization candidate uses Maven version",
                 "## v0.16.0 — Active Development: Stabilization, Recovery Rehearsals, and API Freeze",
-                "## v0.16.0 — Released"
+                "## v0.16.0 — Release Preparation: Stabilization, Recovery Rehearsals, and API Freeze"
             );
 
         assertThat(normalizedRoadmap)

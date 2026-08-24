@@ -2,21 +2,16 @@
 
 ## Current delivery focus
 
-PayFlow v0.15.0 remains the latest tagged release. The reviewed v0.16.0 release-finalization candidate uses Maven version `0.16.0`; no v0.16.0 tag or GitHub Release has been published yet.
+PayFlow v0.16.0 is the latest tagged and published release. The immutable publication is anchored to annotated tag `v0.16.0` with tag object `8308e190960525924a550dafc8dcfcf61d4250d0` and exact merge/tag target `da8cefa9772d8e009b5ef1e5ab53d03bc44b1c13`. Tag-triggered Release workflow run `32757038003` succeeded and published GitHub Release ID `375880233` at `2026-08-24T17:40:22Z`.
 
-The v0.15.0 generalized abuse-protection release was published from verified
-merge commit `c29a067ca3a64514444e17db59a2b862d26f5950` through successful release workflow run `32172653513`.
+The published `100566879`-byte `payflow-0.16.0.jar` has independently verified SHA-256 `8c542fc6928179345e5cda3d0f66d1481f7277a88096a52a69952ed95f2958e6`. Checksum asset SHA-256 `b14f5ea137012e7aa8557fa21c1c9fece151deb2447a0b636da7ee3a173d14b0` names and matches that JAR, and the published release notes exactly match the reviewed `docs/releases/v0.16.0.md`.
+
+The v0.16.0 stabilization line tracked by issue `#169` is complete through protected finalization and independently verified immutable publication. Issue `#186` remains open only for the publication-record merge and release-train closure. Registration remains evidence-backed `DEFER`, the existing password-login limiter semantics remain unchanged, and the publication does not introduce signing, SLSA, reproducible-build, provenance-attestation, production-certification, or real-money claims.
+
+The v0.15.0 generalized abuse-protection release remains anchored to verified
+merge commit `c29a067ca3a64514444e17db59a2b862d26f5950` and successful release workflow run `32172653513`.
 The published `100236578`-byte JAR has independently verified SHA-256
-`7EDF5EAD1EB93966E750F917D9472B4383D2B3CDA7406A264AE78B106A779080`. The release delivers generalized abuse protection,
-reproducible load and performance evidence, and operational dashboards and
-alerts while preserving the existing simulated-money boundary.
-
-The v0.16.0 stabilization line tracked by issue `#169` has completed its feature-frozen
-compatibility, recovery, migration, dependency-failure, documentation, supply-chain,
-and clean-environment increments. Release finalization and immutable publication are
-tracked by issue `#186`. Publication-only values such as the final tag target, release
-workflow run, published artifact size, and independently verified published SHA-256
-remain intentionally unrecorded until those values exist.
+`7EDF5EAD1EB93966E750F917D9472B4383D2B3CDA7406A264AE78B106A779080`.
 
 The v0.14.0 publication remains anchored to merge/tag commit
 `d65929b98bb66b22f208d26f75a764e1ade78b6a` and release workflow run `31728977714`.
@@ -833,7 +828,7 @@ existing public behavior and no generalized registration limiter is added.
 - release checksum verification: passed
 - published release notes verification: exact match
 
-## v0.16.0 — Release Preparation: Stabilization, Recovery Rehearsals, and API Freeze
+## v0.16.0 — Released: Stabilization, Recovery Rehearsals, and API Freeze
 
 Tracking issue: [#169](https://github.com/nursena-pc/payflow/issues/169)
 Release-finalization issue: [#186](https://github.com/nursena-pc/payflow/issues/186)
@@ -886,31 +881,31 @@ Baseline: v0.15.0 publication-record merge
 
 ### Increment 6 — Dependency and supply-chain evidence
 
-- [ ] Run a repository-appropriate dependency vulnerability review
-- [ ] Run secret scanning against committed content
-- [ ] Generate an SBOM with a documented tool and command
-- [ ] Record verifiable build/provenance inputs for the stabilization candidate
-- [ ] Review every critical/high finding explicitly
-- [ ] Do not suppress or retune findings only to make the release pass
+- [x] Run a repository-appropriate dependency vulnerability review
+- [x] Run secret scanning against committed content
+- [x] Generate an SBOM with a documented tool and command
+- [x] Record verifiable build/provenance inputs for the stabilization candidate
+- [x] Review every critical/high finding explicitly
+- [x] Do not suppress or retune findings only to make the release pass
 
 ### Increment 7 — Clean-environment release rehearsal
 
-- [ ] Verify the project from a clean checkout/environment
-- [ ] Run the complete Maven verification suite
-- [ ] Run production-profile Docker smoke on the exact reviewed stabilization head
-- [ ] Verify executable JAR creation and checksum generation
-- [ ] Verify required production configuration fails fast when intentionally incomplete
-- [ ] Keep rehearsal evidence separate from immutable v1.0.0 publication
+- [x] Verify the project from a clean checkout/environment
+- [x] Run the complete Maven verification suite
+- [x] Run production-profile Docker smoke on the exact reviewed stabilization head
+- [x] Verify executable JAR creation and checksum generation
+- [x] Verify required production configuration fails fast when intentionally incomplete
+- [x] Keep rehearsal evidence separate from immutable v1.0.0 publication
 
 ### Increment 8 — v0.16.0 finalization and publication evidence
 
-- [ ] Align final README, changelog, roadmap, operations, security, OpenAPI, and Postman contracts from completed evidence only
-- [ ] Freeze Maven version `0.16.0` only on the reviewed release candidate
-- [ ] Pass protected `build-and-test` and `docker-smoke` checks on the exact release-preparation PR head
-- [ ] Publish the annotated `v0.16.0` tag from the exact approved merge commit
-- [ ] Publish and independently verify the executable JAR and SHA-256 checksum
-- [ ] Publish the GitHub Release from reviewed versioned release notes
-- [ ] Record immutable publication values only after publication
+- [x] Align final README, changelog, roadmap, operations, security, OpenAPI, and Postman contracts from completed evidence only
+- [x] Freeze Maven version `0.16.0` only on the reviewed release candidate
+- [x] Pass protected `build-and-test` and `docker-smoke` checks on the exact release-preparation PR head
+- [x] Publish the annotated `v0.16.0` tag from the exact approved merge commit
+- [x] Publish and independently verify the executable JAR and SHA-256 checksum
+- [x] Publish the GitHub Release from reviewed versioned release notes
+- [x] Record immutable publication values only after publication
 
 ## Explicit v0.16.0 non-goals
 
@@ -931,14 +926,30 @@ Baseline: v0.15.0 publication-record merge
 - [x] PostgreSQL backup and restore rehearsal is repeatable and passes integrity checks
 - [x] clean-install and previous-release-to-current Flyway rehearsals pass
 - [x] Redis and Kafka outage/recovery procedures are documented and verified against existing failure contracts
-- [ ] OpenAPI, Postman, README, architecture docs, ADRs, security/operations guidance, and implementation agree
-- [ ] dependency vulnerability and secret scans have no unresolved critical/high release blockers
-- [ ] an SBOM and build/provenance evidence are produced for the stabilization candidate
-- [ ] complete Maven verification passes with zero failures, errors, and skips
-- [ ] production Docker smoke passes on the exact reviewed stabilization head
-- [ ] clean-environment release rehearsal succeeds
-- [ ] protected CI checks pass before every merge
-- [ ] the v0.16.0 tag, JAR, checksum, GitHub Release, and immutable publication record are verified
+- [x] OpenAPI, Postman, README, architecture docs, ADRs, security/operations guidance, and implementation agree
+- [x] dependency vulnerability and secret scans have no unresolved critical/high release blockers
+- [x] an SBOM and build/provenance evidence are produced for the stabilization candidate
+- [x] complete Maven verification passes with zero failures, errors, and skips
+- [x] production Docker smoke passes on the exact reviewed stabilization head
+- [x] clean-environment release rehearsal succeeds
+- [x] protected CI checks pass before every merge
+- [x] the v0.16.0 tag, JAR, checksum, GitHub Release, and immutable publication record are verified
+
+### Publication record
+
+- release-finalization PR: `#187`
+- reviewed release-candidate commit: `55694be7b76d122da10e52ddb1eab0de2fe48068`
+- published merge and tag commit: `da8cefa9772d8e009b5ef1e5ab53d03bc44b1c13`
+- annotated tag object: `8308e190960525924a550dafc8dcfcf61d4250d0`
+- release workflow run: [`32757038003`](https://github.com/nursena-pc/payflow/actions/runs/32757038003)
+- release workflow number: `9`
+- published at: `2026-08-24T17:40:22Z`
+- GitHub Release ID: `375880233`
+- published JAR size: `100566879` bytes
+- published JAR SHA-256: `8c542fc6928179345e5cda3d0f66d1481f7277a88096a52a69952ed95f2958e6`
+- checksum asset SHA-256: `b14f5ea137012e7aa8557fa21c1c9fece151deb2447a0b636da7ee3a173d14b0`
+- release checksum verification: passed
+- published release notes verification: exact match
 
 ## v1.0.0 next stage
 

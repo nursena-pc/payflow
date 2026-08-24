@@ -34,7 +34,9 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Added the repeatable clean-environment release rehearsal through issue #184, including fresh-checkout Maven verification, executable JAR/checksum evidence, required-configuration fail-fast checks, production-profile Docker smoke, and bounded local evidence.
 - The merged Increment 7 checkpoint passed 1,622 Maven tests with zero failures, errors, or skipped tests; exact-head CI #262 and Docker Smoke #60 passed before PR #185 merged.
 - Stabilized the mail-outbox persistence regression fixture by deriving its synthetic 32-byte credential digest from the full UUID rather than a lossy low-byte pattern, removing a random uniqueness collision without changing production code.
-- Immutable v0.16.0 tag target, release workflow run, published artifact size, and independently verified published SHA-256 remain intentionally absent until actual publication.
+- Published annotated `v0.16.0` from exact finalization merge commit `da8cefa9772d8e009b5ef1e5ab53d03bc44b1c13` after PR #187 passed exact-head CI #264 and Docker Smoke #61.
+- Tag-triggered Release workflow run [`32757038003`](https://github.com/nursena-pc/payflow/actions/runs/32757038003) succeeded and published GitHub Release ID `375880233` at `2026-08-24T17:40:22Z`.
+- Independently verified the published `100566879`-byte `payflow-0.16.0.jar` at SHA-256 `8c542fc6928179345e5cda3d0f66d1481f7277a88096a52a69952ed95f2958e6`; checksum asset SHA-256 `b14f5ea137012e7aa8557fa21c1c9fece151deb2447a0b636da7ee3a173d14b0` names and matches the JAR, and published release notes exactly match `docs/releases/v0.16.0.md`.
 
 ## [0.15.0] - 2026-08-18
 
@@ -282,4 +284,5 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 [0.13.0]: https://github.com/nursena-pc/payflow/compare/v0.12.0...v0.13.0
 [0.14.0]: https://github.com/nursena-pc/payflow/compare/v0.13.0...v0.14.0
 [0.15.0]: https://github.com/nursena-pc/payflow/compare/v0.14.0...v0.15.0
-[Unreleased]: https://github.com/nursena-pc/payflow/compare/v0.15.0...HEAD
+[0.16.0]: https://github.com/nursena-pc/payflow/compare/v0.15.0...v0.16.0
+[Unreleased]: https://github.com/nursena-pc/payflow/compare/v0.16.0...HEAD
