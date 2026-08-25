@@ -1,10 +1,14 @@
 # MFA Security Operations
 
+This guide describes the MFA and purpose-bound step-up operations retained by
+the PayFlow `1.0.0-SNAPSHOT` release-candidate line. It does not add
+authentication methods or change the historical v0.14.0 security invariants.
+
 ## Production prerequisites
 
 - configure dedicated MFA AES-256-GCM key material independently from JWT and mail keys
 - keep key material outside source control and container images
-- apply Flyway migrations through V24 before enabling v0.14.0 traffic
+- apply Flyway migrations through V24 before enabling production MFA traffic
 - synchronize application-node clocks for bounded TOTP verification
 
 ## Enrollment
@@ -60,6 +64,6 @@ Already-issued access JWTs retain only their configured residual lifetime.
 
 ## Explicit limitation
 
-Active-authenticator replacement is not part of v0.14.0. It requires a
+Active-authenticator replacement remains outside the v1.0.0 release-candidate scope. It requires a
 separately reviewed two-stage lifecycle that cannot silently destroy the only
 working factor before replacement confirmation.

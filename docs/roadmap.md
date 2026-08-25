@@ -955,6 +955,7 @@ Baseline: v0.15.0 publication-record merge
 
 Tracking issue: [#189](https://github.com/nursena-pc/payflow/issues/189)
 Development-start issue: [#190](https://github.com/nursena-pc/payflow/issues/190)
+Authentication/security closure issue: [#192](https://github.com/nursena-pc/payflow/issues/192)
 
 Baseline: v0.16.0 publication-record merge
 `7712c5ccbeeee3b9cefd3324c42270e71554ea17`.
@@ -963,17 +964,19 @@ The v1.0.0 line is release hardening and evidence closure, not a new product fea
 
 ### Checkpoint 1 — Release-candidate development baseline
 
-- [ ] Open the Maven development line at `1.0.0-SNAPSHOT` through a protected PR
-- [ ] Preserve the immutable v0.16.0 publication record while v1 development is active
-- [ ] Keep runtime, API, migration, dependency, workflow, and security semantics unchanged in the development-start checkpoint
-- [ ] Add executable development contracts for the approved v1 release-candidate scope
+- [x] Open the Maven development line at `1.0.0-SNAPSHOT` through a protected PR
+- [x] Preserve the immutable v0.16.0 publication record while v1 development is active
+- [x] Keep runtime, API, migration, dependency, workflow, and security semantics unchanged in the development-start checkpoint
+- [x] Add executable development contracts for the approved v1 release-candidate scope
 
 ### Checkpoint 2 — Authentication and security lifecycle closure
 
-- [ ] Re-verify email verification, password recovery, JWT key rotation, MFA/recovery codes, step-up, session/revocation, abuse-protection, and login-limiter contracts
-- [ ] Align threat-model and security documentation with implemented behavior
-- [ ] Preserve credential redaction, anti-enumeration, trusted-client, and fail-closed boundaries
-- [ ] Resolve only verified release-blocking defects without expanding authentication scope for version branding
+- [x] Re-verify email verification, password recovery, JWT key rotation, MFA/recovery codes, step-up, session/revocation, abuse-protection, and login-limiter contracts
+- [x] Align threat-model and security documentation with implemented behavior
+- [x] Preserve credential redaction, anti-enumeration, trusted-client, and fail-closed boundaries
+- [x] Resolve only verified release-blocking defects without expanding authentication scope for version branding
+
+CP2 evidence baseline: exact `main` `ffa8819beede102c995a7530c1b15b0aa4a2fca1`; five focused authentication/security lifecycle groups passed with no repository mutation before the documentation-only closure candidate. No runtime defect was identified, so CP2 changes only current documentation and executable drift contracts.
 
 ### Checkpoint 3 — Financial and messaging integrity guarantees
 
