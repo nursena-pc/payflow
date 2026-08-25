@@ -1,16 +1,16 @@
 # MFA and Step-Up Authentication Threat Model
 
-- Status: Active v0.14.0 security contract
+- Status: Historical v0.14.0 foundation security contract retained as an invariant baseline
 - Scope: TOTP enrollment, MFA login completion, recovery codes, MFA disable,
   authenticator replacement, and selected step-up operations
 - Baseline: PayFlow `0.14.0`
 
 ## Purpose
 
-This document freezes the security boundaries that must exist before PayFlow
-persists an MFA authenticator, accepts a TOTP value, issues a recovery code, or
-creates a step-up grant. It intentionally precedes endpoint and persistence
-implementation so later increments cannot silently redefine the trust model.
+This document records the v0.14.0 foundation security boundaries that PayFlow
+retains for MFA and step-up authentication. The threat taxonomy and invariants
+remain historical release evidence; current v1.0.0 release-candidate lifecycle
+status is recorded in `v1-authentication-security-lifecycle.md`.
 
 The first factor remains the existing password flow. MFA is an additional proof
 for eligible accounts; it is not a replacement for password verification,
@@ -66,7 +66,7 @@ representations. JPA entities do not enter the MFA domain model.
 
 ### Application to secret protection
 
-A future application-facing MFA secret-protection port separates TOTP secret
+The application-facing MFA secret-protection port separates TOTP secret
 handling from the domain model. The adapter may use local AES-GCM key material
 in the first implementation, but provider-specific cryptography and key-loading
 types remain outside the domain and application policies.
@@ -119,11 +119,10 @@ adapters, JPA entities, and secret-protection formats.
 **Threat:** an attacker with a stolen bearer token attempts to enroll their own
 authenticator on the victim account.
 
-**Boundary:** enrollment requires an authenticated, active, email-verified
-subject. The implementation increment must define whether an additional recent
-password or step-up proof is required before activation; silently treating a
-long-lived bearer token as sufficient for every lifecycle mutation is not
-allowed.
+**Boundary:** starting enrollment requires an authenticated, active,
+email-verified subject plus the current password. Enrollment confirmation
+requires a valid TOTP proof for the pending authenticator. Bearer
+authentication alone is insufficient to start enrollment.
 
 ### Secret disclosure
 

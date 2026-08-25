@@ -12,6 +12,7 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Advanced the active release-candidate development version to `1.0.0-SNAPSHOT`.
 - Opened the v1.0.0 release-candidate validation and final-publication milestone through issue #189, with development-start checkpoint #190, without adding product or runtime behavior.
+- Closed the v1.0.0 authentication/security lifecycle documentation drift through issue #192 with a current-state lifecycle contract and executable drift protection, while preserving historical v0.13.0-v0.15.0 evidence and leaving runtime, API, migration, limiter, and authentication behavior unchanged.
 
 ## [0.16.0] - 2026-08-24
 
