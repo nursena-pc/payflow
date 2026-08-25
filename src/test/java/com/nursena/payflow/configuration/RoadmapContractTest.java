@@ -22,7 +22,7 @@ class RoadmapContractTest {
         Path.of("docs", "roadmap.md");
 
     @Test
-    void shouldAlignRoadmapWithV016PublishedRelease()
+    void shouldAlignRoadmapWithV100ActiveDevelopment()
         throws Exception {
 
         String projectVersion = readProjectVersion();
@@ -30,7 +30,7 @@ class RoadmapContractTest {
         String normalizedRoadmap = normalizeWhitespace(roadmap);
 
         assertThat(projectVersion)
-            .isEqualTo("0.16.0");
+            .isEqualTo("1.0.0-SNAPSHOT");
 
         assertThat(roadmap)
             .contains(
@@ -48,16 +48,19 @@ class RoadmapContractTest {
                 "## v0.14.0 — Released: MFA and Step-Up Authentication",
                 "## v0.15.0 — Released: Generalized Abuse Protection and Performance Evidence",
                 "## v0.16.0 — Released: Stabilization, Recovery Rehearsals, and API Freeze",
-                "Tracking issue: [#169]",
-                "Release-finalization issue: [#186]",
-                "8e1dffe61beeecca81466fee23ff217f862ce8e1"
+                "## v1.0.0 — Active Release-Candidate Development",
+                "Tracking issue: [#189]",
+                "Development-start issue: [#190]",
+                "7712c5ccbeeee3b9cefd3324c42270e71554ea17"
             )
             .doesNotContain(
                 "0.15.0-SNAPSHOT",
                 "PayFlow v0.15.0 remains the latest tagged release",
                 "release-finalization candidate uses Maven version",
                 "## v0.16.0 — Active Development: Stabilization, Recovery Rehearsals, and API Freeze",
-                "## v0.16.0 — Release Preparation: Stabilization, Recovery Rehearsals, and API Freeze"
+                "## v0.16.0 — Release Preparation: Stabilization, Recovery Rehearsals, and API Freeze",
+                "## v1.0.0 — Release Preparation",
+                "## v1.0.0 — Released"
             );
 
         assertThat(normalizedRoadmap)
@@ -69,7 +72,10 @@ class RoadmapContractTest {
                 "dependency vulnerability review",
                 "secret scanning",
                 "SBOM",
-                "clean-environment release rehearsal"
+                "clean-environment release rehearsal",
+                "Authentication and security lifecycle closure",
+                "Financial and messaging integrity guarantees",
+                "Supply-chain and clean-environment release-candidate verification"
             );
     }
 

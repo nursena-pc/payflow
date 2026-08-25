@@ -10,9 +10,6 @@ import org.junit.jupiter.api.Test;
 
 class V016DevelopmentContractTest {
 
-    private static final Path POM =
-        Path.of("pom.xml");
-
     private static final Path README =
         Path.of("README.md");
 
@@ -23,27 +20,19 @@ class V016DevelopmentContractTest {
         Path.of("docs", "roadmap.md");
 
     @Test
-    void shouldRecordV016PublishedReleaseState()
+    void shouldRetainV016PublishedReleaseRecord()
         throws IOException {
-
-        assertThat(Files.readString(POM))
-            .contains(
-                "<version>0.16.0</version>"
-            )
-            .doesNotContain(
-                "<version>0.16.0-SNAPSHOT</version>"
-            );
 
         assertThat(Files.readString(README))
             .contains(
-                "PayFlow v0.16.0 is the latest published release",
-                "annotated tag `v0.16.0`",
+                "The immutable v0.16.0 publication record is anchored to annotated tag `v0.16.0`",
                 "8308e190960525924a550dafc8dcfcf61d4250d0",
                 "da8cefa9772d8e009b5ef1e5ab53d03bc44b1c13",
                 "32757038003",
                 "375880233",
                 "100566879 bytes",
                 "8c542fc6928179345e5cda3d0f66d1481f7277a88096a52a69952ed95f2958e6",
+                "## v0.16.0 release",
                 "/api/v1",
                 "PostgreSQL backup/restore",
                 "Flyway migration rehearsals",
@@ -58,7 +47,7 @@ class V016DevelopmentContractTest {
     }
 
     @Test
-    void shouldDefineIncrementalStabilizationPlan()
+    void shouldRetainIncrementalStabilizationPlan()
         throws IOException {
 
         assertThat(Files.readString(ROADMAP))
@@ -95,26 +84,25 @@ class V016DevelopmentContractTest {
     }
 
     @Test
-    void shouldRecordDevelopmentTransitionWithoutRewritingV015Publication()
+    void shouldRetainV016ChangelogWithoutOwningMutableUnreleasedState()
         throws IOException {
 
         assertThat(Files.readString(CHANGELOG))
             .contains(
-                "## [Unreleased]",
+                "## [0.16.0] - 2026-08-24",
                 "Advanced the active development version to `0.16.0-SNAPSHOT`",
                 "issue #169",
-                "## [0.15.0] - 2026-08-18",
-                "[0.16.0]: https://github.com/nursena-pc/payflow/compare/v0.15.0...v0.16.0",
-                "[Unreleased]: https://github.com/nursena-pc/payflow/compare/v0.16.0...HEAD"
+                "[0.16.0]: https://github.com/nursena-pc/payflow/compare/v0.15.0...v0.16.0"
             );
 
         assertThat(Files.readString(ROADMAP))
             .contains(
-                "published merge and tag commit: `c29a067ca3a64514444e17db59a2b862d26f5950`",
-                "annotated tag object: `a1aa528b4933c69a3fa81c10a103154bd1d6a327`",
-                "release workflow run: [`32172653513`]",
-                "published JAR size: `100236578` bytes",
-                "published JAR SHA-256: `7EDF5EAD1EB93966E750F917D9472B4383D2B3CDA7406A264AE78B106A779080`"
+                "published merge and tag commit: `da8cefa9772d8e009b5ef1e5ab53d03bc44b1c13`",
+                "annotated tag object: `8308e190960525924a550dafc8dcfcf61d4250d0`",
+                "release workflow run: [`32757038003`]",
+                "GitHub Release ID: `375880233`",
+                "published JAR size: `100566879` bytes",
+                "published JAR SHA-256: `8c542fc6928179345e5cda3d0f66d1481f7277a88096a52a69952ed95f2958e6`"
             );
     }
 }

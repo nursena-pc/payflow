@@ -6,7 +6,7 @@ PayFlow v0.16.0 is the latest tagged and published release. The immutable public
 
 The published `100566879`-byte `payflow-0.16.0.jar` has independently verified SHA-256 `8c542fc6928179345e5cda3d0f66d1481f7277a88096a52a69952ed95f2958e6`. Checksum asset SHA-256 `b14f5ea137012e7aa8557fa21c1c9fece151deb2447a0b636da7ee3a173d14b0` names and matches that JAR, and the published release notes exactly match the reviewed `docs/releases/v0.16.0.md`.
 
-The v0.16.0 stabilization line tracked by issue `#169` is complete through protected finalization and independently verified immutable publication. Issue `#186` remains open only for the publication-record merge and release-train closure. Registration remains evidence-backed `DEFER`, the existing password-login limiter semantics remain unchanged, and the publication does not introduce signing, SLSA, reproducible-build, provenance-attestation, production-certification, or real-money claims.
+The v0.16.0 stabilization line tracked by issue `#169` and release-finalization issue `#186` is complete through protected finalization, independently verified immutable publication, and publication-record merge `7712c5ccbeeee3b9cefd3324c42270e71554ea17`. The active v1.0.0 release-candidate development line uses Maven version `1.0.0-SNAPSHOT`, is tracked by umbrella issue `#189`, and begins with development-start checkpoint `#190`. Registration remains evidence-backed `DEFER`, the existing password-login limiter semantics remain unchanged, and v1 development does not introduce signing, SLSA, reproducible-build, provenance-attestation, production-certification, or real-money claims.
 
 The v0.15.0 generalized abuse-protection release remains anchored to verified
 merge commit `c29a067ca3a64514444e17db59a2b862d26f5950` and successful release workflow run `32172653513`.
@@ -951,7 +951,102 @@ Baseline: v0.15.0 publication-record merge
 - release checksum verification: passed
 - published release notes verification: exact match
 
-## v1.0.0 next stage
+## v1.0.0 — Active Release-Candidate Development
 
-v1.0.0 release-candidate validation begins only after the complete v0.16.0
-stabilization milestone and immutable publication record are complete.
+Tracking issue: [#189](https://github.com/nursena-pc/payflow/issues/189)
+Development-start issue: [#190](https://github.com/nursena-pc/payflow/issues/190)
+
+Baseline: v0.16.0 publication-record merge
+`7712c5ccbeeee3b9cefd3324c42270e71554ea17`.
+
+The v1.0.0 line is release hardening and evidence closure, not a new product feature milestone. A behavior change belongs here only when release-candidate verification demonstrates a concrete blocker and the fix is separately scoped and reviewed.
+
+### Checkpoint 1 — Release-candidate development baseline
+
+- [ ] Open the Maven development line at `1.0.0-SNAPSHOT` through a protected PR
+- [ ] Preserve the immutable v0.16.0 publication record while v1 development is active
+- [ ] Keep runtime, API, migration, dependency, workflow, and security semantics unchanged in the development-start checkpoint
+- [ ] Add executable development contracts for the approved v1 release-candidate scope
+
+### Checkpoint 2 — Authentication and security lifecycle closure
+
+- [ ] Re-verify email verification, password recovery, JWT key rotation, MFA/recovery codes, step-up, session/revocation, abuse-protection, and login-limiter contracts
+- [ ] Align threat-model and security documentation with implemented behavior
+- [ ] Preserve credential redaction, anti-enumeration, trusted-client, and fail-closed boundaries
+- [ ] Resolve only verified release-blocking defects without expanding authentication scope for version branding
+
+### Checkpoint 3 — Financial and messaging integrity guarantees
+
+- [ ] Re-verify transaction, idempotency, wallet, double-entry ledger, outbox, Kafka, DLQ/replay, and audit guarantees
+- [ ] Verify PostgreSQL remains the durable source of truth where designed
+- [ ] Re-verify duplicate, retry, concurrency, and dependency-failure consistency paths
+- [ ] Keep messaging architecture unchanged unless a separately verified release blocker requires correction
+
+### Checkpoint 4 — Observability and performance release budgets
+
+- [ ] Verify structured logging, request/correlation IDs, sensitive-value redaction, metrics, dashboards, and alerts remain coherent
+- [ ] Re-run the repository-approved v1 performance evidence
+- [ ] Record bounded latency, throughput, saturation, overload, and recovery evidence with environment assumptions
+- [ ] Do not convert local or synthetic evidence into production-capacity claims
+
+### Checkpoint 5 — Recovery, migration, API, and documentation freeze
+
+- [ ] Re-validate PostgreSQL backup/restore and Flyway clean-install/upgrade procedures
+- [ ] Re-validate Redis and Kafka outage/recovery procedures
+- [ ] Compare `/api/v1`, OpenAPI, Postman, README, architecture, ADR, security, operations, and roadmap contracts for drift
+- [ ] Require explicit compatibility review for any public API behavior change
+
+### Checkpoint 6 — Supply-chain and clean-environment release-candidate verification
+
+- [ ] Run the repository-approved dependency vulnerability review and committed-content secret scan
+- [ ] Generate and review the v1 release-candidate SBOM using the documented toolchain
+- [ ] Review every Critical/High finding explicitly without suppressing findings only to make the gate green
+- [ ] Run complete clean-environment Maven verification and production-profile Docker smoke on the exact reviewed candidate
+- [ ] Verify executable JAR/checksum creation and required-configuration fail-fast behavior
+
+### Checkpoint 7 — v1.0.0 release preparation
+
+- [ ] Transition the reviewed candidate to exact version `1.0.0` only through a focused release-preparation PR
+- [ ] Add reviewed `docs/releases/v1.0.0.md` from implemented and verified evidence only
+- [ ] Align changelog, README, roadmap, and executable release contracts without inventing publication-only values
+- [ ] Require exact-head GitHub CI and Docker Smoke success before expected-head merge
+
+### Checkpoint 8 — Immutable v1.0.0 publication
+
+- [ ] Publish annotated tag `v1.0.0` only from the exact approved release merge
+- [ ] Require the tag-triggered Release workflow to succeed
+- [ ] Independently download and verify the published executable JAR and checksum
+- [ ] Verify published release notes exactly match the reviewed versioned release notes
+- [ ] Record real tag object, tag target, merge SHA, workflow run, release ID, artifact size, and SHA-256 only after publication
+
+### Checkpoint 9 — Publication record and release-train closure
+
+- [ ] Merge immutable publication evidence only after real published values are known
+- [ ] Require normal exact-head CI and Docker gates on the publication-record PR
+- [ ] Close issue #189 only after publication evidence is merged and independently verified
+- [ ] Mark v1.0.0 complete in release train #106 only after #189 is complete
+- [ ] Return local and remote `main` to an exact clean synchronized state after branch cleanup
+
+## Explicit v1.0.0 non-goals
+
+- New wallet, transfer, payment, or public API features merely for the version number
+- Registration activation merely to satisfy a version number
+- Login-limiter retuning without a verified defect
+- New MFA factors, OAuth/OIDC, WebAuthn/passkeys, or authenticator redesign
+- Microservice extraction
+- Kubernetes, API gateway, CDN, WAF, service mesh, or deployment redesign
+- Frontend work
+- Real payment-provider integration
+- Regulatory certification, production certification, or real-money operation
+- Artifact signing, SLSA provenance, or reproducible-build guarantees without separately designed and verified evidence
+
+## v1.0.0 release exit criteria
+
+- [ ] all release-candidate verification checkpoints complete without unresolved Critical/High release blockers
+- [ ] authentication, financial consistency, messaging, observability, recovery, migration, and compatibility guarantees remain executable
+- [ ] complete Maven verification and production-profile Docker smoke pass on the exact reviewed release candidate
+- [ ] OpenAPI, Postman, runbooks, architecture/security guidance, and implementation agree
+- [ ] the exact reviewed `1.0.0` release merge is immutably tagged
+- [ ] tag-triggered publication succeeds and published artifacts are independently verified
+- [ ] immutable publication evidence is merged from actual published values
+- [ ] release train #106 can close without unsupported production, regulatory, real-money, signing, SLSA, or reproducible-build claims

@@ -112,7 +112,7 @@ Completed capabilities include:
 - operator-only, paginated command-audit queries and chronological command timelines
 - Prometheus metrics, Grafana dashboards, and alert rules for Kafka consumer failures
 
-OpenAPI documentation covers the implemented API. Across the committed standard, MFA, login-rate-limit, and compatibility-coverage collections, Postman represents all 30 canonical `/api/v1` operations while keeping lifecycle-sensitive and privileged requests manually gated. PayFlow v0.16.0 is the latest published release at Maven version `0.16.0`. The feature-frozen stabilization line completed recovery rehearsals, API compatibility review, documentation alignment, dependency and supply-chain evidence, clean-environment verification, protected finalization, and immutable publication verification. Issue #186 remains the publication-record checkpoint; registration remains evidence-backed `DEFER`, and the existing password-login limiter semantics remain unchanged.
+OpenAPI documentation covers the implemented API. Across the committed standard, MFA, login-rate-limit, and compatibility-coverage collections, Postman represents all 30 canonical `/api/v1` operations while keeping lifecycle-sensitive and privileged requests manually gated. PayFlow v0.16.0 is the latest published release, while the active release-candidate development line uses Maven version `1.0.0-SNAPSHOT`. The v1.0.0 stage is tracked by umbrella issue #189 and development-start issue #190 and is limited to release hardening and evidence closure unless a separately reviewed defect requires change. Registration remains evidence-backed `DEFER`, and the existing password-login limiter semantics remain unchanged.
 
 The immutable v0.16.0 publication record is anchored to annotated tag `v0.16.0` with tag object `8308e190960525924a550dafc8dcfcf61d4250d0`, merge commit `da8cefa9772d8e009b5ef1e5ab53d03bc44b1c13`, and successful Release workflow run [32757038003](https://github.com/nursena-pc/payflow/actions/runs/32757038003). GitHub Release ID `375880233` was published at `2026-08-24T17:40:22Z`. The published `payflow-0.16.0.jar` is 100566879 bytes and its independently verified SHA-256 is `8c542fc6928179345e5cda3d0f66d1481f7277a88096a52a69952ed95f2958e6`; checksum asset SHA-256 `b14f5ea137012e7aa8557fa21c1c9fece151deb2447a0b636da7ee3a173d14b0` names and matches that JAR, and the published release notes exactly match the reviewed versioned notes.
 
@@ -259,11 +259,17 @@ the [policy guide](docs/abuse-protection.md), the
 [operations runbook](docs/operations/abuse-protection-observability.md), and
 the committed [registration decision evidence](docs/performance/evidence/2026-08-17-registration-defer-f94ffa8.md).
 
-## v0.16.0 release preparation
+## v0.16.0 release
 
-The active `0.16.0-SNAPSHOT` line is the stabilization stage before v1.0.0 release-candidate validation. It adds no new wallet, transfer, payment, identity-factor, or abuse-protection product feature, and it does not activate generalized registration protection.
+The published v0.16.0 stabilization baseline completed the documented `/api/v1` compatibility boundary, repeatable PostgreSQL backup/restore and Flyway migration rehearsals, Redis and Kafka outage/recovery runbooks, OpenAPI/Postman/documentation drift review, dependency and secret scanning, SBOM/provenance evidence, clean-environment release rehearsal, protected finalization, and immutable publication verification. It added no new wallet, transfer, payment, identity-factor, or abuse-protection product feature and did not activate generalized registration protection.
 
-Work is tracked by [issue #169](https://github.com/nursena-pc/payflow/issues/169). The milestone covers a documented `/api/v1` compatibility boundary, repeatable PostgreSQL backup/restore and Flyway migration rehearsals, Redis and Kafka outage/recovery runbooks, OpenAPI/Postman/documentation drift review, dependency and secret scanning, SBOM/provenance evidence, and clean-environment release rehearsal. Existing modular-monolith, security, privacy, simulated-money, and fail-closed boundaries remain in force.
+Work was tracked by [issue #169](https://github.com/nursena-pc/payflow/issues/169), with finalization/publication closure tracked by [issue #186](https://github.com/nursena-pc/payflow/issues/186). Existing modular-monolith, security, privacy, simulated-money, and fail-closed boundaries remain in force.
+
+## v1.0.0 active release-candidate development
+
+The active `1.0.0-SNAPSHOT` line begins from exact v0.16.0 publication-record merge `7712c5ccbeeee3b9cefd3324c42270e71554ea17`. Work is tracked by [issue #189](https://github.com/nursena-pc/payflow/issues/189), with the development-start transition tracked by [issue #190](https://github.com/nursena-pc/payflow/issues/190). This checkpoint changes release/development state only and adds no product capability.
+
+The v1 release candidate re-validates authentication and security lifecycle behavior, transaction/ledger/outbox/Kafka/DLQ guarantees, observability and bounded performance evidence, PostgreSQL backup/restore and Flyway migration rehearsals, Redis/Kafka recovery procedures, `/api/v1` compatibility, OpenAPI/Postman/documentation alignment, supply-chain evidence, and clean-environment release verification. Existing modular-monolith, simulated-money, registration `DEFER`, password-login limiter, fail-closed, privacy, and credential-redaction boundaries remain in force.
 
 ## Implemented API
 
