@@ -3,6 +3,8 @@
 - Status: Accepted
 - Date: 2026-07-25
 
+> Current-state note (v1.0.0 release-candidate): this ADR preserves the query-boundary design as introduced. The operator-only command-audit list and timeline endpoints, application query contracts, and read-only PostgreSQL adapter are implemented on the current line. The historical future-tense decision body below is retained unchanged; see `docs/v1-financial-messaging-integrity.md` for the current integrated contract.
+
 ## Context
 
 PayFlow persists an append-only PostgreSQL audit trail for authorized Kafka

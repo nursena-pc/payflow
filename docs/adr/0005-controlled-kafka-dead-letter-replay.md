@@ -3,6 +3,8 @@
 - Status: Accepted
 - Date: 2026-07-21
 
+> Current-state note (v1.0.0 release-candidate): this ADR preserves the original replay-foundation decision. Authorized replay/discard HTTP operations, append-only command auditing, and audit query endpoints are now implemented under the `PAYFLOW_OPERATIONS` boundary. The historical decision body below is retained unchanged; see ADR 0006 through ADR 0008 and `docs/v1-financial-messaging-integrity.md` for the current integrated contract.
+
 ## Context
 
 The transfer-completed Kafka consumer uses bounded retries and publishes permanent or exhausted failures to:

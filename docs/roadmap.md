@@ -956,6 +956,7 @@ Baseline: v0.15.0 publication-record merge
 Tracking issue: [#189](https://github.com/nursena-pc/payflow/issues/189)
 Development-start issue: [#190](https://github.com/nursena-pc/payflow/issues/190)
 Authentication/security closure issue: [#192](https://github.com/nursena-pc/payflow/issues/192)
+Financial/messaging integrity closure issue: [#194](https://github.com/nursena-pc/payflow/issues/194)
 
 Baseline: v0.16.0 publication-record merge
 `7712c5ccbeeee3b9cefd3324c42270e71554ea17`.
@@ -980,10 +981,12 @@ CP2 evidence baseline: exact `main` `ffa8819beede102c995a7530c1b15b0aa4a2fca1`; 
 
 ### Checkpoint 3 — Financial and messaging integrity guarantees
 
-- [ ] Re-verify transaction, idempotency, wallet, double-entry ledger, outbox, Kafka, DLQ/replay, and audit guarantees
-- [ ] Verify PostgreSQL remains the durable source of truth where designed
-- [ ] Re-verify duplicate, retry, concurrency, and dependency-failure consistency paths
-- [ ] Keep messaging architecture unchanged unless a separately verified release blocker requires correction
+- [x] Re-verify transaction, idempotency, wallet, double-entry ledger, outbox, Kafka, DLQ/replay, and audit guarantees
+- [x] Verify PostgreSQL remains the durable source of truth where designed
+- [x] Re-verify duplicate, retry, concurrency, and dependency-failure consistency paths
+- [x] Keep messaging architecture unchanged unless a separately verified release blocker requires correction
+
+CP3 evidence baseline: exact `main` `315488e88f2b69c56d77fc64b49dfc1c6497649f`; 119 discovered transaction/wallet/ledger/outbox/event-processing test classes executed 564 focused tests with zero failures, errors, or skips and no repository mutation. No runtime integrity defect was identified. The current v1 financial/messaging contract is captured in `docs/v1-financial-messaging-integrity.md`; historical ADR 0005 and ADR 0008 decision bodies remain preserved with explicit current-state notes rather than being rewritten as if they were authored at the current implementation stage.
 
 ### Checkpoint 4 — Observability and performance release budgets
 
