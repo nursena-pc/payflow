@@ -14,6 +14,7 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Opened the v1.0.0 release-candidate validation and final-publication milestone through issue #189, with development-start checkpoint #190, without adding product or runtime behavior.
 - Closed the v1.0.0 authentication/security lifecycle documentation drift through issue #192 with a current-state lifecycle contract and executable drift protection, while preserving historical v0.13.0-v0.15.0 evidence and leaving runtime, API, migration, limiter, and authentication behavior unchanged.
 - Aligned the v1.0.0 financial/messaging integrity contract through issue #194 after a 119-class / 564-test focused diagnostic passed with zero failures, errors, or skips; added current-state documentation and executable drift protection while leaving runtime, public API, migration/schema, messaging topology, and financial behavior unchanged.
+- Closed the v1.0.0 observability/performance release-budget review through issue #197 after a read-only diagnostic found no runtime observability defect and the repository-approved protected-workflow recorder produced fresh accepted developer-workstation evidence from exact commit `8a49e8bcd05ba64fd07b87bdeca5dc415e87dda3`; added the reviewed evidence, current-state contract, and executable drift protection without changing runtime, public API, schema/migrations, dependencies, workflows, metrics, alerts, quota, retry, or security behavior, and without making a production-capacity claim.
 
 ## [0.16.0] - 2026-08-24
 
