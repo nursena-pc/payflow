@@ -957,6 +957,7 @@ Tracking issue: [#189](https://github.com/nursena-pc/payflow/issues/189)
 Development-start issue: [#190](https://github.com/nursena-pc/payflow/issues/190)
 Authentication/security closure issue: [#192](https://github.com/nursena-pc/payflow/issues/192)
 Financial/messaging integrity closure issue: [#194](https://github.com/nursena-pc/payflow/issues/194)
+Observability/performance closure issue: [#197](https://github.com/nursena-pc/payflow/issues/197)
 
 Baseline: v0.16.0 publication-record merge
 `7712c5ccbeeee3b9cefd3324c42270e71554ea17`.
@@ -990,10 +991,12 @@ CP3 evidence baseline: exact `main` `315488e88f2b69c56d77fc64b49dfc1c6497649f`; 
 
 ### Checkpoint 4 — Observability and performance release budgets
 
-- [ ] Verify structured logging, request/correlation IDs, sensitive-value redaction, metrics, dashboards, and alerts remain coherent
-- [ ] Re-run the repository-approved v1 performance evidence
-- [ ] Record bounded latency, throughput, saturation, overload, and recovery evidence with environment assumptions
-- [ ] Do not convert local or synthetic evidence into production-capacity claims
+- [x] Verify structured logging, request/correlation IDs, sensitive-value redaction, metrics, dashboards, and alerts remain coherent
+- [x] Re-run the repository-approved v1 performance evidence
+- [x] Record bounded latency, throughput, saturation, overload, and recovery evidence with environment assumptions
+- [x] Do not convert local or synthetic evidence into production-capacity claims
+
+CP4 evidence baseline: exact `main` `8a49e8bcd05ba64fd07b87bdeca5dc415e87dda3`. The read-only diagnostic found no runtime observability, metric, dashboard, alert, or performance-contract defect. The repository-approved protected-workflow recorder produced fresh run `20260827T152405Z`; the independently reviewed candidate passed the frozen steady-state budget, preserved the reviewed security/quota boundary in every phase, and recovered in `0.038` seconds against the 30-second budget. The accepted bounded developer-workstation record is `docs/performance/evidence/2026-08-27-protected-workflow-8a49e8b.md`, with the current v1 boundary captured in `docs/v1-observability-performance.md`. No production-capacity claim or runtime/API/schema/metric/alert/security expansion is introduced.
 
 ### Checkpoint 5 — Recovery, migration, API, and documentation freeze
 

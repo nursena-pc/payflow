@@ -267,9 +267,11 @@ Work was tracked by [issue #169](https://github.com/nursena-pc/payflow/issues/16
 
 ## v1.0.0 active release-candidate development
 
-The active `1.0.0-SNAPSHOT` line begins from exact v0.16.0 publication-record merge `7712c5ccbeeee3b9cefd3324c42270e71554ea17`. Work is tracked by [issue #189](https://github.com/nursena-pc/payflow/issues/189), with the development-start transition tracked by [issue #190](https://github.com/nursena-pc/payflow/issues/190). This checkpoint changes release/development state only and adds no product capability.
+The active `1.0.0-SNAPSHOT` line begins from exact v0.16.0 publication-record merge `7712c5ccbeeee3b9cefd3324c42270e71554ea17`. Work is tracked by [issue #189](https://github.com/nursena-pc/payflow/issues/189), with the development-start transition tracked by [issue #190](https://github.com/nursena-pc/payflow/issues/190). Authentication/security lifecycle closure is tracked by [issue #192](https://github.com/nursena-pc/payflow/issues/192), financial/messaging integrity closure by [issue #194](https://github.com/nursena-pc/payflow/issues/194), and observability/performance release-budget closure by [issue #197](https://github.com/nursena-pc/payflow/issues/197).
 
 The v1 release candidate re-validates authentication and security lifecycle behavior, transaction/ledger/outbox/Kafka/DLQ guarantees, observability and bounded performance evidence, PostgreSQL backup/restore and Flyway migration rehearsals, Redis/Kafka recovery procedures, `/api/v1` compatibility, OpenAPI/Postman/documentation alignment, supply-chain evidence, and clean-environment release verification. Existing modular-monolith, simulated-money, registration `DEFER`, password-login limiter, fail-closed, privacy, and credential-redaction boundaries remain in force.
+
+CP4 re-ran the repository-approved protected-workflow performance recorder from exact commit `8a49e8bcd05ba64fd07b87bdeca5dc415e87dda3`. The fresh developer-workstation evidence satisfied the reviewed steady-state, security/quota, and recovery budgets without a runtime, API, schema, metric, alert, quota, retry, or security behavior change. The current boundary is recorded in the [v1 observability/performance contract](docs/v1-observability-performance.md) and the [accepted v1 performance evidence](docs/performance/evidence/2026-08-27-protected-workflow-8a49e8b.md). These results are bounded local/synthetic evidence and are not production-capacity certification.
 
 ## Implemented API
 
