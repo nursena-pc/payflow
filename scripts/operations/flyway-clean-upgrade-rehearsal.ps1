@@ -529,15 +529,34 @@ $WorktreeAdded = $false
 
 try {
     Write-Host ''
-    Write-Host '=== 3. BUILD CURRENT V0.16 JAR ===' -ForegroundColor Cyan
+    Write-Host '=== 3. BUILD CURRENT V1 CANDIDATE JAR ===' -ForegroundColor Cyan
 
     & .\mvnw.cmd -B -ntp -DskipTests package
     if ($LASTEXITCODE -ne 0) { throw 'Current package build failed.' }
 
+    [xml] $CurrentPom = Get-Content `
+        -LiteralPath (Join-Path $RepoRoot 'pom.xml') `
+        -Raw
+
+    $CurrentArtifactId = [string] $CurrentPom.project.artifactId
+    $CurrentVersion = [string] $CurrentPom.project.version
+
+    if (
+        [string]::IsNullOrWhiteSpace($CurrentArtifactId) -or
+        [string]::IsNullOrWhiteSpace($CurrentVersion)
+    ) {
+        throw 'Could not resolve current Maven artifact coordinates.'
+    }
+
+    $CurrentJarName = "$CurrentArtifactId-$CurrentVersion.jar"
+
     $CurrentJar = Join-Path `
         $RepoRoot `
-        'target\payflow-0.16.0-SNAPSHOT.jar'
-    if (-not (Test-Path $CurrentJar)) { throw 'Current JAR missing.' }
+        "target\$CurrentJarName"
+
+    if (-not (Test-Path -LiteralPath $CurrentJar -PathType Leaf)) {
+        throw "Current JAR missing: $CurrentJarName"
+    }
 
     Write-Host ''
     Write-Host '=== 4. CLEAN INSTALL: EMPTY POSTGRESQL 17 -> V24 ===' -ForegroundColor Cyan
@@ -590,7 +609,7 @@ try {
     if (-not (Test-Path $V013Jar)) { throw 'v0.13.0 JAR missing.' }
 
     Write-Host ''
-    Write-Host '=== 6. IMMUTABLE PREVIOUS-RELEASE BASELINE -> V17 ===' `
+    Write-Host '=== 6. IMMUTABLE HISTORICAL V0.13.0 BASELINE -> V17 ===' `
         -ForegroundColor Cyan
 
     $UpgradePort = Free-Port
