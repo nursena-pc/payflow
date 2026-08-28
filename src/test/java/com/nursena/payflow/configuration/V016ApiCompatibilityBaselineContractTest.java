@@ -208,10 +208,7 @@ class V016ApiCompatibilityBaselineContractTest {
             );
 
         assertThat(openApiConfiguration)
-            .contains(
-                "API_VERSION",
-                "\"0.16.0\""
-            )
+            .contains("API_VERSION")
             .doesNotContain("\"0.2.0\"");
 
         assertThat(baseline)

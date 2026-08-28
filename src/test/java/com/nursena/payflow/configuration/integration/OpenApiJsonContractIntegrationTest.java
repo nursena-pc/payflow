@@ -175,7 +175,7 @@ class OpenApiJsonContractIntegrationTest {
             .isEqualTo("PayFlow API");
 
         assertThat(info.path("version").asText())
-            .isEqualTo("0.16.0");
+            .isEqualTo("1.0.0");
 
         assertThat(info.path("description").asText())
             .contains(

@@ -1,10 +1,11 @@
 # Redis and Kafka Outage/Recovery Rehearsal
 
-Issue: [#178](https://github.com/nursena-pc/payflow/issues/178)
+Historical rehearsal issue: [#178](https://github.com/nursena-pc/payflow/issues/178)
+Current v1.0.0 CP5 review: [#199](https://github.com/nursena-pc/payflow/issues/199)
 
-PayFlow v0.16.0 uses this stabilization rehearsal to verify the already-reviewed
-Redis and Kafka dependency-failure contracts without changing runtime API,
-security, retry, or persistence semantics.
+PayFlow v1.0.0 release-candidate CP5 reuses and revalidates this rehearsal to
+verify the already-reviewed Redis and Kafka dependency-failure contracts without
+changing runtime API, security, retry, or persistence semantics.
 
 The committed entry point is:
 
@@ -33,6 +34,9 @@ Two focused executable contracts own the runtime proof:
 - `V016KafkaOutageRecoveryRehearsalTest`
 
 Both use isolated PostgreSQL and dependency containers created by Testcontainers.
+Their `V016` class names preserve the historical introduction point of these
+behavior probes; v1.0.0 CP5 deliberately reuses the same contracts rather than
+duplicating or retuning their runtime semantics.
 Dependency isolation targets the exact container ID created by the test through
 Docker pause/unpause. It never selects or stops a developer service by a generic
 container name.
