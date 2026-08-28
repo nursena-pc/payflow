@@ -826,38 +826,96 @@ try {
     $PreviousEnvironment = Set-TemporaryEnvironment `
         -Values $EnvironmentValues
 
+    $AppStdoutTask = $null
+    $AppStderrTask = $null
+
     try {
-        $AppProcess = Start-Process `
-            -FilePath 'java' `
-            -ArgumentList @('-jar', $JarPath) `
-            -PassThru `
-            -RedirectStandardOutput $AppStdout `
-            -RedirectStandardError $AppStderr
+        if ([string]::IsNullOrWhiteSpace($env:JAVA_HOME)) {
+            throw 'JAVA_HOME must point to the Java 21 JDK used by PayFlow.'
+        }
+
+        $JavaExecutable = Join-Path `
+            $env:JAVA_HOME `
+            'bin\java.exe'
+
+        if (-not (
+            Test-Path `
+                -LiteralPath $JavaExecutable `
+                -PathType Leaf
+        )) {
+            throw "JAVA_HOME does not contain bin\java.exe: $env:JAVA_HOME"
+        }
+
+        $StartInfo = [System.Diagnostics.ProcessStartInfo]::new()
+
+        $StartInfo.FileName = $JavaExecutable
+        $StartInfo.Arguments = "-jar `"$JarPath`""
+        $StartInfo.UseShellExecute = $false
+        $StartInfo.CreateNoWindow = $true
+        $StartInfo.RedirectStandardOutput = $true
+        $StartInfo.RedirectStandardError = $true
+        $StartInfo.WorkingDirectory = $RepoRoot
+
+        $AppProcess = [System.Diagnostics.Process]::new()
+        $AppProcess.StartInfo = $StartInfo
+
+        if (-not $AppProcess.Start()) {
+            throw 'Restored-database PayFlow process start returned false.'
+        }
+
+        $AppStdoutTask = `
+            $AppProcess.StandardOutput.ReadToEndAsync()
+
+        $AppStderrTask = `
+            $AppProcess.StandardError.ReadToEndAsync()
 
         $Deadline = [DateTime]::UtcNow.AddSeconds(120)
-        $HealthUri = "http://127.0.0.1:$AppPort/api/v1/system/health"
+        $HealthUri = `
+            "http://127.0.0.1:$AppPort/api/v1/system/health"
+
         $HealthStatus = $null
 
         while ([DateTime]::UtcNow -lt $Deadline) {
             $AppProcess.Refresh()
 
             if ($AppProcess.HasExited) {
-                $StdoutTail = if (Test-Path $AppStdout) {
-                    (Get-Content $AppStdout -Tail 40) -join "`n"
-                }
-                else {
-                    ''
-                }
+                $AppProcess.WaitForExit()
 
-                $StderrTail = if (Test-Path $AppStderr) {
-                    (Get-Content $AppStderr -Tail 40) -join "`n"
-                }
-                else {
-                    ''
-                }
+                [int] $ExitCode = $AppProcess.ExitCode
+
+                $StdoutText = $AppStdoutTask.Result
+                $StderrText = $AppStderrTask.Result
+
+                [IO.File]::WriteAllText(
+                    $AppStdout,
+                    $StdoutText,
+                    [Text.UTF8Encoding]::new($false)
+                )
+
+                [IO.File]::WriteAllText(
+                    $AppStderr,
+                    $StderrText,
+                    [Text.UTF8Encoding]::new($false)
+                )
+
+                $StdoutTail = (
+                    @(
+                        $StdoutText -split '\r?\n'
+                    ) |
+                        Select-Object -Last 120
+                ) -join "`n"
+
+                $StderrTail = (
+                    @(
+                        $StderrText -split '\r?\n'
+                    ) |
+                        Select-Object -Last 120
+                ) -join "`n"
 
                 throw @"
 PayFlow exited before restored-database startup verification completed.
+Exit code: $ExitCode
+
 STDOUT tail:
 $StdoutTail
 
@@ -890,14 +948,56 @@ $StderrTail
             throw 'PayFlow did not return HTTP 200 from /api/v1/system/health within 120 seconds.'
         }
 
-        Write-Host "Restored DB startup health: HTTP $HealthStatus" `
+        Write-Host `
+            "Restored DB startup health: HTTP $HealthStatus" `
             -ForegroundColor Green
     }
     finally {
-        Restore-Environment -Previous $PreviousEnvironment
+        if ($null -ne $AppProcess) {
+            try {
+                $AppProcess.Refresh()
+
+                if (-not $AppProcess.HasExited) {
+                    $AppProcess.Kill()
+                }
+
+                $AppProcess.WaitForExit()
+            }
+            catch {}
+        }
+
+        if ($null -ne $AppStdoutTask) {
+            try {
+                $StdoutText = $AppStdoutTask.Result
+
+                [IO.File]::WriteAllText(
+                    $AppStdout,
+                    $StdoutText,
+                    [Text.UTF8Encoding]::new($false)
+                )
+            }
+            catch {}
+        }
+
+        if ($null -ne $AppStderrTask) {
+            try {
+                $StderrText = $AppStderrTask.Result
+
+                [IO.File]::WriteAllText(
+                    $AppStderr,
+                    $StderrText,
+                    [Text.UTF8Encoding]::new($false)
+                )
+            }
+            catch {}
+        }
+
+        Restore-Environment `
+            -Previous $PreviousEnvironment
     }
 
     Write-Host ''
+
     Write-Host '=== 11. WRITE SANITIZED REHEARSAL EVIDENCE ===' -ForegroundColor Cyan
 
     $Evidence = New-Object System.Collections.Generic.List[string]
