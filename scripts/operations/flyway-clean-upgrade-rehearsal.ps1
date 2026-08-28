@@ -1,4 +1,4 @@
-# PayFlow v0.16 local Flyway clean-install / previous-release upgrade rehearsal.
+# PayFlow v1.0.0 release-candidate Flyway clean-install / historical upgrade rehearsal.
 # Uses fresh PostgreSQL 17 targets, immutable v0.13.0/V17 as the approved
 # upgrade source, synthetic data only, never repairs Flyway history, and
 # does not implement a down-migration.
@@ -790,10 +790,10 @@ ROLLBACK;
     Write-Host '=== 10. WRITE SANITIZED EVIDENCE ===' -ForegroundColor Cyan
 
     $lines = New-Object System.Collections.Generic.List[string]
-    [void]$lines.Add('PayFlow v0.16.0 Flyway Clean-Install / Upgrade Rehearsal Evidence')
+    [void]$lines.Add('PayFlow v1.0.0 CP5 Flyway Clean-Install / Upgrade Rehearsal Evidence')
     [void]$lines.Add("Branch: $Branch")
     [void]$lines.Add("HEAD: $Head")
-    [void]$lines.Add("Previous release: v0.13.0 @ $ExpectedV013Commit")
+    [void]$lines.Add("Historical upgrade source: v0.13.0/V17 @ $ExpectedV013Commit")
     [void]$lines.Add("PostgreSQL image: $PostgresImage")
     [void]$lines.Add('Historical V1..V17 blob drift: 0')
     [void]$lines.Add('Clean install V1..V24: PASS')
@@ -835,7 +835,7 @@ ROLLBACK;
 
     Write-Host ''
     Write-Host '=============================================' -ForegroundColor Green
-    Write-Host 'v0.16 FLYWAY CLEAN/UPGRADE REHEARSAL PASS' -ForegroundColor Green
+    Write-Host 'v1.0.0 CP5 FLYWAY CLEAN/UPGRADE REHEARSAL PASS' -ForegroundColor Green
     Write-Host '=============================================' -ForegroundColor Green
     Write-Host "Branch           : $Branch"
     Write-Host "HEAD             : $Head"

@@ -18,7 +18,7 @@ $TargetDatabase = 'payflow_restore'
 $TargetUser = 'payflow_restore'
 
 if ($TargetImage -notmatch '^postgres:17(?:-|$)') {
-    throw "This v0.16 rehearsal requires PostgreSQL 17 target tooling; got: $TargetImage"
+    throw "This recovery rehearsal requires PostgreSQL 17 target tooling; got: $TargetImage"
 }
 
 if ($SourceDatabase -eq $TargetDatabase) {
@@ -272,10 +272,26 @@ function Assert-FingerprintEqual {
 }
 
 function Get-JarPath {
+    [xml] $Pom = Get-Content `
+        -LiteralPath 'pom.xml' `
+        -Raw
+
+    $ArtifactId = [string] $Pom.project.artifactId
+    $Version = [string] $Pom.project.version
+
+    if (
+        [string]::IsNullOrWhiteSpace($ArtifactId) -or
+        [string]::IsNullOrWhiteSpace($Version)
+    ) {
+        throw 'Could not resolve Maven artifactId/version from pom.xml.'
+    }
+
+    $ExpectedJarName = "$ArtifactId-$Version.jar"
+
     $Jar = @(
         Get-ChildItem `
             -LiteralPath 'target' `
-            -Filter 'payflow-0.16.0-SNAPSHOT.jar' `
+            -Filter $ExpectedJarName `
             -File `
             -ErrorAction SilentlyContinue
     )
@@ -779,7 +795,7 @@ try {
     $JarPath = Get-JarPath
 
     if ($null -eq $JarPath) {
-        throw 'Expected payflow-0.16.0-SNAPSHOT.jar was not found. Run without -SkipPackage first.'
+        throw 'Expected current Maven project JAR was not found. Run without -SkipPackage first.'
     }
 
     Write-Host "Application JAR: $JarPath"
