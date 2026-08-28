@@ -376,13 +376,36 @@ function Run-App(
         while ([DateTime]::UtcNow -lt $deadline) {
             $proc.Refresh()
             if ($proc.HasExited) {
+                [void] $proc.WaitForExit(10000)
+                $proc.WaitForExit()
+                $proc.Refresh()
+
+                $ExitCode = $proc.ExitCode
+
+                Start-Sleep -Milliseconds 250
+
                 $out = if (Test-Path "$LogPrefix.stdout.log") {
-                    (Get-Content "$LogPrefix.stdout.log" -Tail 60) -join "`n"
-                } else { '' }
+                    (Get-Content "$LogPrefix.stdout.log" -Tail 120) -join "`n"
+                }
+                else {
+                    ''
+                }
+
                 $err = if (Test-Path "$LogPrefix.stderr.log") {
-                    (Get-Content "$LogPrefix.stderr.log" -Tail 60) -join "`n"
-                } else { '' }
-                throw "$Label exited early.`nSTDOUT:`n$out`nSTDERR:`n$err"
+                    (Get-Content "$LogPrefix.stderr.log" -Tail 120) -join "`n"
+                }
+                else {
+                    ''
+                }
+
+                throw @"
+$Label exited early.
+Exit code: $ExitCode
+STDOUT:
+$out
+STDERR:
+$err
+"@
             }
             try {
                 $r = Invoke-WebRequest `
