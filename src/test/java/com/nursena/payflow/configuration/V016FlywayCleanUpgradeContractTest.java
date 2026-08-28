@@ -73,7 +73,7 @@ class V016FlywayCleanUpgradeContractTest {
             .contains(
                 "postgres:17-alpine",
                 "=== 4. CLEAN INSTALL: EMPTY POSTGRESQL 17 -> V24 ===",
-                "=== 6. IMMUTABLE PREVIOUS-RELEASE BASELINE -> V17 ===",
+                "=== 6. IMMUTABLE HISTORICAL V0.13.0 BASELINE -> V17 ===",
                 "=== 8. UPGRADE V17 -> V24 WITH CURRENT APP ===",
                 "payflow_clean",
                 "payflow_upgrade",
@@ -82,7 +82,7 @@ class V016FlywayCleanUpgradeContractTest {
                 "worktree','add','--detach",
                 "Resolve-Java21",
                 "JAVA_HOME",
-                "-FilePath $javaExecutable"
+                "$startInfo.FileName = $javaExecutable"
             )
             .doesNotContain(
                 "docker compose down -v",
