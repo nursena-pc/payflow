@@ -342,6 +342,7 @@ function Run-App(
     [string]$LogPrefix,[string]$Label
 ) {
     $port = Free-Port
+
     $old = Set-Env @{
         DB_URL = $Url
         DB_USERNAME = $User
@@ -360,83 +361,153 @@ function Run-App(
     }
 
     $javaExecutable = Resolve-Java21
+
     Write-Host "$Label runtime: JAVA_HOME Java 21"
 
+    $stdoutPath = "$LogPrefix.stdout.log"
+    $stderrPath = "$LogPrefix.stderr.log"
+
     $proc = $null
+    $stdoutTask = $null
+    $stderrTask = $null
+
     try {
-        $proc = Start-Process `
-            -FilePath $javaExecutable `
-            -ArgumentList @('-jar',$Jar) `
-            -PassThru `
-            -RedirectStandardOutput "$LogPrefix.stdout.log" `
-            -RedirectStandardError "$LogPrefix.stderr.log"
+        $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
+
+        $startInfo.FileName = $javaExecutable
+        $startInfo.Arguments = "-jar `"$Jar`""
+        $startInfo.UseShellExecute = $false
+        $startInfo.CreateNoWindow = $true
+        $startInfo.RedirectStandardOutput = $true
+        $startInfo.RedirectStandardError = $true
+        $startInfo.WorkingDirectory = (Get-Location).Path
+
+        $proc = [System.Diagnostics.Process]::new()
+        $proc.StartInfo = $startInfo
+
+        if (-not $proc.Start()) {
+            throw "$Label process start returned false."
+        }
+
+        $stdoutTask = $proc.StandardOutput.ReadToEndAsync()
+        $stderrTask = $proc.StandardError.ReadToEndAsync()
 
         $deadline = [DateTime]::UtcNow.AddSeconds(150)
         $status = $null
+
         while ([DateTime]::UtcNow -lt $deadline) {
             $proc.Refresh()
+
             if ($proc.HasExited) {
-                [void] $proc.WaitForExit(10000)
                 $proc.WaitForExit()
-                $proc.Refresh()
 
-                $ExitCode = $proc.ExitCode
+                [int] $exitCode = $proc.ExitCode
 
-                Start-Sleep -Milliseconds 250
+                $out = $stdoutTask.Result
+                $err = $stderrTask.Result
 
-                $out = if (Test-Path "$LogPrefix.stdout.log") {
-                    (Get-Content "$LogPrefix.stdout.log" -Tail 120) -join "`n"
-                }
-                else {
-                    ''
-                }
+                [IO.File]::WriteAllText(
+                    $stdoutPath,
+                    $out,
+                    [Text.UTF8Encoding]::new($false)
+                )
 
-                $err = if (Test-Path "$LogPrefix.stderr.log") {
-                    (Get-Content "$LogPrefix.stderr.log" -Tail 120) -join "`n"
-                }
-                else {
-                    ''
-                }
+                [IO.File]::WriteAllText(
+                    $stderrPath,
+                    $err,
+                    [Text.UTF8Encoding]::new($false)
+                )
+
+                $outTail = (
+                    @(
+                        $out -split '\r?\n'
+                    ) |
+                        Select-Object -Last 120
+                ) -join "`n"
+
+                $errTail = (
+                    @(
+                        $err -split '\r?\n'
+                    ) |
+                        Select-Object -Last 120
+                ) -join "`n"
 
                 throw @"
 $Label exited early.
-Exit code: $ExitCode
+Exit code: $exitCode
 STDOUT:
-$out
+$outTail
 STDERR:
-$err
+$errTail
 "@
             }
+
             try {
-                $r = Invoke-WebRequest `
+                $response = Invoke-WebRequest `
                     -Uri "http://127.0.0.1:$port/api/v1/system/health" `
-                    -UseBasicParsing -TimeoutSec 2
-                $status = [int]$r.StatusCode
-                if ($status -eq 200) { break }
+                    -UseBasicParsing `
+                    -TimeoutSec 2
+
+                $status = [int] $response.StatusCode
+
+                if ($status -eq 200) {
+                    break
+                }
             }
-            catch {}
+            catch {
+                # Application startup is still in progress.
+            }
+
             Start-Sleep -Seconds 2
         }
+
         if ($status -ne 200) {
             throw "$Label health did not reach HTTP 200."
         }
-        Write-Host "$Label health: HTTP 200" -ForegroundColor Green
+
+        Write-Host "$Label health: HTTP 200" `
+            -ForegroundColor Green
     }
     finally {
         if ($null -ne $proc) {
             try {
                 $proc.Refresh()
+
                 if (-not $proc.HasExited) {
-                    Stop-Process -Id $proc.Id -Force
-                    [void]$proc.WaitForExit(10000)
+                    $proc.Kill()
+                }
+
+                $proc.WaitForExit()
+            }
+            catch {}
+
+            try {
+                if ($null -ne $stdoutTask) {
+                    $out = $stdoutTask.Result
+
+                    [IO.File]::WriteAllText(
+                        $stdoutPath,
+                        $out,
+                        [Text.UTF8Encoding]::new($false)
+                    )
+                }
+
+                if ($null -ne $stderrTask) {
+                    $err = $stderrTask.Result
+
+                    [IO.File]::WriteAllText(
+                        $stderrPath,
+                        $err,
+                        [Text.UTF8Encoding]::new($false)
+                    )
                 }
             }
             catch {}
         }
+
         Restore-Env $old
     }
 }
-
 function Assert-Current-Schema(
     [string]$Id,[string]$User,[string]$Db,[string]$Label
 ) {
