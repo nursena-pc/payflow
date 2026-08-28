@@ -27,7 +27,7 @@ class OpenApiConfigurationTest {
             .isEqualTo("PayFlow API");
 
         assertThat(openApi.getInfo().getVersion())
-            .isEqualTo("0.16.0");
+            .isEqualTo("1.0.0");
 
         assertThat(openApi.getInfo().getDescription())
             .contains(

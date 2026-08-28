@@ -1,4 +1,4 @@
-# PayFlow v0.16 local Flyway clean-install / previous-release upgrade rehearsal.
+# PayFlow v1.0.0 release-candidate Flyway clean-install / historical upgrade rehearsal.
 # Uses fresh PostgreSQL 17 targets, immutable v0.13.0/V17 as the approved
 # upgrade source, synthetic data only, never repairs Flyway history, and
 # does not implement a down-migration.
@@ -342,6 +342,7 @@ function Run-App(
     [string]$LogPrefix,[string]$Label
 ) {
     $port = Free-Port
+
     $old = Set-Env @{
         DB_URL = $Url
         DB_USERNAME = $User
@@ -360,60 +361,153 @@ function Run-App(
     }
 
     $javaExecutable = Resolve-Java21
+
     Write-Host "$Label runtime: JAVA_HOME Java 21"
 
+    $stdoutPath = "$LogPrefix.stdout.log"
+    $stderrPath = "$LogPrefix.stderr.log"
+
     $proc = $null
+    $stdoutTask = $null
+    $stderrTask = $null
+
     try {
-        $proc = Start-Process `
-            -FilePath $javaExecutable `
-            -ArgumentList @('-jar',$Jar) `
-            -PassThru `
-            -RedirectStandardOutput "$LogPrefix.stdout.log" `
-            -RedirectStandardError "$LogPrefix.stderr.log"
+        $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
+
+        $startInfo.FileName = $javaExecutable
+        $startInfo.Arguments = "-jar `"$Jar`""
+        $startInfo.UseShellExecute = $false
+        $startInfo.CreateNoWindow = $true
+        $startInfo.RedirectStandardOutput = $true
+        $startInfo.RedirectStandardError = $true
+        $startInfo.WorkingDirectory = (Get-Location).Path
+
+        $proc = [System.Diagnostics.Process]::new()
+        $proc.StartInfo = $startInfo
+
+        if (-not $proc.Start()) {
+            throw "$Label process start returned false."
+        }
+
+        $stdoutTask = $proc.StandardOutput.ReadToEndAsync()
+        $stderrTask = $proc.StandardError.ReadToEndAsync()
 
         $deadline = [DateTime]::UtcNow.AddSeconds(150)
         $status = $null
+
         while ([DateTime]::UtcNow -lt $deadline) {
             $proc.Refresh()
+
             if ($proc.HasExited) {
-                $out = if (Test-Path "$LogPrefix.stdout.log") {
-                    (Get-Content "$LogPrefix.stdout.log" -Tail 60) -join "`n"
-                } else { '' }
-                $err = if (Test-Path "$LogPrefix.stderr.log") {
-                    (Get-Content "$LogPrefix.stderr.log" -Tail 60) -join "`n"
-                } else { '' }
-                throw "$Label exited early.`nSTDOUT:`n$out`nSTDERR:`n$err"
+                $proc.WaitForExit()
+
+                [int] $exitCode = $proc.ExitCode
+
+                $out = $stdoutTask.Result
+                $err = $stderrTask.Result
+
+                [IO.File]::WriteAllText(
+                    $stdoutPath,
+                    $out,
+                    [Text.UTF8Encoding]::new($false)
+                )
+
+                [IO.File]::WriteAllText(
+                    $stderrPath,
+                    $err,
+                    [Text.UTF8Encoding]::new($false)
+                )
+
+                $outTail = (
+                    @(
+                        $out -split '\r?\n'
+                    ) |
+                        Select-Object -Last 120
+                ) -join "`n"
+
+                $errTail = (
+                    @(
+                        $err -split '\r?\n'
+                    ) |
+                        Select-Object -Last 120
+                ) -join "`n"
+
+                throw @"
+$Label exited early.
+Exit code: $exitCode
+STDOUT:
+$outTail
+STDERR:
+$errTail
+"@
             }
+
             try {
-                $r = Invoke-WebRequest `
+                $response = Invoke-WebRequest `
                     -Uri "http://127.0.0.1:$port/api/v1/system/health" `
-                    -UseBasicParsing -TimeoutSec 2
-                $status = [int]$r.StatusCode
-                if ($status -eq 200) { break }
+                    -UseBasicParsing `
+                    -TimeoutSec 2
+
+                $status = [int] $response.StatusCode
+
+                if ($status -eq 200) {
+                    break
+                }
             }
-            catch {}
+            catch {
+                # Application startup is still in progress.
+            }
+
             Start-Sleep -Seconds 2
         }
+
         if ($status -ne 200) {
             throw "$Label health did not reach HTTP 200."
         }
-        Write-Host "$Label health: HTTP 200" -ForegroundColor Green
+
+        Write-Host "$Label health: HTTP 200" `
+            -ForegroundColor Green
     }
     finally {
         if ($null -ne $proc) {
             try {
                 $proc.Refresh()
+
                 if (-not $proc.HasExited) {
-                    Stop-Process -Id $proc.Id -Force
-                    [void]$proc.WaitForExit(10000)
+                    $proc.Kill()
+                }
+
+                $proc.WaitForExit()
+            }
+            catch {}
+
+            try {
+                if ($null -ne $stdoutTask) {
+                    $out = $stdoutTask.Result
+
+                    [IO.File]::WriteAllText(
+                        $stdoutPath,
+                        $out,
+                        [Text.UTF8Encoding]::new($false)
+                    )
+                }
+
+                if ($null -ne $stderrTask) {
+                    $err = $stderrTask.Result
+
+                    [IO.File]::WriteAllText(
+                        $stderrPath,
+                        $err,
+                        [Text.UTF8Encoding]::new($false)
+                    )
                 }
             }
             catch {}
         }
+
         Restore-Env $old
     }
 }
-
 function Assert-Current-Schema(
     [string]$Id,[string]$User,[string]$Db,[string]$Label
 ) {
@@ -529,15 +623,34 @@ $WorktreeAdded = $false
 
 try {
     Write-Host ''
-    Write-Host '=== 3. BUILD CURRENT V0.16 JAR ===' -ForegroundColor Cyan
+    Write-Host '=== 3. BUILD CURRENT V1 CANDIDATE JAR ===' -ForegroundColor Cyan
 
     & .\mvnw.cmd -B -ntp -DskipTests package
     if ($LASTEXITCODE -ne 0) { throw 'Current package build failed.' }
 
+    [xml] $CurrentPom = Get-Content `
+        -LiteralPath (Join-Path $RepoRoot 'pom.xml') `
+        -Raw
+
+    $CurrentArtifactId = [string] $CurrentPom.project.artifactId
+    $CurrentVersion = [string] $CurrentPom.project.version
+
+    if (
+        [string]::IsNullOrWhiteSpace($CurrentArtifactId) -or
+        [string]::IsNullOrWhiteSpace($CurrentVersion)
+    ) {
+        throw 'Could not resolve current Maven artifact coordinates.'
+    }
+
+    $CurrentJarName = "$CurrentArtifactId-$CurrentVersion.jar"
+
     $CurrentJar = Join-Path `
         $RepoRoot `
-        'target\payflow-0.16.0-SNAPSHOT.jar'
-    if (-not (Test-Path $CurrentJar)) { throw 'Current JAR missing.' }
+        "target\$CurrentJarName"
+
+    if (-not (Test-Path -LiteralPath $CurrentJar -PathType Leaf)) {
+        throw "Current JAR missing: $CurrentJarName"
+    }
 
     Write-Host ''
     Write-Host '=== 4. CLEAN INSTALL: EMPTY POSTGRESQL 17 -> V24 ===' -ForegroundColor Cyan
@@ -590,7 +703,7 @@ try {
     if (-not (Test-Path $V013Jar)) { throw 'v0.13.0 JAR missing.' }
 
     Write-Host ''
-    Write-Host '=== 6. IMMUTABLE PREVIOUS-RELEASE BASELINE -> V17 ===' `
+    Write-Host '=== 6. IMMUTABLE HISTORICAL V0.13.0 BASELINE -> V17 ===' `
         -ForegroundColor Cyan
 
     $UpgradePort = Free-Port
@@ -790,10 +903,10 @@ ROLLBACK;
     Write-Host '=== 10. WRITE SANITIZED EVIDENCE ===' -ForegroundColor Cyan
 
     $lines = New-Object System.Collections.Generic.List[string]
-    [void]$lines.Add('PayFlow v0.16.0 Flyway Clean-Install / Upgrade Rehearsal Evidence')
+    [void]$lines.Add('PayFlow v1.0.0 CP5 Flyway Clean-Install / Upgrade Rehearsal Evidence')
     [void]$lines.Add("Branch: $Branch")
     [void]$lines.Add("HEAD: $Head")
-    [void]$lines.Add("Previous release: v0.13.0 @ $ExpectedV013Commit")
+    [void]$lines.Add("Historical upgrade source: v0.13.0/V17 @ $ExpectedV013Commit")
     [void]$lines.Add("PostgreSQL image: $PostgresImage")
     [void]$lines.Add('Historical V1..V17 blob drift: 0')
     [void]$lines.Add('Clean install V1..V24: PASS')
@@ -835,7 +948,7 @@ ROLLBACK;
 
     Write-Host ''
     Write-Host '=============================================' -ForegroundColor Green
-    Write-Host 'v0.16 FLYWAY CLEAN/UPGRADE REHEARSAL PASS' -ForegroundColor Green
+    Write-Host 'v1.0.0 CP5 FLYWAY CLEAN/UPGRADE REHEARSAL PASS' -ForegroundColor Green
     Write-Host '=============================================' -ForegroundColor Green
     Write-Host "Branch           : $Branch"
     Write-Host "HEAD             : $Head"

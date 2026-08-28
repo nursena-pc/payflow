@@ -318,8 +318,8 @@ Write-Host '=== 7. WRITE SANITIZED EVIDENCE ===' `
     -ForegroundColor Cyan
 
 $Evidence = @"
-PayFlow v0.16.0 Redis/Kafka Outage-Recovery Rehearsal
-Issue: #178
+PayFlow v1.0.0 CP5 Redis/Kafka Outage-Recovery Rehearsal
+Issue: #199
 Branch: $Branch
 HEAD: $Head
 Java major: 21
@@ -388,7 +388,7 @@ $EvidenceHash = (
 Write-Host ''
 Write-Host '=============================================' `
     -ForegroundColor Green
-Write-Host 'v0.16 REDIS/KAFKA OUTAGE REHEARSAL PASS' `
+Write-Host 'v1.0.0 CP5 REDIS/KAFKA OUTAGE REHEARSAL PASS' `
     -ForegroundColor Green
 Write-Host '=============================================' `
     -ForegroundColor Green

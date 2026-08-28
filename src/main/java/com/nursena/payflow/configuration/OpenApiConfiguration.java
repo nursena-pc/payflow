@@ -17,7 +17,7 @@ public class OpenApiConfiguration {
         "PayFlow API";
 
     private static final String API_VERSION =
-        "0.16.0";
+        "1.0.0";
 
     private static final String API_DESCRIPTION =
         """

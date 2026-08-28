@@ -1,11 +1,13 @@
 # PostgreSQL Backup and Restore Rehearsal
 
-Issue: [#173](https://github.com/nursena-pc/payflow/issues/173)
+Historical rehearsal issue: [#173](https://github.com/nursena-pc/payflow/issues/173)
+Current v1.0.0 CP5 review: [#199](https://github.com/nursena-pc/payflow/issues/199)
 
-PayFlow uses PostgreSQL as the system of record. This guide defines the local
-v0.16.0 backup-and-restore rehearsal that proves a PostgreSQL backup can be
-restored into a clean isolated target without changing the source database,
-Flyway schema, public `/api/v1` behavior, or security boundaries.
+PayFlow uses PostgreSQL as the system of record. This guide originated with the
+v0.16.0 backup-and-restore rehearsal and is revalidated for the current v1.0.0
+release-candidate line. It proves that a PostgreSQL backup can be restored into
+a clean isolated target without changing the source database, Flyway schema,
+public `/api/v1` behavior, or security boundaries.
 
 This is a developer/stabilization rehearsal. It is **not** production
 disaster-recovery certification.
@@ -25,8 +27,9 @@ Before running the rehearsal:
 
 - Docker must be available.
 - Java 21 must be available for restored-database application startup.
-- the Maven wrapper must be present unless an already-built
-  `payflow-0.16.0-SNAPSHOT.jar` is intentionally reused with `-SkipPackage`.
+- the Maven wrapper must be present unless the JAR resolved from the current
+  Maven artifact coordinates is intentionally reused with `-SkipPackage`; on
+  the active line this is `target/payflow-1.0.0-SNAPSHOT.jar`.
 - the Git working tree must be clean and HEAD must be attached to a branch.
 - exactly one running Docker container must match the configured Compose project
   and PostgreSQL service labels; defaults are project `payflow`, service
@@ -190,8 +193,10 @@ resetting its schema, restoring over it, or removing its persistent volume.
 inspection. The default removes it.
 
 `-SkipPackage`
-: Reuse an existing `target/payflow-0.16.0-SNAPSHOT.jar`. The script fails if
-that artifact is absent.
+: Reuse the existing JAR resolved dynamically as
+`target/<artifactId>-<project.version>.jar`. On the active development line
+this resolves to `target/payflow-1.0.0-SNAPSHOT.jar`; the script fails if the
+resolved artifact is absent.
 
 `-ComposeProject`, `-PostgresService`, `-AppService`, `-SourceDatabase`,
 `-SourceUser`
@@ -214,7 +219,32 @@ provide or claim:
 Row-count plus Flyway metadata verification is intended to detect an
 empty/partial restore while avoiding exposure of sensitive row contents.
 
-## Reviewed local rehearsal evidence
+## Current v1.0.0 CP5 rehearsal evidence
+
+On 2026-08-28, the recovery tooling was rehearsed from exact candidate
+`33f5ce5e37ec0e947ad21d7fd415409b8773063b` after the restored-database
+launcher was aligned to `System.Diagnostics.Process`.
+
+The reviewed checkpoint proved:
+
+- PostgreSQL `17.11`;
+- Flyway latest `V24` with `24` successful versioned rows;
+- `19` public tables;
+- source fingerprint unchanged across the backup window;
+- custom-format backup and clean isolated restore: PASS;
+- complete public-table row-count and Flyway metadata comparison: PASS;
+- PayFlow startup against the restored database: HTTP `200`;
+- reused candidate JAR SHA-256:
+  `30898695e9647c98a678551950131d6c22ec882d35d220ec19b606827b8fa0f7`;
+- sanitized rehearsal evidence SHA-256:
+  `6757de9340dd02515ce11d2ec83685ea397c9f4a2a11341616008499cccad330`;
+- isolated restore target removed after the rehearsal; and
+- the source application restored to healthy HTTP `200` service afterward.
+
+This remains bounded developer/release-candidate evidence. It is not a
+production disaster-recovery, RPO, or RTO certification.
+
+## Historical v0.16.0 rehearsal evidence
 
 On 2026-08-20, before committing this operational contract, the procedure was
 rehearsed from exact repository baseline

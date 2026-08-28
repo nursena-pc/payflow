@@ -106,7 +106,8 @@ class V016PostgresBackupRestoreContractTest {
 
         assertThat(guide)
             .contains(
-                "Issue: [#173]",
+                "Historical rehearsal issue: [#173]",
+                "Current v1.0.0 CP5 review: [#199]",
                 "production disaster-recovery certification",
                 "point-in-time recovery or WAL archival",
                 "down-migration support",

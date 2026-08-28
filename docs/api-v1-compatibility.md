@@ -1,12 +1,15 @@
 # `/api/v1` Compatibility Baseline
 
-Issue: [#171](https://github.com/nursena-pc/payflow/issues/171)
+Historical baseline issue: [#171](https://github.com/nursena-pc/payflow/issues/171)
+Current v1.0.0 CP5 review: [#199](https://github.com/nursena-pc/payflow/issues/199)
 
 Baseline commit:
 `a9620d360025f101b354d1d2469a98ee2936afc2`
 
-This document freezes the implementation-backed PayFlow `/api/v1` compatibility
-surface for the v0.16.0 stabilization line. It is an inventory and review
+This document originated as the implementation-backed PayFlow `/api/v1`
+compatibility boundary for the v0.16.0 stabilization line. The current
+v1.0.0 release-candidate line adopts the same 30-operation / 28-path boundary
+unchanged for API and documentation freeze. It remains an inventory and review
 boundary, not a new feature specification.
 
 PayFlow remains a simulated-money modular monolith. This baseline does not
@@ -136,7 +139,7 @@ compatibility analysis, executable verification, and protected review.
 
 The generated OpenAPI contract continues to expose the same **28 unique `/api/v1` paths** and the same 30 method/path operations frozen by this baseline. Two paths intentionally support two methods.
 
-Increment 5 alignment changes documentation metadata only: `OpenApiConfiguration` now reports `info.version = 0.16.0-SNAPSHOT`, matching the active Maven development line. This value is build/development metadata; it does not rename `/api/v1`, introduce `/api/v2`, or authorize a compatibility break.
+During v0.16.0 Increment 5, OpenAPI metadata was aligned to `info.version = 0.16.0` while the Maven development line used `0.16.0-SNAPSHOT`. On the current `1.0.0-SNAPSHOT` release-candidate line, `OpenApiConfiguration` reports `info.version = 1.0.0`. OpenAPI metadata follows the candidate release version while Maven alone carries the `-SNAPSHOT` suffix. This metadata-only alignment does not rename `/api/v1`, introduce `/api/v2`, or authorize a compatibility break.
 
 `OpenApiJsonContractIntegrationTest` remains the executable authority for exact path presence, bearer/public security placement, and the material response-code contracts already covered by the stabilization baseline.
 
@@ -162,14 +165,15 @@ Increment 5 alignment resolves the concrete documentation drift recorded at the 
 
 1. `docs/architecture.md` now describes transactional outbox persistence, retryable Kafka publication, idempotent event processing, DLT/replay, mail delivery, abuse protection, and observability as delivered modular-monolith capabilities rather than future placeholders.
 2. The architecture package inventory now matches current top-level source packages such as `abuseprotection`, `eventprocessing`, `maildelivery`, `observability`, and `outbox`; obsolete `notification` and `audit` top-level examples are removed.
-3. OpenAPI metadata now uses the active `0.16.0-SNAPSHOT` development version instead of the historical `0.2.0` text while preserving the frozen `/api/v1` route contract.
+3. OpenAPI metadata moved from the historical `0.2.0` text to release metadata `0.16.0` during v0.16.0; v1.0.0 CP5 advances only `info.version` to `1.0.0` while preserving the frozen `/api/v1` route contract.
 4. Postman coverage now maps all 30 canonical operations while keeping secret-bearing and destructive flows manually gated.
 
 The alignment does not activate generalized registration abuse protection, change the separate login limiter, redesign DTOs, add product endpoints, alter retry policy, rewrite migrations, extract microservices, or make real-money/HA/production-certification claims.
 
-## Stabilization decision
+## Compatibility freeze decision
 
-The implementation-backed `/api/v1` surface is now frozen as the v0.16.0
-compatibility baseline. Recovery, migration, dependency-failure, supply-chain,
-and clean-environment rehearsals must preserve this surface unless a separately
+The implementation-backed `/api/v1` surface was frozen as the v0.16.0
+compatibility baseline and is carried unchanged into the v1.0.0 release-candidate
+API freeze. Recovery, migration, dependency-failure, supply-chain, and
+clean-environment rehearsals must preserve this surface unless a separately
 reviewed compatibility change explicitly supersedes part of it.

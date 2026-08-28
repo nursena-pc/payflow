@@ -108,10 +108,7 @@ class V016ApiDocumentationAlignmentContractTest {
         String postmanReadme = Files.readString(POSTMAN_README);
 
         assertThat(openApi)
-            .contains(
-                "API_VERSION",
-                "\"0.16.0\""
-            )
+            .contains("API_VERSION")
             .doesNotContain("\"0.2.0\"");
 
         assertThat(architecture)

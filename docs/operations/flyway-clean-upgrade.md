@@ -1,9 +1,10 @@
 # Flyway Clean-Install and Upgrade Rehearsal
 
-Issue: [#175](https://github.com/nursena-pc/payflow/issues/175)
+Historical rehearsal issue: [#175](https://github.com/nursena-pc/payflow/issues/175)
+Current v1.0.0 CP5 review: [#199](https://github.com/nursena-pc/payflow/issues/199)
 
-PayFlow v0.16.0 uses this local stabilization rehearsal to prove two separate
-forward-migration paths on PostgreSQL 17:
+PayFlow v1.0.0 release-candidate CP5 reuses and revalidates this local rehearsal
+to prove two separate forward-migration paths on PostgreSQL 17:
 
 1. an empty database reaches the complete current V1 through V24 schema; and
 2. the approved immutable `v0.13.0` / V17 release schema and representative
@@ -28,7 +29,7 @@ commit is:
 726f631a0de800870813ccb0c00b2676eb5d172b
 ```
 
-That release carries Flyway V1 through V17. The current v0.16.0 line carries V1
+That release carries Flyway V1 through V17. The current v1.0.0 release-candidate line carries V1
 through V24. Inventory performed for issue #175 proved that the current V1
 through V17 migration blobs are identical to the immutable v0.13.0 blobs, so
 the upgrade delta is exactly V18 through V24.
@@ -73,7 +74,7 @@ SQL, and sanitized evidence live below:
 
 ## Clean-install proof
 
-The current `0.16.0-SNAPSHOT` application is built and started against an empty
+The current `1.0.0-SNAPSHOT` application is built and started against an empty
 PostgreSQL 17 database. Application startup owns normal Flyway execution;
 Hibernate remains `ddl-auto: validate`.
 
@@ -138,7 +139,7 @@ Fingerprint digests, not row values, are written to sanitized evidence.
 
 ## Upgrade and current-schema proof
 
-The current v0.16.0 application then starts against the V17 database and applies
+The current v1.0.0 release-candidate application then starts against the V17 database and applies
 only V18 through V24.
 
 Success requires:
