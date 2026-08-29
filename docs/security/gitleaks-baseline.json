@@ -47,9 +47,9 @@
       "path": "README.md",
       "startLine": 264,
       "endLine": 264,
-      "lineDigestSha256": "e1a62ffcd5730239da31a8011aaf08a520d125f081359bf7a73dad476a4d29a9",
+      "lineDigestSha256": "d6eff707b0e0dd8dc375696efa9e0e70ff6c2c1791c0fb604ac45fb0a1b32764",
       "classification": "documentation-false-positive",
-      "rationale": "Project roadmap prose; the reviewed line contains no credential or secret value."
+      "rationale": "Published v0.16.0 release documentation prose; the reviewed line contains no credential or secret value."
     },
     {
       "ruleId": "generic-api-key",
