@@ -74,7 +74,7 @@ SQL, and sanitized evidence live below:
 
 ## Clean-install proof
 
-The current `1.0.0-SNAPSHOT` application is built and started against an empty
+The current `1.0.0` release-preparation application is built and started against an empty
 PostgreSQL 17 database. Application startup owns normal Flyway execution;
 Hibernate remains `ddl-auto: validate`.
 

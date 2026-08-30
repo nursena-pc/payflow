@@ -139,7 +139,7 @@ compatibility analysis, executable verification, and protected review.
 
 The generated OpenAPI contract continues to expose the same **28 unique `/api/v1` paths** and the same 30 method/path operations frozen by this baseline. Two paths intentionally support two methods.
 
-During v0.16.0 Increment 5, OpenAPI metadata was aligned to `info.version = 0.16.0` while the Maven development line used `0.16.0-SNAPSHOT`. On the current `1.0.0-SNAPSHOT` release-candidate line, `OpenApiConfiguration` reports `info.version = 1.0.0`. OpenAPI metadata follows the candidate release version while Maven alone carries the `-SNAPSHOT` suffix. This metadata-only alignment does not rename `/api/v1`, introduce `/api/v2`, or authorize a compatibility break.
+During v0.16.0 Increment 5, OpenAPI metadata was aligned to `info.version = 0.16.0` while the Maven development line used `0.16.0-SNAPSHOT`. During the v1.0.0 CP5 review, `OpenApiConfiguration` reported `info.version = 1.0.0` while the Maven development line still used `1.0.0-SNAPSHOT`. On the current release-preparation candidate, the Maven project version and OpenAPI metadata are both exact `1.0.0`. This alignment does not rename `/api/v1`, introduce `/api/v2`, or authorize a compatibility break.
 
 `OpenApiJsonContractIntegrationTest` remains the executable authority for exact path presence, bearer/public security placement, and the material response-code contracts already covered by the stabilization baseline.
 

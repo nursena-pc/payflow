@@ -253,8 +253,10 @@ class V100FinancialMessagingIntegrityContractTest {
 
         assertThat(readme)
             .contains(
-                "authentication/security lifecycle closure is tracked by #192",
-                "That checkpoint is complete; financial/messaging integrity closure is tracked by #194",
+                "Checkpoints 1 through 6 are complete",
+                "authentication/security lifecycle closure #192",
+                "financial/messaging integrity closure #194",
+                "release preparation is tracked by issue #203",
                 "v1 financial/messaging integrity contract"
             );
 

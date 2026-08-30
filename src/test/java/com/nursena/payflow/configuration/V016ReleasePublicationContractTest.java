@@ -35,7 +35,7 @@ class V016ReleasePublicationContractTest {
 
         assertThat(Files.readString(README))
             .contains(
-                "PayFlow v0.16.0 is the latest published release",
+                "PayFlow v0.16.0 remains the latest published release",
                 "annotated tag `v0.16.0`",
                 "8308e190960525924a550dafc8dcfcf61d4250d0",
                 "da8cefa9772d8e009b5ef1e5ab53d03bc44b1c13",
@@ -62,7 +62,6 @@ class V016ReleasePublicationContractTest {
                 "## [Unreleased]",
                 "## [0.16.0] - 2026-08-24",
                 "[0.16.0]: https://github.com/nursena-pc/payflow/compare/v0.15.0...v0.16.0",
-                "[Unreleased]: https://github.com/nursena-pc/payflow/compare/v0.16.0...HEAD",
                 "32757038003",
                 "375880233",
                 "100566879",

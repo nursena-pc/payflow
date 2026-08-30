@@ -6,7 +6,7 @@ Tracking issue: #194
 
 Baseline: `315488e88f2b69c56d77fc64b49dfc1c6497649f`
 
-Project version: `1.0.0-SNAPSHOT`
+Project version: `1.0.0`
 
 ## Purpose
 

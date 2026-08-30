@@ -3,7 +3,7 @@
 - Status: Active v1.0.0 release-candidate security contract
 - Tracking issue: #192
 - Baseline: `ffa8819beede102c995a7530c1b15b0aa4a2fca1`
-- Project version: `1.0.0-SNAPSHOT`
+- Project version: `1.0.0`
 
 ## Purpose
 

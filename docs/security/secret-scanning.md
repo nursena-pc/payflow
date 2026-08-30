@@ -29,6 +29,20 @@ The 10 committed-snapshot findings were reviewed as:
 
 No Gitleaks allowlist, rule suppression, path suppression, or history rewrite is used to make these findings disappear.
 
+## v1.0.0 release-preparation delta review
+
+The CP7 exact candidate at source HEAD
+$OldHead produced 12 committed-snapshot findings with the pinned scanner.
+Two locations were new relative to the v0.16.0 reviewed baseline:
+CHANGELOG.md:21 and README.md:276. Both are release-state documentation
+prose and were explicitly reviewed as documentation-false-positive; neither
+line contains credential or secret material.
+
+The reviewed committed-snapshot baseline therefore contains 12 findings:
+2 synthetic CI fixtures, 3 documentation false positives, 4 OpenAPI example
+fixtures, and 3 controller-test fixtures. No Gitleaks allowlist, rule
+suppression, path suppression, or scanner retuning was introduced for this
+review.
 ## Verification invariant
 
 `gitleaks-baseline.json` stores only safe metadata: rule ID, repository path, line range, SHA-256 digest of the reviewed source line, classification, and rationale. It does not store the matched secret text, the Gitleaks match field, or raw source-line content.

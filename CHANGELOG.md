@@ -8,6 +8,8 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-08-30
+
 ### Changed
 
 - Advanced the active release-candidate development version to `1.0.0-SNAPSHOT`.
@@ -15,6 +17,9 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Closed the v1.0.0 authentication/security lifecycle documentation drift through issue #192 with a current-state lifecycle contract and executable drift protection, while preserving historical v0.13.0-v0.15.0 evidence and leaving runtime, API, migration, limiter, and authentication behavior unchanged.
 - Aligned the v1.0.0 financial/messaging integrity contract through issue #194 after a 119-class / 564-test focused diagnostic passed with zero failures, errors, or skips; added current-state documentation and executable drift protection while leaving runtime, public API, migration/schema, messaging topology, and financial behavior unchanged.
 - Closed the v1.0.0 observability/performance release-budget review through issue #197 after a read-only diagnostic found no runtime observability defect and the repository-approved protected-workflow recorder produced fresh accepted developer-workstation evidence from exact commit `8a49e8bcd05ba64fd07b87bdeca5dc415e87dda3`; added the reviewed evidence, current-state contract, and executable drift protection without changing runtime, public API, schema/migrations, dependencies, workflows, metrics, alerts, quota, retry, or security behavior, and without making a production-capacity claim.
+- Closed the v1.0.0 recovery, migration, API, and documentation freeze through issue #199 after fresh PostgreSQL backup/restore, Flyway V1-V24 clean/upgrade, Redis/Kafka outage-recovery, and 30-operation / 28-path `/api/v1` compatibility verification; aligned OpenAPI metadata to `1.0.0` and current documentation without introducing runtime, API, schema, or migration behavior changes.
+- Closed the v1.0.0 supply-chain and clean-environment verification through issue #201 with fresh committed-content secret review, SBOM/vulnerability evidence, zero unresolved Critical/High release blockers, Java 21 / Maven Wrapper 3.9.16 clean-environment verification, 1,649 passing tests, required-configuration fail-fast verification, and production-profile Docker smoke without suppression or unrelated dependency modernization.
+- Prepared the exact `1.0.0` release candidate through issue #203 by transitioning release metadata from `1.0.0-SNAPSHOT`, adding reviewed versioned release notes, and aligning changelog, README, roadmap, and executable release contracts while keeping immutable publication values reserved for the later publication checkpoint.
 
 ## [0.16.0] - 2026-08-24
 
@@ -293,4 +298,5 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 [0.14.0]: https://github.com/nursena-pc/payflow/compare/v0.13.0...v0.14.0
 [0.15.0]: https://github.com/nursena-pc/payflow/compare/v0.14.0...v0.15.0
 [0.16.0]: https://github.com/nursena-pc/payflow/compare/v0.15.0...v0.16.0
-[Unreleased]: https://github.com/nursena-pc/payflow/compare/v0.16.0...HEAD
+[1.0.0]: https://github.com/nursena-pc/payflow/compare/v0.16.0...v1.0.0
+[Unreleased]: https://github.com/nursena-pc/payflow/compare/v1.0.0...HEAD

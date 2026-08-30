@@ -22,7 +22,7 @@ class RoadmapContractTest {
         Path.of("docs", "roadmap.md");
 
     @Test
-    void shouldAlignRoadmapWithV100ActiveDevelopment()
+    void shouldAlignRoadmapWithV100ReleasePreparation()
         throws Exception {
 
         String projectVersion = readProjectVersion();
@@ -30,7 +30,7 @@ class RoadmapContractTest {
         String normalizedRoadmap = normalizeWhitespace(roadmap);
 
         assertThat(projectVersion)
-            .isEqualTo("1.0.0-SNAPSHOT");
+            .isEqualTo("1.0.0");
 
         assertThat(roadmap)
             .contains(
@@ -48,9 +48,15 @@ class RoadmapContractTest {
                 "## v0.14.0 — Released: MFA and Step-Up Authentication",
                 "## v0.15.0 — Released: Generalized Abuse Protection and Performance Evidence",
                 "## v0.16.0 — Released: Stabilization, Recovery Rehearsals, and API Freeze",
-                "## v1.0.0 — Active Release-Candidate Development",
+                "## v1.0.0 — Release Preparation",
                 "Tracking issue: [#189]",
                 "Development-start issue: [#190]",
+                "Authentication/security closure issue: [#192]",
+                "Financial/messaging integrity closure issue: [#194]",
+                "Observability/performance closure issue: [#197]",
+                "Recovery/migration/API/documentation freeze issue: [#199]",
+                "Supply-chain/clean-environment verification issue: [#201]",
+                "Release-preparation issue: [#203]",
                 "7712c5ccbeeee3b9cefd3324c42270e71554ea17"
             )
             .doesNotContain(
@@ -59,7 +65,7 @@ class RoadmapContractTest {
                 "release-finalization candidate uses Maven version",
                 "## v0.16.0 — Active Development: Stabilization, Recovery Rehearsals, and API Freeze",
                 "## v0.16.0 — Release Preparation: Stabilization, Recovery Rehearsals, and API Freeze",
-                "## v1.0.0 — Release Preparation",
+                "## v1.0.0 — Active Release-Candidate Development",
                 "## v1.0.0 — Released"
             );
 

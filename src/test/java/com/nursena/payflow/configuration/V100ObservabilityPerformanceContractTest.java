@@ -190,11 +190,11 @@ class V100ObservabilityPerformanceContractTest {
 
         assertThat(readme)
             .contains(
-                "observability/performance release-budget closure by [issue #197]",
-                "repository-approved protected-workflow performance recorder",
-                "v1 observability/performance contract",
-                "accepted v1 performance evidence",
-                "not production-capacity certification"
+                "Checkpoints 1 through 6 are complete",
+                "observability/performance closure #197",
+                "CP4 produced fresh bounded developer-workstation performance evidence",
+                "release evidence only",
+                "do not create production-capacity"
             );
 
         assertThat(changelog)

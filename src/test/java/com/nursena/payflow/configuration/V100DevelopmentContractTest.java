@@ -23,20 +23,29 @@ class V100DevelopmentContractTest {
         Path.of("docs", "roadmap.md");
 
     @Test
-    void shouldOpenV100ReleaseCandidateDevelopmentLine()
+    void shouldCarryV100DevelopmentLineIntoReleasePreparation()
         throws IOException {
 
         assertThat(Files.readString(POM))
-            .contains("<version>1.0.0-SNAPSHOT</version>")
-            .doesNotContain("<version>0.16.0-SNAPSHOT</version>");
+            .contains("<version>1.0.0</version>")
+            .doesNotContain(
+                "<version>1.0.0-SNAPSHOT</version>",
+                "<version>0.16.0-SNAPSHOT</version>"
+            );
 
         assertThat(Files.readString(README))
             .contains(
-                "PayFlow v0.16.0 is the latest published release",
-                "active release-candidate development line uses Maven version `1.0.0-SNAPSHOT`",
-                "## v1.0.0 active release-candidate development",
-                "issue #189",
-                "issue #190",
+                "PayFlow v0.16.0 remains the latest published release",
+                "reviewed v1.0.0 release-preparation candidate uses Maven version `1.0.0`",
+                "## v1.0.0 release preparation",
+                "Checkpoints 1 through 6 are complete",
+                "development-start #190",
+                "authentication/security lifecycle closure #192",
+                "financial/messaging integrity closure #194",
+                "observability/performance closure #197",
+                "recovery/migration/API/documentation freeze #199",
+                "supply-chain/clean-environment verification #201",
+                "release-preparation checkpoint is tracked by [issue #203]",
                 "7712c5ccbeeee3b9cefd3324c42270e71554ea17"
             )
             .doesNotContain(
@@ -45,14 +54,15 @@ class V100DevelopmentContractTest {
     }
 
     @Test
-    void shouldDefineV100ReleaseCandidatePlan()
+    void shouldDefineV100ReleasePreparationPlan()
         throws IOException {
 
         assertThat(Files.readString(ROADMAP))
             .contains(
-                "## v1.0.0 — Active Release-Candidate Development",
+                "## v1.0.0 — Release Preparation",
                 "Tracking issue: [#189]",
                 "Development-start issue: [#190]",
+                "Release-preparation issue: [#203]",
                 "### Checkpoint 1 — Release-candidate development baseline",
                 "### Checkpoint 2 — Authentication and security lifecycle closure",
                 "### Checkpoint 3 — Financial and messaging integrity guarantees",
@@ -89,22 +99,26 @@ class V100DevelopmentContractTest {
     }
 
     @Test
-    void shouldRecordDevelopmentTransitionWithoutRewritingV016Publication()
+    void shouldPreserveDevelopmentHistoryWhileOpeningReleasePreparation()
         throws IOException {
 
         assertThat(Files.readString(CHANGELOG))
             .contains(
                 "## [Unreleased]",
+                "## [1.0.0] - 2026-08-30",
                 "Advanced the active release-candidate development version to `1.0.0-SNAPSHOT`",
                 "issue #189",
                 "development-start checkpoint #190",
+                "Prepared the exact `1.0.0` release candidate through issue #203",
                 "## [0.16.0] - 2026-08-24",
                 "[0.16.0]: https://github.com/nursena-pc/payflow/compare/v0.15.0...v0.16.0",
-                "[Unreleased]: https://github.com/nursena-pc/payflow/compare/v0.16.0...HEAD"
+                "[1.0.0]: https://github.com/nursena-pc/payflow/compare/v0.16.0...v1.0.0",
+                "[Unreleased]: https://github.com/nursena-pc/payflow/compare/v1.0.0...HEAD"
             );
 
         assertThat(Files.readString(ROADMAP))
             .contains(
+                "- [x] Open the Maven development line at `1.0.0-SNAPSHOT` through a protected PR",
                 "published merge and tag commit: `da8cefa9772d8e009b5ef1e5ab53d03bc44b1c13`",
                 "annotated tag object: `8308e190960525924a550dafc8dcfcf61d4250d0`",
                 "release workflow run: [`32757038003`]",

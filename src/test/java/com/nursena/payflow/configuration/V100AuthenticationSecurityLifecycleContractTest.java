@@ -75,7 +75,7 @@ class V100AuthenticationSecurityLifecycleContractTest {
             .contains(
                 "Status: Active v1.0.0 release-candidate security contract",
                 "Tracking issue: #192",
-                "Project version: `1.0.0-SNAPSHOT`",
+                "Project version: `1.0.0`",
                 "Registration remains evidence-backed `DEFER`",
                 "Password login retains its existing separate Redis-backed fixed-window limiter",
                 "`mfa-disable`",
@@ -110,7 +110,7 @@ class V100AuthenticationSecurityLifecycleContractTest {
 
         assertThat(operations)
             .contains(
-                "PayFlow `1.0.0-SNAPSHOT` release-candidate line",
+                "PayFlow `1.0.0` release-preparation candidate",
                 "before enabling production MFA traffic",
                 "Active-authenticator replacement remains outside the v1.0.0 release-candidate scope"
             )
@@ -168,9 +168,9 @@ class V100AuthenticationSecurityLifecycleContractTest {
 
         assertThat(readme)
             .contains(
-                "development-start checkpoint #190 is complete",
-                "authentication/security lifecycle closure is tracked by #192",
-                "v1 authentication/security lifecycle closure"
+                "Checkpoints 1 through 6 are complete",
+                "authentication/security lifecycle closure #192",
+                "release-preparation checkpoint is tracked by [issue #203]"
             );
 
         assertThat(changelog)
