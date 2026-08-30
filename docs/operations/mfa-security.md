@@ -1,7 +1,7 @@
 # MFA Security Operations
 
 This guide describes the MFA and purpose-bound step-up operations retained by
-the PayFlow `1.0.0-SNAPSHOT` release-candidate line. It does not add
+the PayFlow `1.0.0` release-preparation candidate. It does not add
 authentication methods or change the historical v0.14.0 security invariants.
 
 ## Production prerequisites

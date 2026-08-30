@@ -6,7 +6,7 @@ PayFlow v0.16.0 is the latest tagged and published release. The immutable public
 
 The published `100566879`-byte `payflow-0.16.0.jar` has independently verified SHA-256 `8c542fc6928179345e5cda3d0f66d1481f7277a88096a52a69952ed95f2958e6`. Checksum asset SHA-256 `b14f5ea137012e7aa8557fa21c1c9fece151deb2447a0b636da7ee3a173d14b0` names and matches that JAR, and the published release notes exactly match the reviewed `docs/releases/v0.16.0.md`.
 
-The v0.16.0 stabilization line tracked by issue `#169` and release-finalization issue `#186` is complete through protected finalization, independently verified immutable publication, and publication-record merge `7712c5ccbeeee3b9cefd3324c42270e71554ea17`. The active v1.0.0 release-candidate development line uses Maven version `1.0.0-SNAPSHOT`, is tracked by umbrella issue `#189`, and begins with development-start checkpoint `#190`. Registration remains evidence-backed `DEFER`, the existing password-login limiter semantics remain unchanged, and v1 development does not introduce signing, SLSA, reproducible-build, provenance-attestation, production-certification, or real-money claims.
+The v0.16.0 stabilization line tracked by issue `#169` and release-finalization issue `#186` is complete through protected finalization, independently verified immutable publication, and publication-record merge `7712c5ccbeeee3b9cefd3324c42270e71554ea17`. The reviewed v1.0.0 release-preparation candidate uses Maven version `1.0.0`, is tracked by umbrella issue `#189`, and release preparation is tracked by issue `#203`. Checkpoints 1 through 6 are complete; immutable tagging and publication remain separate later checkpoints. Registration remains evidence-backed `DEFER`, the existing password-login limiter semantics remain unchanged, and v1 development does not introduce signing, SLSA, reproducible-build, provenance-attestation, production-certification, or real-money claims.
 
 The v0.15.0 generalized abuse-protection release remains anchored to verified
 merge commit `c29a067ca3a64514444e17db59a2b862d26f5950` and successful release workflow run `32172653513`.
@@ -951,13 +951,16 @@ Baseline: v0.15.0 publication-record merge
 - release checksum verification: passed
 - published release notes verification: exact match
 
-## v1.0.0 — Active Release-Candidate Development
+## v1.0.0 — Release Preparation
 
 Tracking issue: [#189](https://github.com/nursena-pc/payflow/issues/189)
 Development-start issue: [#190](https://github.com/nursena-pc/payflow/issues/190)
 Authentication/security closure issue: [#192](https://github.com/nursena-pc/payflow/issues/192)
 Financial/messaging integrity closure issue: [#194](https://github.com/nursena-pc/payflow/issues/194)
 Observability/performance closure issue: [#197](https://github.com/nursena-pc/payflow/issues/197)
+Recovery/migration/API/documentation freeze issue: [#199](https://github.com/nursena-pc/payflow/issues/199)
+Supply-chain/clean-environment verification issue: [#201](https://github.com/nursena-pc/payflow/issues/201)
+Release-preparation issue: [#203](https://github.com/nursena-pc/payflow/issues/203)
 
 Baseline: v0.16.0 publication-record merge
 `7712c5ccbeeee3b9cefd3324c42270e71554ea17`.
@@ -1000,18 +1003,22 @@ CP4 evidence baseline: exact `main` `8a49e8bcd05ba64fd07b87bdeca5dc415e87dda3`. 
 
 ### Checkpoint 5 — Recovery, migration, API, and documentation freeze
 
-- [ ] Re-validate PostgreSQL backup/restore and Flyway clean-install/upgrade procedures
-- [ ] Re-validate Redis and Kafka outage/recovery procedures
-- [ ] Compare `/api/v1`, OpenAPI, Postman, README, architecture, ADR, security, operations, and roadmap contracts for drift
-- [ ] Require explicit compatibility review for any public API behavior change
+- [x] Re-validate PostgreSQL backup/restore and Flyway clean-install/upgrade procedures
+- [x] Re-validate Redis and Kafka outage/recovery procedures
+- [x] Compare `/api/v1`, OpenAPI, Postman, README, architecture, ADR, security, operations, and roadmap contracts for drift
+- [x] Require explicit compatibility review for any public API behavior change
+
+CP5 closed through issue #199 and PR #200. Fresh PostgreSQL backup/restore, Flyway V1-V24 clean-install/approved-upgrade, and Redis/Kafka outage/recovery rehearsals passed; the public compatibility surface remained 30 canonical `/api/v1` operations across 28 normalized paths. OpenAPI metadata was aligned to `1.0.0` without adding `/api/v2`, changing public API behavior, rewriting migrations, or introducing a recovery/capacity certification claim.
 
 ### Checkpoint 6 — Supply-chain and clean-environment release-candidate verification
 
-- [ ] Run the repository-approved dependency vulnerability review and committed-content secret scan
-- [ ] Generate and review the v1 release-candidate SBOM using the documented toolchain
-- [ ] Review every Critical/High finding explicitly without suppressing findings only to make the gate green
-- [ ] Run complete clean-environment Maven verification and production-profile Docker smoke on the exact reviewed candidate
-- [ ] Verify executable JAR/checksum creation and required-configuration fail-fast behavior
+- [x] Run the repository-approved dependency vulnerability review and committed-content secret scan
+- [x] Generate and review the v1 release-candidate SBOM using the documented toolchain
+- [x] Review every Critical/High finding explicitly without suppressing findings only to make the gate green
+- [x] Run complete clean-environment Maven verification and production-profile Docker smoke on the exact reviewed candidate
+- [x] Verify executable JAR/checksum creation and required-configuration fail-fast behavior
+
+CP6 closed through issue #201 and PR #202. Fresh review reported OSV Critical 0 / High 0 / Medium 6 and builder/runtime Critical/High 0/0 with no suppression or retuning. The clean-environment rehearsal used Java 21.0.2, Maven Wrapper 3.9.16, a fresh isolated Maven local repository, and a detached clean checkout; all 1,649 Maven tests passed with zero failures, errors, or skips, required production configuration remained fail-fast, and production-profile Docker smoke passed.
 
 ### Checkpoint 7 — v1.0.0 release preparation
 

@@ -78,7 +78,7 @@ class V100RecoveryMigrationApiDocumentationFreezeContractTest {
         );
 
     @Test
-    void shouldAlignOpenApiMetadataWithV1ReleaseCandidate()
+    void shouldAlignOpenApiMetadataWithExactV1ReleasePreparation()
         throws IOException {
 
         String pom = Files.readString(POM);
@@ -91,6 +91,9 @@ class V100RecoveryMigrationApiDocumentationFreezeContractTest {
 
         assertThat(pom)
             .contains(
+                "<version>1.0.0</version>"
+            )
+            .doesNotContain(
                 "<version>1.0.0-SNAPSHOT</version>"
             );
 
@@ -129,8 +132,10 @@ class V100RecoveryMigrationApiDocumentationFreezeContractTest {
                 "**28 unique route paths**",
                 "v0.16.0",
                 "compatibility baseline",
+                "During the v1.0.0 CP5 review",
                 "`1.0.0-SNAPSHOT`",
-                "`info.version = 1.0.0`"
+                "On the current release-preparation candidate",
+                "both exact `1.0.0`"
             )
             .contains(
                 "carried unchanged into the v1.0.0 "
@@ -152,7 +157,7 @@ class V100RecoveryMigrationApiDocumentationFreezeContractTest {
         assertThat(flyway)
             .contains(
                 "Current v1.0.0 CP5 review",
-                "`1.0.0-SNAPSHOT` application",
+                "current `1.0.0` release-preparation application",
                 "current v1.0.0 release-candidate line"
             )
             .doesNotContain(
@@ -165,10 +170,12 @@ class V100RecoveryMigrationApiDocumentationFreezeContractTest {
             .contains(
                 "Current v1.0.0 CP5 review",
                 "target/<artifactId>-<project.version>.jar",
-                "target/payflow-1.0.0-SNAPSHOT.jar"
+                "release-preparation candidate",
+                "target/payflow-1.0.0.jar"
             )
             .doesNotContain(
-                "target/payflow-0.16.0-SNAPSHOT.jar"
+                "target/payflow-0.16.0-SNAPSHOT.jar",
+                "target/payflow-1.0.0-SNAPSHOT.jar"
             );
 
         assertThat(redisKafka)

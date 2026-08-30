@@ -29,7 +29,7 @@ Before running the rehearsal:
 - Java 21 must be available for restored-database application startup.
 - the Maven wrapper must be present unless the JAR resolved from the current
   Maven artifact coordinates is intentionally reused with `-SkipPackage`; on
-  the active line this is `target/payflow-1.0.0-SNAPSHOT.jar`.
+  the release-preparation candidate this is `target/payflow-1.0.0.jar`.
 - the Git working tree must be clean and HEAD must be attached to a branch.
 - exactly one running Docker container must match the configured Compose project
   and PostgreSQL service labels; defaults are project `payflow`, service
@@ -194,8 +194,8 @@ inspection. The default removes it.
 
 `-SkipPackage`
 : Reuse the existing JAR resolved dynamically as
-`target/<artifactId>-<project.version>.jar`. On the active development line
-this resolves to `target/payflow-1.0.0-SNAPSHOT.jar`; the script fails if the
+`target/<artifactId>-<project.version>.jar`. On the release-preparation candidate
+this resolves to `target/payflow-1.0.0.jar`; the script fails if the
 resolved artifact is absent.
 
 `-ComposeProject`, `-PostgresService`, `-AppService`, `-SourceDatabase`,
