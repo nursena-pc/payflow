@@ -2,11 +2,11 @@
 
 ## Current delivery focus
 
-PayFlow v0.16.0 is the latest tagged and published release. The immutable publication is anchored to annotated tag `v0.16.0` with tag object `8308e190960525924a550dafc8dcfcf61d4250d0` and exact merge/tag target `da8cefa9772d8e009b5ef1e5ab53d03bc44b1c13`. Tag-triggered Release workflow run `32757038003` succeeded and published GitHub Release ID `375880233` at `2026-08-24T17:40:22Z`.
+PayFlow v1.0.0 is the latest tagged and published release. The immutable publication is anchored to annotated tag `v1.0.0` with tag object `bc1750b17bbdfdcc24764c943afbfd9943e33190` and exact merge/tag target `1adf0b38f1d2da82097c58e41aea4e36a2b4a643`. Tag-triggered Release workflow run `33388085847` succeeded and published GitHub Release ID `379712093` at `2026-08-31T11:50:28Z`.
 
-The published `100566879`-byte `payflow-0.16.0.jar` has independently verified SHA-256 `8c542fc6928179345e5cda3d0f66d1481f7277a88096a52a69952ed95f2958e6`. Checksum asset SHA-256 `b14f5ea137012e7aa8557fa21c1c9fece151deb2447a0b636da7ee3a173d14b0` names and matches that JAR, and the published release notes exactly match the reviewed `docs/releases/v0.16.0.md`.
+The published `100566872`-byte `payflow-1.0.0.jar` has independently verified SHA-256 `ed58f5e812e6dfd3ee1ced8f480265bbc6221ff5de760253095762294a9dd8b1`. Checksum asset SHA-256 `24d66af06c41b1c5bad37c218c8a20678b7fe85d7cfb717ae28a8916cfd79a5c` names and matches that JAR, and the published release notes exactly match the reviewed `docs/releases/v1.0.0.md`.
 
-The v0.16.0 stabilization line tracked by issue `#169` and release-finalization issue `#186` is complete through protected finalization, independently verified immutable publication, and publication-record merge `7712c5ccbeeee3b9cefd3324c42270e71554ea17`. The reviewed v1.0.0 release-preparation candidate uses Maven version `1.0.0`, is tracked by umbrella issue `#189`, and release preparation is tracked by issue `#203`. Checkpoints 1 through 6 are complete; immutable tagging and publication remain separate later checkpoints. Registration remains evidence-backed `DEFER`, the existing password-login limiter semantics remain unchanged, and v1 development does not introduce signing, SLSA, reproducible-build, provenance-attestation, production-certification, or real-money claims.
+The v1 release-hardening line is tracked by umbrella issue `#189`; release preparation completed through issue `#203`, immutable publication completed through issue `#207`, and the factual publication-record/release-train closure is tracked by issue `#208`. The prior v0.16.0 publication record remains immutable historical evidence. Registration remains evidence-backed `DEFER`, the existing password-login limiter semantics remain unchanged, and v1.0.0 makes no signing, SLSA, reproducible-build, provenance-attestation, production-certification, regulatory, or real-money claim.
 
 The v0.15.0 generalized abuse-protection release remains anchored to verified
 merge commit `c29a067ca3a64514444e17db59a2b862d26f5950` and successful release workflow run `32172653513`.
@@ -951,7 +951,7 @@ Baseline: v0.15.0 publication-record merge
 - release checksum verification: passed
 - published release notes verification: exact match
 
-## v1.0.0 — Release Preparation
+## v1.0.0 — Released: Release Hardening and Evidence Closure
 
 Tracking issue: [#189](https://github.com/nursena-pc/payflow/issues/189)
 Development-start issue: [#190](https://github.com/nursena-pc/payflow/issues/190)
@@ -961,6 +961,8 @@ Observability/performance closure issue: [#197](https://github.com/nursena-pc/pa
 Recovery/migration/API/documentation freeze issue: [#199](https://github.com/nursena-pc/payflow/issues/199)
 Supply-chain/clean-environment verification issue: [#201](https://github.com/nursena-pc/payflow/issues/201)
 Release-preparation issue: [#203](https://github.com/nursena-pc/payflow/issues/203)
+Immutable-publication issue: [#207](https://github.com/nursena-pc/payflow/issues/207)
+Publication-record issue: [#208](https://github.com/nursena-pc/payflow/issues/208)
 
 Baseline: v0.16.0 publication-record merge
 `7712c5ccbeeee3b9cefd3324c42270e71554ea17`.
@@ -1022,18 +1024,39 @@ CP6 closed through issue #201 and PR #202. Fresh review reported OSV Critical 0 
 
 ### Checkpoint 7 — v1.0.0 release preparation
 
-- [ ] Transition the reviewed candidate to exact version `1.0.0` only through a focused release-preparation PR
-- [ ] Add reviewed `docs/releases/v1.0.0.md` from implemented and verified evidence only
-- [ ] Align changelog, README, roadmap, and executable release contracts without inventing publication-only values
-- [ ] Require exact-head GitHub CI and Docker Smoke success before expected-head merge
+- [x] Transition the reviewed candidate to exact version `1.0.0` only through a focused release-preparation PR
+- [x] Add reviewed `docs/releases/v1.0.0.md` from implemented and verified evidence only
+- [x] Align changelog, README, roadmap, and executable release contracts without inventing publication-only values
+- [x] Require exact-head GitHub CI and Docker Smoke success before expected-head merge
 
 ### Checkpoint 8 — Immutable v1.0.0 publication
 
-- [ ] Publish annotated tag `v1.0.0` only from the exact approved release merge
-- [ ] Require the tag-triggered Release workflow to succeed
-- [ ] Independently download and verify the published executable JAR and checksum
-- [ ] Verify published release notes exactly match the reviewed versioned release notes
-- [ ] Record real tag object, tag target, merge SHA, workflow run, release ID, artifact size, and SHA-256 only after publication
+- [x] Publish annotated tag `v1.0.0` only from the exact approved release merge
+- [x] Require the tag-triggered Release workflow to succeed
+- [x] Independently download and verify the published executable JAR and checksum
+- [x] Verify published release notes exactly match the reviewed versioned release notes
+- [x] Record real tag object, tag target, merge SHA, workflow run, release ID, artifact size, and SHA-256 only after publication
+
+CP8 closed through issue #207 after immutable publication and independent download/checksum verification.
+
+### Immutable v1.0.0 publication evidence
+
+- approved release merge and tag target: `1adf0b38f1d2da82097c58e41aea4e36a2b4a643`
+- annotated tag object: `bc1750b17bbdfdcc24764c943afbfd9943e33190`
+- release workflow run: [`33388085847`](https://github.com/nursena-pc/payflow/actions/runs/33388085847)
+- release workflow number: `10`
+- published at: `2026-08-31T11:50:28Z`
+- workflow artifact ID: `9756624045`
+- GitHub Release ID: `379712093`
+- JAR asset ID: `537914002`
+- published JAR size: `100566872` bytes
+- published JAR SHA-256: `ed58f5e812e6dfd3ee1ced8f480265bbc6221ff5de760253095762294a9dd8b1`
+- checksum asset ID: `537914001`
+- checksum asset size: `84` bytes
+- checksum asset SHA-256: `24d66af06c41b1c5bad37c218c8a20678b7fe85d7cfb717ae28a8916cfd79a5c`
+- release checksum verification: passed
+- published release notes verification: exact match
+- tag mutation after publication: none
 
 ### Checkpoint 9 — Publication record and release-train closure
 
@@ -1058,11 +1081,11 @@ CP6 closed through issue #201 and PR #202. Fresh review reported OSV Critical 0 
 
 ## v1.0.0 release exit criteria
 
-- [ ] all release-candidate verification checkpoints complete without unresolved Critical/High release blockers
-- [ ] authentication, financial consistency, messaging, observability, recovery, migration, and compatibility guarantees remain executable
-- [ ] complete Maven verification and production-profile Docker smoke pass on the exact reviewed release candidate
-- [ ] OpenAPI, Postman, runbooks, architecture/security guidance, and implementation agree
-- [ ] the exact reviewed `1.0.0` release merge is immutably tagged
-- [ ] tag-triggered publication succeeds and published artifacts are independently verified
+- [x] all release-candidate verification checkpoints complete without unresolved Critical/High release blockers
+- [x] authentication, financial consistency, messaging, observability, recovery, migration, and compatibility guarantees remain executable
+- [x] complete Maven verification and production-profile Docker smoke pass on the exact reviewed release candidate
+- [x] OpenAPI, Postman, runbooks, architecture/security guidance, and implementation agree
+- [x] the exact reviewed `1.0.0` release merge is immutably tagged
+- [x] tag-triggered publication succeeds and published artifacts are independently verified
 - [ ] immutable publication evidence is merged from actual published values
 - [ ] release train #106 can close without unsupported production, regulatory, real-money, signing, SLSA, or reproducible-build claims

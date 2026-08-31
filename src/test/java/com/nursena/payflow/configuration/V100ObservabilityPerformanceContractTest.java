@@ -148,7 +148,7 @@ class V100ObservabilityPerformanceContractTest {
     }
 
     @Test
-    void shouldCloseRoadmapAndPublicReleaseCandidateState()
+    void shouldRetainRoadmapAndPublishedReleaseState()
         throws IOException {
 
         String roadmap =
@@ -190,11 +190,15 @@ class V100ObservabilityPerformanceContractTest {
 
         assertThat(readme)
             .contains(
-                "Checkpoints 1 through 6 are complete",
+                "PayFlow v1.0.0 is the latest tagged and published release",
                 "observability/performance closure #197",
-                "CP4 produced fresh bounded developer-workstation performance evidence",
-                "release evidence only",
+                "CP4 produced bounded developer-workstation performance evidence",
+                "CP8 immutably published and independently verified v1.0.0",
                 "do not create production-capacity"
+            )
+            .doesNotContain(
+                "Checkpoints 1 through 6 are complete",
+                "CP4 produced fresh bounded developer-workstation performance evidence"
             );
 
         assertThat(changelog)

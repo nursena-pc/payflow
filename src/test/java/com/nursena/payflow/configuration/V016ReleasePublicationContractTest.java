@@ -30,13 +30,12 @@ class V016ReleasePublicationContractTest {
         );
 
     @Test
-    void shouldExposePublishedReleaseStatus()
+    void shouldRetainV016PublishedReleaseRecord()
         throws IOException {
 
         assertThat(Files.readString(README))
             .contains(
-                "PayFlow v0.16.0 remains the latest published release",
-                "annotated tag `v0.16.0`",
+                "The immutable v0.16.0 publication record is anchored to annotated tag `v0.16.0`",
                 "8308e190960525924a550dafc8dcfcf61d4250d0",
                 "da8cefa9772d8e009b5ef1e5ab53d03bc44b1c13",
                 "32757038003",
@@ -47,7 +46,7 @@ class V016ReleasePublicationContractTest {
                 "b14f5ea137012e7aa8557fa21c1c9fece151deb2447a0b636da7ee3a173d14b0"
             )
             .doesNotContain(
-                "PayFlow v0.15.0 remains the latest published release",
+                "PayFlow v0.16.0 remains the latest published release",
                 "reviewed v0.16.0 release candidate uses Maven version",
                 "No v0.16.0 tag or GitHub Release has been published yet"
             );

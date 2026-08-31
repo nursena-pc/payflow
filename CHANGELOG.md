@@ -8,7 +8,7 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-## [1.0.0] - 2026-08-30
+## [1.0.0] - 2026-08-31
 
 ### Changed
 
@@ -20,6 +20,12 @@ and PayFlow uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Closed the v1.0.0 recovery, migration, API, and documentation freeze through issue #199 after fresh PostgreSQL backup/restore, Flyway V1-V24 clean/upgrade, Redis/Kafka outage-recovery, and 30-operation / 28-path `/api/v1` compatibility verification; aligned OpenAPI metadata to `1.0.0` and current documentation without introducing runtime, API, schema, or migration behavior changes.
 - Closed the v1.0.0 supply-chain and clean-environment verification through issue #201 with fresh committed-content secret review, SBOM/vulnerability evidence, zero unresolved Critical/High release blockers, Java 21 / Maven Wrapper 3.9.16 clean-environment verification, 1,649 passing tests, required-configuration fail-fast verification, and production-profile Docker smoke without suppression or unrelated dependency modernization.
 - Prepared the exact `1.0.0` release candidate through issue #203 by transitioning release metadata from `1.0.0-SNAPSHOT`, adding reviewed versioned release notes, and aligning changelog, README, roadmap, and executable release contracts while keeping immutable publication values reserved for the later publication checkpoint.
+
+### Release verification
+
+- Published annotated `v1.0.0` through issue #207 from exact release merge `1adf0b38f1d2da82097c58e41aea4e36a2b4a643`; tag object `bc1750b17bbdfdcc24764c943afbfd9943e33190` peels to that exact commit, and tag-triggered Release workflow run `33388085847` succeeded.
+- GitHub Release ID `379712093` was published at `2026-08-31T11:50:28Z`. Independently verified the published 100566872-byte `payflow-1.0.0.jar` at SHA-256 `ed58f5e812e6dfd3ee1ced8f480265bbc6221ff5de760253095762294a9dd8b1`; checksum asset SHA-256 `24d66af06c41b1c5bad37c218c8a20678b7fe85d7cfb717ae28a8916cfd79a5c` names and matches that JAR, and published release notes exactly match `docs/releases/v1.0.0.md`.
+- Opened publication-record and release-train closure issue #208 after immutable publication verification; no runtime, API, schema, security, dependency, Docker, workflow, tag, or GitHub Release behavior is changed by that record.
 
 ## [0.16.0] - 2026-08-24
 

@@ -168,8 +168,14 @@ class V100AuthenticationSecurityLifecycleContractTest {
 
         assertThat(readme)
             .contains(
-                "Checkpoints 1 through 6 are complete",
+                "PayFlow v1.0.0 is the latest tagged and published release",
                 "authentication/security lifecycle closure #192",
+                "release preparation #203",
+                "immutable publication #207",
+                "issue #208"
+            )
+            .doesNotContain(
+                "Checkpoints 1 through 6 are complete",
                 "release-preparation checkpoint is tracked by [issue #203]"
             );
 
