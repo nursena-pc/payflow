@@ -23,7 +23,7 @@ class V100DevelopmentContractTest {
         Path.of("docs", "roadmap.md");
 
     @Test
-    void shouldCarryV100DevelopmentLineIntoReleasePreparation()
+    void shouldCarryV100DevelopmentHistoryIntoPublishedRelease()
         throws IOException {
 
         assertThat(Files.readString(POM))
@@ -35,34 +35,39 @@ class V100DevelopmentContractTest {
 
         assertThat(Files.readString(README))
             .contains(
-                "PayFlow v0.16.0 remains the latest published release",
-                "reviewed v1.0.0 release-preparation candidate uses Maven version `1.0.0`",
-                "## v1.0.0 release preparation",
-                "Checkpoints 1 through 6 are complete",
+                "PayFlow v1.0.0 is the latest tagged and published release",
+                "exact Maven/OpenAPI version `1.0.0`",
+                "## v1.0.0 release",
                 "development-start #190",
                 "authentication/security lifecycle closure #192",
                 "financial/messaging integrity closure #194",
                 "observability/performance closure #197",
                 "recovery/migration/API/documentation freeze #199",
                 "supply-chain/clean-environment verification #201",
-                "release-preparation checkpoint is tracked by [issue #203]",
+                "release preparation #203",
+                "immutable publication #207",
+                "issue #208",
                 "7712c5ccbeeee3b9cefd3324c42270e71554ea17"
             )
             .doesNotContain(
-                "Issue #186 remains the publication-record checkpoint"
+                "PayFlow v0.16.0 remains the latest published release",
+                "No `v1.0.0` tag or GitHub Release has been published yet",
+                "## v1.0.0 release preparation"
             );
     }
 
     @Test
-    void shouldDefineV100ReleasePreparationPlan()
+    void shouldDefineCompletedV100ReleasePlan()
         throws IOException {
 
         assertThat(Files.readString(ROADMAP))
             .contains(
-                "## v1.0.0 — Release Preparation",
+                "## v1.0.0 — Released: Release Hardening and Evidence Closure",
                 "Tracking issue: [#189]",
                 "Development-start issue: [#190]",
                 "Release-preparation issue: [#203]",
+                "Immutable-publication issue: [#207]",
+                "Publication-record issue: [#208]",
                 "### Checkpoint 1 — Release-candidate development baseline",
                 "### Checkpoint 2 — Authentication and security lifecycle closure",
                 "### Checkpoint 3 — Financial and messaging integrity guarantees",
@@ -71,7 +76,8 @@ class V100DevelopmentContractTest {
                 "### Checkpoint 6 — Supply-chain and clean-environment release-candidate verification",
                 "### Checkpoint 7 — v1.0.0 release preparation",
                 "### Checkpoint 8 — Immutable v1.0.0 publication",
-                "### Checkpoint 9 — Publication record and release-train closure"
+                "### Checkpoint 9 — Publication record and release-train closure",
+                "- [x] Publish annotated tag `v1.0.0` only from the exact approved release merge"
             );
     }
 
@@ -99,17 +105,21 @@ class V100DevelopmentContractTest {
     }
 
     @Test
-    void shouldPreserveDevelopmentHistoryWhileOpeningReleasePreparation()
+    void shouldPreserveDevelopmentHistoryAndPublishedEvidence()
         throws IOException {
 
         assertThat(Files.readString(CHANGELOG))
             .contains(
                 "## [Unreleased]",
-                "## [1.0.0] - 2026-08-30",
+                "## [1.0.0] - 2026-08-31",
                 "Advanced the active release-candidate development version to `1.0.0-SNAPSHOT`",
                 "issue #189",
                 "development-start checkpoint #190",
                 "Prepared the exact `1.0.0` release candidate through issue #203",
+                "Published annotated `v1.0.0` through issue #207",
+                "33388085847",
+                "379712093",
+                "ed58f5e812e6dfd3ee1ced8f480265bbc6221ff5de760253095762294a9dd8b1",
                 "## [0.16.0] - 2026-08-24",
                 "[0.16.0]: https://github.com/nursena-pc/payflow/compare/v0.15.0...v0.16.0",
                 "[1.0.0]: https://github.com/nursena-pc/payflow/compare/v0.16.0...v1.0.0",

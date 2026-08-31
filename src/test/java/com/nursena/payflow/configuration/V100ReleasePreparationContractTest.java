@@ -41,7 +41,7 @@ class V100ReleasePreparationContractTest {
         Path.of(".github", "workflows", "release.yml");
 
     @Test
-    void shouldFreezeExactV100ReleasePreparationVersion()
+    void shouldFreezeExactV100ReleaseVersion()
         throws IOException {
 
         assertThat(Files.readString(POM))
@@ -60,22 +60,12 @@ class V100ReleasePreparationContractTest {
     }
 
     @Test
-    void shouldAlignPrePublicationReleaseDocumentation()
+    void shouldRetainReviewedV100ReleasePreparationHistory()
         throws IOException {
-
-        assertThat(Files.readString(README))
-            .contains(
-                "PayFlow v0.16.0 remains the latest published release",
-                "reviewed v1.0.0 release-preparation candidate uses Maven version `1.0.0`",
-                "No `v1.0.0` tag or GitHub Release has been published yet",
-                "## v1.0.0 release preparation",
-                "release-preparation checkpoint is tracked by [issue #203]"
-            );
 
         assertThat(Files.readString(CHANGELOG))
             .contains(
-                "## [Unreleased]",
-                "## [1.0.0] - 2026-08-30",
+                "## [1.0.0] - 2026-08-31",
                 "Prepared the exact `1.0.0` release candidate through issue #203",
                 "[1.0.0]: https://github.com/nursena-pc/payflow/compare/v0.16.0...v1.0.0",
                 "[Unreleased]: https://github.com/nursena-pc/payflow/compare/v1.0.0...HEAD"
@@ -83,19 +73,26 @@ class V100ReleasePreparationContractTest {
 
         assertThat(Files.readString(ROADMAP))
             .contains(
-                "## v1.0.0 — Release Preparation",
-                "Recovery/migration/API/documentation freeze issue: [#199]",
-                "Supply-chain/clean-environment verification issue: [#201]",
                 "Release-preparation issue: [#203]",
                 "### Checkpoint 7 — v1.0.0 release preparation",
-                "### Checkpoint 8 — Immutable v1.0.0 publication",
-                "### Checkpoint 9 — Publication record and release-train closure",
-                "- [ ] Publish annotated tag `v1.0.0` only from the exact approved release merge"
+                "- [x] Transition the reviewed candidate to exact version `1.0.0` only through a focused release-preparation PR",
+                "- [x] Add reviewed `docs/releases/v1.0.0.md` from implemented and verified evidence only"
+            );
+
+        assertThat(Files.readString(README))
+            .contains(
+                "PayFlow v1.0.0 is the latest tagged and published release",
+                "## v1.0.0 release"
+            )
+            .doesNotContain(
+                "PayFlow v0.16.0 remains the latest published release",
+                "reviewed v1.0.0 release-preparation candidate uses Maven version `1.0.0`",
+                "No `v1.0.0` tag or GitHub Release has been published yet"
             );
     }
 
     @Test
-    void shouldExposeReviewedV100ReleaseNotesWithoutPublicationClaims()
+    void shouldRetainReviewedV100ReleaseNotesAsHistoricalPublicationInput()
         throws IOException {
 
         assertThat(Files.readString(RELEASE_NOTES))

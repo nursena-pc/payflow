@@ -22,7 +22,7 @@ class RoadmapContractTest {
         Path.of("docs", "roadmap.md");
 
     @Test
-    void shouldAlignRoadmapWithV100ReleasePreparation()
+    void shouldAlignRoadmapWithPublishedV100()
         throws Exception {
 
         String projectVersion = readProjectVersion();
@@ -34,13 +34,14 @@ class RoadmapContractTest {
 
         assertThat(roadmap)
             .contains(
-                "PayFlow v0.16.0 is the latest tagged and published release",
-                "published merge and tag commit: `da8cefa9772d8e009b5ef1e5ab53d03bc44b1c13`",
-                "annotated tag object: `8308e190960525924a550dafc8dcfcf61d4250d0`",
-                "release workflow run: [`32757038003`]",
-                "GitHub Release ID: `375880233`",
-                "published JAR size: `100566879` bytes",
-                "published JAR SHA-256: `8c542fc6928179345e5cda3d0f66d1481f7277a88096a52a69952ed95f2958e6`",
+                "PayFlow v1.0.0 is the latest tagged and published release",
+                "annotated tag `v1.0.0` with tag object `bc1750b17bbdfdcc24764c943afbfd9943e33190`",
+                "exact merge/tag target `1adf0b38f1d2da82097c58e41aea4e36a2b4a643`",
+                "Release workflow run `33388085847` succeeded",
+                "GitHub Release ID `379712093`",
+                "published JAR size: `100566872` bytes",
+                "published JAR SHA-256: `ed58f5e812e6dfd3ee1ced8f480265bbc6221ff5de760253095762294a9dd8b1`",
+                "checksum asset SHA-256: `24d66af06c41b1c5bad37c218c8a20678b7fe85d7cfb717ae28a8916cfd79a5c`",
                 "## v0.10.0 — Released: Trusted Client Context",
                 "## v0.11.0 — Released: Structured Logging and Request Correlation",
                 "## v0.12.0 — Released: JWT Signing-Key Rotation",
@@ -48,7 +49,7 @@ class RoadmapContractTest {
                 "## v0.14.0 — Released: MFA and Step-Up Authentication",
                 "## v0.15.0 — Released: Generalized Abuse Protection and Performance Evidence",
                 "## v0.16.0 — Released: Stabilization, Recovery Rehearsals, and API Freeze",
-                "## v1.0.0 — Release Preparation",
+                "## v1.0.0 — Released: Release Hardening and Evidence Closure",
                 "Tracking issue: [#189]",
                 "Development-start issue: [#190]",
                 "Authentication/security closure issue: [#192]",
@@ -57,16 +58,25 @@ class RoadmapContractTest {
                 "Recovery/migration/API/documentation freeze issue: [#199]",
                 "Supply-chain/clean-environment verification issue: [#201]",
                 "Release-preparation issue: [#203]",
-                "7712c5ccbeeee3b9cefd3324c42270e71554ea17"
+                "Immutable-publication issue: [#207]",
+                "Publication-record issue: [#208]",
+                "### Checkpoint 7 — v1.0.0 release preparation",
+                "### Checkpoint 8 — Immutable v1.0.0 publication",
+                "### Checkpoint 9 — Publication record and release-train closure",
+                "- [x] Publish annotated tag `v1.0.0` only from the exact approved release merge",
+                "- [x] Require the tag-triggered Release workflow to succeed",
+                "- [x] Independently download and verify the published executable JAR and checksum",
+                "- [x] Verify published release notes exactly match the reviewed versioned release notes",
+                "CP8 closed through issue #207",
+                "9756624045",
+                "537914002",
+                "537914001"
             )
             .doesNotContain(
-                "0.15.0-SNAPSHOT",
-                "PayFlow v0.15.0 remains the latest tagged release",
-                "release-finalization candidate uses Maven version",
-                "## v0.16.0 — Active Development: Stabilization, Recovery Rehearsals, and API Freeze",
-                "## v0.16.0 — Release Preparation: Stabilization, Recovery Rehearsals, and API Freeze",
-                "## v1.0.0 — Active Release-Candidate Development",
-                "## v1.0.0 — Released"
+                "PayFlow v0.16.0 is the latest tagged and published release",
+                "## v1.0.0 — Release Preparation",
+                "- [ ] Publish annotated tag `v1.0.0` only from the exact approved release merge",
+                "immutable tagging and publication remain separate later checkpoints"
             );
 
         assertThat(normalizedRoadmap)

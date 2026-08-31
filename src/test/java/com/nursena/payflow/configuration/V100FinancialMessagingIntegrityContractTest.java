@@ -253,11 +253,17 @@ class V100FinancialMessagingIntegrityContractTest {
 
         assertThat(readme)
             .contains(
-                "Checkpoints 1 through 6 are complete",
+                "PayFlow v1.0.0 is the latest tagged and published release",
                 "authentication/security lifecycle closure #192",
                 "financial/messaging integrity closure #194",
-                "release preparation is tracked by issue #203",
+                "release preparation #203",
+                "immutable publication #207",
+                "issue #208",
                 "v1 financial/messaging integrity contract"
+            )
+            .doesNotContain(
+                "Checkpoints 1 through 6 are complete",
+                "release preparation is tracked by issue #203"
             );
 
         assertThat(changelog)
